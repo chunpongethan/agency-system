@@ -227,6 +227,8 @@ class Period(Base):
     month: Mapped[int] = mapped_column(Integer)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
     locked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Frozen agency-summary JSON captured at lock time (read on locked periods).
+    snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class Payout(Base):

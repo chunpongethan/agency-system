@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from sqlalchemy import create_engine, select, or_
@@ -24,7 +24,10 @@ from app.models.models import (
 )
 from app.schemas import schemas
 from app.security import verify_password, create_access_token, decode_token, hash_password
-from app.services import commission_engine, reports, agent_service, scoping
+from app.services import (
+    commission_engine, reports, agent_service, scoping,
+    periods, payouts, exports,
+)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
@@ -57,6 +60,16 @@ def _permission_handler(request, exc: PermissionError):
 @app.exception_handler(agent_service.ValidationError)
 def _validation_handler(request, exc: agent_service.ValidationError):
     return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
+@app.exception_handler(periods.PeriodLockedError)
+def _period_locked_handler(request, exc: periods.PeriodLockedError):
+    return JSONResponse(status_code=409, content={"detail": str(exc)})
+
+
+@app.exception_handler(ValueError)
+def _value_error_handler(request, exc: ValueError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 # --- Auth --------------------------------------------------------------------
@@ -186,7 +199,8 @@ def list_products(db: Session = Depends(get_db),
 
 # --- Transactions ------------------------------------------------------------
 @app.post("/transactions", response_model=schemas.TransactionOut)
-def create_transaction(payload: schemas.TransactionIn, db: Session = Depends(get_db),
+def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
+                       db: Session = Depends(get_db),
                        current: Agent = Depends(get_current_agent)):
     scoping.assert_visible(db, current, payload.agent_id)
     client = db.get(Client, payload.client_id)
@@ -194,7 +208,11 @@ def create_transaction(payload: schemas.TransactionIn, db: Session = Depends(get
         raise HTTPException(404, "client not found")
     scoping.assert_visible(db, current, client.agent_id)
     data = payload.model_dump()
-    data["trade_date"] = data.get("trade_date") or date.today()
+    trade_date = data.get("trade_date") or date.today()
+    # Period locking: reject into a locked period unless an admin routes it as an
+    # adjustment into the next open period.
+    allow_adjust = adjust and current.role == Role.ADMIN
+    data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust)
     txn = Transaction(**data)
     db.add(txn); db.commit(); db.refresh(txn)
     return txn
@@ -279,3 +297,87 @@ def report_agency(start: date | None = None, end: date | None = None,
 def recompute(db: Session = Depends(get_db),
               current: Agent = Depends(require_admin)):
     return {"entries": commission_engine.recompute_all(db)}
+
+
+# --- Exports -----------------------------------------------------------------
+def _export_response(content, fmt: str, filename: str):
+    if fmt == "pdf":
+        return Response(content, media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{filename}.pdf"'})
+    return Response(content, media_type="text/csv",
+                    headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'})
+
+
+@app.get("/reports/agent/{agent_id}/export")
+def export_agent_statement(agent_id: int, format: str = "csv",
+                           start: date | None = None, end: date | None = None,
+                           db: Session = Depends(get_db),
+                           current: Agent = Depends(get_current_agent)):
+    scoping.assert_visible(db, current, agent_id)
+    statement = reports.agent_statement(db, agent_id, start, end)
+    if format == "pdf":
+        return _export_response(exports.statement_to_pdf(statement), "pdf",
+                                f"statement_agent_{agent_id}")
+    return _export_response(exports.statement_to_csv(statement), "csv",
+                            f"statement_agent_{agent_id}")
+
+
+@app.get("/reports/agency/export")
+def export_agency_summary(format: str = "csv",
+                          start: date | None = None, end: date | None = None,
+                          db: Session = Depends(get_db),
+                          current: Agent = Depends(get_current_agent)):
+    ids = scoping.visible_agent_ids(db, current)
+    summary = reports.agency_summary(db, start, end, agent_ids=ids)
+    if format == "pdf":
+        return _export_response(exports.agency_summary_to_pdf(summary), "pdf",
+                                "agency_summary")
+    return _export_response(exports.agency_summary_to_csv(summary), "csv",
+                            "agency_summary")
+
+
+# --- Periods -----------------------------------------------------------------
+@app.get("/periods/{ym}")
+def get_period(ym: str, db: Session = Depends(get_db),
+               current: Agent = Depends(get_current_agent)):
+    year, month = periods.parse_ym(ym)
+    period = periods.get_period(db, year, month)
+    snapshot = periods.period_snapshot(db, year, month)
+    return {
+        "period": ym,
+        "is_locked": bool(period and period.is_locked),
+        "locked_at": period.locked_at.isoformat() if period and period.locked_at else None,
+        "snapshot": snapshot,
+    }
+
+
+@app.post("/periods/{ym}/lock")
+def lock_period(ym: str, db: Session = Depends(get_db),
+                current: Agent = Depends(require_admin)):
+    year, month = periods.parse_ym(ym)
+    period = periods.lock_period(db, year, month)
+    return {"period": ym, "is_locked": period.is_locked,
+            "locked_at": period.locked_at.isoformat() if period.locked_at else None}
+
+
+@app.post("/periods/{ym}/unlock")
+def unlock_period(ym: str, db: Session = Depends(get_db),
+                  current: Agent = Depends(require_admin)):
+    year, month = periods.parse_ym(ym)
+    periods.unlock_period(db, year, month)
+    return {"period": ym, "is_locked": False}
+
+
+# --- Payouts -----------------------------------------------------------------
+@app.post("/payouts/run")
+def run_payout(period: str, db: Session = Depends(get_db),
+               current: Agent = Depends(require_admin)):
+    year, month = periods.parse_ym(period)
+    return payouts.run_payout(db, year, month)
+
+
+@app.get("/payouts/{ym}")
+def get_payout(ym: str, db: Session = Depends(get_db),
+               current: Agent = Depends(require_admin)):
+    year, month = periods.parse_ym(ym)
+    return payouts.payout_summary(db, year, month)

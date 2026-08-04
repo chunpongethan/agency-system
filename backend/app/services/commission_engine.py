@@ -166,22 +166,48 @@ def preview(session: Session, product: Product, closer: Agent,
     return lines
 
 
+def _build_all(session: Session, txn: Transaction, product: Product,
+               closer: Agent, as_of: date, reversal: bool) -> list[CommissionEntry]:
+    out: list[CommissionEntry] = []
+    for period_index, accrual_date in _due_periods(product, txn, as_of):
+        out += _period_entries(
+            session, txn, product, closer, period_index, accrual_date, reversal=reversal
+        )
+    return out
+
+
 def compute_for_transaction(session: Session, txn: Transaction,
                             as_of: date | None = None) -> list[CommissionEntry]:
     """
-    Generate and persist commission entries for one transaction, deterministically
-    from its current state:
+    Regenerate commission entries for one transaction, deterministically from its
+    current state, while treating already-*paid* entries as immutable:
+
       - SETTLED  -> positive entries for every due period.
       - CANCELLED (that was previously settled) -> the positive entries PLUS a
-        matching negative reversal for each, netting to zero but visible.
+        matching negative reversal for each, netting to zero but visible. If a
+        positive was already paid in a payout, its reversal is emitted as an
+        unpaid negative adjustment (picked up by the next payout run).
       - anything else -> no entries.
-    Idempotent: existing entries for this txn are cleared first.
+
+    Only *unpaid* entries are cleared and rebuilt; paid entries are preserved and
+    never duplicated. Returns all current entries for the transaction.
     """
     as_of = as_of or date.today()
 
-    # Idempotency: clear any prior entries for this txn.
+    existing = session.execute(
+        select(CommissionEntry).where(CommissionEntry.transaction_id == txn.id)
+    ).scalars().all()
+    paid_keys = {
+        (e.period_index, e.agent_id, e.kind, e.is_reversal)
+        for e in existing if e.paid
+    }
+
+    # Clear only unpaid entries; paid entries are frozen in a payout batch.
     session.execute(
-        delete(CommissionEntry).where(CommissionEntry.transaction_id == txn.id)
+        delete(CommissionEntry).where(
+            CommissionEntry.transaction_id == txn.id,
+            CommissionEntry.paid.is_(False),
+        )
     )
 
     was_settled = txn.settled_at is not None
@@ -196,19 +222,24 @@ def compute_for_transaction(session: Session, txn: Transaction,
     closer = session.get(Agent, txn.agent_id)
     reversal_too = txn.status == TxnStatus.CANCELLED
 
-    entries: list[CommissionEntry] = []
-    for period_index, accrual_date in _due_periods(product, txn, as_of):
-        entries += _period_entries(
-            session, txn, product, closer, period_index, accrual_date, reversal=False
-        )
-        if reversal_too:
-            entries += _period_entries(
-                session, txn, product, closer, period_index, accrual_date, reversal=True
-            )
+    def _key(e: CommissionEntry):
+        return (e.period_index, e.agent_id, e.kind, e.is_reversal)
 
-    session.add_all(entries)
+    to_add: list[CommissionEntry] = []
+    for e in _build_all(session, txn, product, closer, as_of, reversal=False):
+        if _key(e) not in paid_keys:
+            to_add.append(e)
+    if reversal_too:
+        for e in _build_all(session, txn, product, closer, as_of, reversal=True):
+            if _key(e) not in paid_keys:
+                to_add.append(e)
+
+    session.add_all(to_add)
     session.flush()
-    return entries
+
+    return session.execute(
+        select(CommissionEntry).where(CommissionEntry.transaction_id == txn.id)
+    ).scalars().all()
 
 
 def run_accruals(session: Session, as_of: date | None = None) -> int:
