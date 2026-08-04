@@ -6,20 +6,52 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
+# --- Auth -------------------------------------------------------------------
+class LoginIn(BaseModel):
+    username: str  # agent code or email
+    password: str
+
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class MeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    code: str
+    name: str
+    email: str
+    level: int
+    role: str
+    upline_id: int | None = None
+
+
+# --- Agents -----------------------------------------------------------------
 class AgentIn(BaseModel):
     code: str
     name: str
     email: EmailStr
     level: int
     upline_id: int | None = None
+    role: str = "agent"
+    password: str | None = None
 
 
-class AgentOut(AgentIn):
+class AgentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    code: str
+    name: str
+    email: str
+    level: int
+    upline_id: int | None = None
+    role: str
     is_active: bool
 
 
+# --- Clients ----------------------------------------------------------------
 class ClientIn(BaseModel):
     ref: str
     name: str
@@ -30,18 +62,30 @@ class ClientIn(BaseModel):
     agent_id: int
 
 
+class ClientUpdate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    risk_profile: str | None = None
+    notes: str | None = None
+
+
 class ClientOut(ClientIn):
     model_config = ConfigDict(from_attributes=True)
     id: int
     created_at: datetime
 
 
+# --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str
     name: str
     type: str
     provider: str | None = None
     base_commission_rate: Decimal
+    commission_schedule: str = "upfront"
+    trail_frequency: str | None = None
+    trail_periods: int | None = None
 
 
 class ProductOut(ProductIn):
@@ -50,6 +94,26 @@ class ProductOut(ProductIn):
     is_active: bool
 
 
+# --- Override rules ---------------------------------------------------------
+class OverrideRuleIn(BaseModel):
+    product_type: str
+    level_gap: int
+    override_rate: Decimal
+    valid_from: date | None = None
+    valid_to: date | None = None
+
+
+class OverrideRuleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    product_type: str
+    level_gap: int
+    override_rate: Decimal
+    valid_from: date
+    valid_to: date | None = None
+
+
+# --- Transactions -----------------------------------------------------------
 class TransactionIn(BaseModel):
     ref: str
     client_id: int
@@ -57,6 +121,15 @@ class TransactionIn(BaseModel):
     agent_id: int
     notional: Decimal
     currency: str = "USD"
+    base_currency: str = "USD"
+    fx_rate: Decimal | None = None
+    trade_date: date | None = None
+
+
+class TransactionPreviewIn(BaseModel):
+    product_id: int
+    agent_id: int
+    notional: Decimal
     trade_date: date | None = None
 
 
@@ -71,3 +144,17 @@ class TransactionOut(BaseModel):
     currency: str
     status: str
     trade_date: date
+
+
+class CommissionPreviewLine(BaseModel):
+    agent_id: int
+    kind: str
+    rate: Decimal
+    amount: Decimal
+    level_gap: int
+    period_index: int
+
+
+class CommissionPreviewOut(BaseModel):
+    lines: list[CommissionPreviewLine]
+    total: Decimal

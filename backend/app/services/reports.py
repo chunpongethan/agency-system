@@ -70,7 +70,8 @@ def agent_statement(session: Session, agent_id: int,
 
 
 def agency_summary(session: Session,
-                   start: date | None = None, end: date | None = None) -> list[dict]:
+                   start: date | None = None, end: date | None = None,
+                   agent_ids: set[int] | None = None) -> list[dict]:
     q = (
         select(
             Agent.id, Agent.code, Agent.name, Agent.level,
@@ -81,6 +82,8 @@ def agency_summary(session: Session,
         .group_by(Agent.id)
         .order_by(func.sum(CommissionEntry.amount).desc())
     )
+    if agent_ids is not None:
+        q = q.where(Agent.id.in_(agent_ids))
     q = _window(q, start, end)
     return [
         {"agent_id": aid, "code": code, "name": name, "level": int(level),

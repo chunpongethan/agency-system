@@ -139,6 +139,33 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     return out
 
 
+def preview(session: Session, product: Product, closer: Agent,
+            notional: Decimal, trade_date: date) -> list[dict]:
+    """
+    Compute the commission lines a settlement *would* produce, without persisting
+    anything. Used by POST /transactions/preview so the UI can show a live preview
+    that matches the settled result (period 0 only).
+    """
+    lines: list[dict] = []
+    direct_amt = _money(notional * product.base_commission_rate)
+    lines.append({
+        "agent_id": closer.id, "kind": CommissionKind.DIRECT.value,
+        "rate": product.base_commission_rate, "amount": direct_amt,
+        "level_gap": 0, "period_index": 0,
+    })
+    rules = _rules_for(session, product.type, trade_date)
+    for gap, upline in _upline_chain(session, closer):
+        rate = rules.get(gap)
+        if rate is None or rate == 0:
+            continue
+        lines.append({
+            "agent_id": upline.id, "kind": CommissionKind.OVERRIDE.value,
+            "rate": rate, "amount": _money(notional * rate),
+            "level_gap": gap, "period_index": 0,
+        })
+    return lines
+
+
 def compute_for_transaction(session: Session, txn: Transaction,
                             as_of: date | None = None) -> list[CommissionEntry]:
     """
