@@ -13,10 +13,10 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.models import (
-    Base, Agent, Client, Product, Transaction, TxnStatus,
+    Base, Agent, Client, Product, Transaction, TxnStatus, now_utc,
 )
 from app.schemas import schemas
-from app.services import commission_engine, reports
+from app.services import commission_engine, reports, agent_service
 
 DATABASE_URL = "sqlite:///./agency.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -40,6 +40,10 @@ def get_db():
 # --- Agents -----------------------------------------------------------------
 @app.post("/agents", response_model=schemas.AgentOut)
 def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db)):
+    try:
+        agent_service.validate_agent(db, payload.level, payload.upline_id)
+    except agent_service.ValidationError as exc:
+        raise HTTPException(422, str(exc))
     agent = Agent(**payload.model_dump())
     db.add(agent); db.commit(); db.refresh(agent)
     return agent
@@ -97,8 +101,21 @@ def settle_transaction(txn_id: int, db: Session = Depends(get_db)):
     if txn is None:
         raise HTTPException(404, "transaction not found")
     txn.status = TxnStatus.SETTLED
-    txn.settled_at = datetime.utcnow()
+    txn.settled_at = now_utc()
     db.commit()
+    commission_engine.compute_for_transaction(db, txn)
+    db.commit()
+    return txn
+
+
+@app.post("/transactions/{txn_id}/cancel", response_model=schemas.TransactionOut)
+def cancel_transaction(txn_id: int, db: Session = Depends(get_db)):
+    txn = db.get(Transaction, txn_id)
+    if txn is None:
+        raise HTTPException(404, "transaction not found")
+    txn.status = TxnStatus.CANCELLED
+    db.commit()
+    # Clawback: writes negative reversal entries (decision 5).
     commission_engine.compute_for_transaction(db, txn)
     db.commit()
     return txn
