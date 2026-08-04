@@ -4,11 +4,29 @@ Starter codebase for a multi-level agency: agents in a 4-level hierarchy sell
 insurance, funds, EAM accounts and other services; the system calculates
 commissions and upline overrides, generates reports, and manages client records.
 
-**Working today:** data model, commission engine (tested), reports, REST API, demo seed.
-**To build:** the full system — auth/roles, frontend, exports, payouts, production. The
-plan in [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) is written for Claude Code to build
-end-to-end autonomously: phase-gated, with all design decisions resolved and a pass/fail
-gate command per phase. Hand it the repo and say "build this following docs/BUILD_PLAN.md".
+**Status: built end-to-end.** Backend (FastAPI, 40 passing tests), commission engine
+(effective-dated rules, trailing commissions, clawbacks), JWT auth with role-based
+row-level scoping, reporting + CSV/PDF exports, period locking, idempotent payouts, a
+React + Vite + TypeScript frontend, Alembic migrations, an audit log, bulk import, and a
+Docker Compose stack.
+
+See **[`docs/HANDOFF.md`](docs/HANDOFF.md)** for what was built, how to run it (local +
+Docker), the resolved design decisions, and the API surface. The original phased plan is
+in [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md).
+
+### Run it
+
+```bash
+# Backend
+cd backend && pip install -r requirements.txt
+python ../scripts/seed.py && uvicorn app.main:app --reload   # :8000/docs
+# Frontend
+cd frontend && npm install && npm run dev                    # :5173
+# Or the whole stack
+docker compose up -d --build                                 # web :5173, api :8000
+```
+
+Demo logins (password `demo1234`): `A001` admin, `A003` manager, `A004` agent.
 
 ## Quick start
 
