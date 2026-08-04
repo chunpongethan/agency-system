@@ -1,0 +1,162 @@
+// Typed API client against the FastAPI backend. Attaches the JWT bearer token
+// from localStorage and centralises error handling.
+
+import type {
+  Me, Agent, Client, Product, Transaction, OverrideRule,
+  AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
+} from "./types";
+
+const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const TOKEN_KEY = "agency_token";
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const headers = new Headers(options.headers);
+  const token = getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (options.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  if (res.status === 401) {
+    clearToken();
+    if (!path.startsWith("/auth/login")) {
+      window.location.hash = "#/login";
+    }
+  }
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail ?? detail;
+      if (Array.isArray(detail)) detail = detail.map((d) => d.msg).join(", ");
+    } catch {
+      /* non-JSON error body */
+    }
+    throw new ApiError(res.status, String(detail));
+  }
+  if (res.status === 204) return undefined as T;
+  const ct = res.headers.get("Content-Type") || "";
+  if (ct.includes("application/json")) return res.json() as Promise<T>;
+  return res.text() as unknown as Promise<T>;
+}
+
+export const api = {
+  base: BASE,
+
+  // Auth
+  login: (username: string, password: string) =>
+    request<{ access_token: string; token_type: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    }),
+  me: () => request<Me>("/auth/me"),
+
+  // Agents
+  agents: () => request<Agent[]>("/agents"),
+  downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
+  createAgent: (payload: Partial<Agent> & { password?: string }) =>
+    request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
+
+  // Clients
+  clients: () => request<Client[]>("/clients"),
+  agentClients: (id: number) => request<Client[]>(`/agents/${id}/clients`),
+  client: (id: number) => request<Client>(`/clients/${id}`),
+  createClient: (payload: Partial<Client>) =>
+    request<Client>("/clients", { method: "POST", body: JSON.stringify(payload) }),
+  updateClient: (id: number, payload: Partial<Client>) =>
+    request<Client>(`/clients/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  clientTransactions: (id: number) =>
+    request<Transaction[]>(`/clients/${id}/transactions`),
+  agentTransactions: (id: number) =>
+    request<Transaction[]>(`/agents/${id}/transactions`),
+
+  // Products
+  products: () => request<Product[]>("/products"),
+  createProduct: (payload: Record<string, unknown>) =>
+    request<Product>("/products", { method: "POST", body: JSON.stringify(payload) }),
+
+  // Override rules (admin)
+  overrideRules: () => request<OverrideRule[]>("/override-rules"),
+  createOverrideRule: (payload: Record<string, unknown>) =>
+    request<OverrideRule>("/override-rules", { method: "POST", body: JSON.stringify(payload) }),
+
+  // Transactions
+  createTransaction: (payload: Record<string, unknown>) =>
+    request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(payload) }),
+  previewTransaction: (payload: Record<string, unknown>) =>
+    request<CommissionPreview>("/transactions/preview", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  settleTransaction: (id: number) =>
+    request<Transaction>(`/transactions/${id}/settle`, { method: "POST" }),
+  cancelTransaction: (id: number) =>
+    request<Transaction>(`/transactions/${id}/cancel`, { method: "POST" }),
+
+  // Reports
+  agentStatement: (id: number, start?: string, end?: string) =>
+    request<AgentStatement>(`/reports/agent/${id}${qs({ start, end })}`),
+  agencySummary: (start?: string, end?: string) =>
+    request<AgencySummaryRow[]>(`/reports/agency${qs({ start, end })}`),
+  recompute: () => request<{ entries: number }>("/reports/recompute", { method: "POST" }),
+
+  // Periods
+  period: (ym: string) => request<PeriodInfo>(`/periods/${ym}`),
+  lockPeriod: (ym: string) =>
+    request<{ period: string; is_locked: boolean }>(`/periods/${ym}/lock`, { method: "POST" }),
+  unlockPeriod: (ym: string) =>
+    request<{ period: string; is_locked: boolean }>(`/periods/${ym}/unlock`, { method: "POST" }),
+
+  // Payouts
+  runPayout: (period: string) =>
+    request<PayoutResult>(`/payouts/run?period=${period}`, { method: "POST" }),
+
+  // Export URLs (open in a new tab; token is passed as a fragment via fetch-download)
+  exportUrl: (path: string) => `${BASE}${path}`,
+};
+
+function qs(params: Record<string, string | undefined>): string {
+  const parts = Object.entries(params)
+    .filter(([, v]) => v !== undefined && v !== "")
+    .map(([k, v]) => `${k}=${encodeURIComponent(v as string)}`);
+  return parts.length ? `?${parts.join("&")}` : "";
+}
+
+// Download a protected file (CSV/PDF) with the bearer token attached.
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(res.status, `download failed (${res.status})`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

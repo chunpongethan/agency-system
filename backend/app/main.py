@@ -151,6 +151,13 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
     return client
 
 
+@app.get("/clients", response_model=list[schemas.ClientOut])
+def list_clients(db: Session = Depends(get_db),
+                 current: Agent = Depends(get_current_agent)):
+    ids = scoping.visible_agent_ids(db, current)
+    return db.execute(select(Client).where(Client.agent_id.in_(ids))).scalars().all()
+
+
 @app.get("/clients/{client_id}", response_model=schemas.ClientOut)
 def get_client(client_id: int, db: Session = Depends(get_db),
                current: Agent = Depends(get_current_agent)):
@@ -182,6 +189,16 @@ def agent_clients(agent_id: int, db: Session = Depends(get_db),
     return db.execute(select(Client).where(Client.agent_id == agent_id)).scalars().all()
 
 
+@app.get("/agents/{agent_id}/transactions", response_model=list[schemas.TransactionOut])
+def agent_transactions(agent_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    scoping.assert_visible(db, current, agent_id)
+    return db.execute(
+        select(Transaction).where(Transaction.agent_id == agent_id)
+        .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
+    ).scalars().all()
+
+
 # --- Products ----------------------------------------------------------------
 @app.post("/products", response_model=schemas.ProductOut)
 def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
@@ -195,6 +212,26 @@ def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
 def list_products(db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
     return db.execute(select(Product)).scalars().all()
+
+
+# --- Override rules (admin) --------------------------------------------------
+@app.get("/override-rules", response_model=list[schemas.OverrideRuleOut])
+def list_override_rules(db: Session = Depends(get_db),
+                        current: Agent = Depends(get_current_agent)):
+    from app.models.models import OverrideRule
+    return db.execute(select(OverrideRule)).scalars().all()
+
+
+@app.post("/override-rules", response_model=schemas.OverrideRuleOut)
+def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(get_db),
+                         current: Agent = Depends(require_admin)):
+    from app.models.models import OverrideRule
+    data = payload.model_dump()
+    if data.get("valid_from") is None:
+        data.pop("valid_from", None)  # let the column default apply
+    rule = OverrideRule(**data)
+    db.add(rule); db.commit(); db.refresh(rule)
+    return rule
 
 
 # --- Transactions ------------------------------------------------------------
