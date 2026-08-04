@@ -1,0 +1,53 @@
+# Full-stack local deployment: Postgres + FastAPI + built frontend (nginx).
+#
+#   docker compose up -d --build
+#   API + docs -> http://localhost:8000/docs
+#   Web app    -> http://localhost:5173
+#
+# Config is env-based; the values below are DEV defaults only. In production,
+# override POSTGRES_PASSWORD and SECRET_KEY via a real secret store / .env file.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-agency}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agency}
+      POSTGRES_DB: ${POSTGRES_DB:-agency}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-agency} -d ${POSTGRES_DB:-agency}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-agency}:${POSTGRES_PASSWORD:-agency}@db:5432/${POSTGRES_DB:-agency}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production-0123456789-abcdef}
+      ACCESS_TOKEN_EXPIRE_MINUTES: "480"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
+volumes:
+  postgres-data:

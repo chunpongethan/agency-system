@@ -158,3 +158,15 @@ class CommissionPreviewLine(BaseModel):
 class CommissionPreviewOut(BaseModel):
     lines: list[CommissionPreviewLine]
     total: Decimal
+
+
+class AuditOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    actor_agent_id: int | None
+    action: str
+    entity: str
+    entity_id: str | None
+    before: str | None
+    after: str | None
+    created_at: datetime

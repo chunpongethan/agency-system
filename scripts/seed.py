@@ -19,7 +19,8 @@ from app.security import hash_password
 
 DEMO_PASSWORD = "demo1234"
 
-engine = create_engine("sqlite:///./backend/agency.db")
+import os
+engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///./backend/agency.db"))
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 db = Session()

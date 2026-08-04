@@ -26,7 +26,7 @@ from app.schemas import schemas
 from app.security import verify_password, create_access_token, decode_token, hash_password
 from app.services import (
     commission_engine, reports, agent_service, scoping,
-    periods, payouts, exports,
+    periods, payouts, exports, audit,
 )
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
@@ -204,7 +204,10 @@ def agent_transactions(agent_id: int, db: Session = Depends(get_db),
 def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
     product = Product(**payload.model_dump())
-    db.add(product); db.commit(); db.refresh(product)
+    db.add(product); db.flush()
+    audit.record(db, current.id, "create", "product", product.id,
+                 after=payload.model_dump())
+    db.commit(); db.refresh(product)
     return product
 
 
@@ -230,7 +233,10 @@ def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(
     if data.get("valid_from") is None:
         data.pop("valid_from", None)  # let the column default apply
     rule = OverrideRule(**data)
-    db.add(rule); db.commit(); db.refresh(rule)
+    db.add(rule); db.flush()
+    audit.record(db, current.id, "create", "override_rule", rule.id,
+                 after=payload.model_dump())
+    db.commit(); db.refresh(rule)
     return rule
 
 
@@ -251,7 +257,11 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
     allow_adjust = adjust and current.role == Role.ADMIN
     data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust)
     txn = Transaction(**data)
-    db.add(txn); db.commit(); db.refresh(txn)
+    db.add(txn); db.flush()
+    audit.record(db, current.id, "create", "transaction", txn.id,
+                 after={"ref": txn.ref, "notional": txn.notional, "agent_id": txn.agent_id,
+                        "product_id": txn.product_id, "trade_date": txn.trade_date})
+    db.commit(); db.refresh(txn)
     return txn
 
 
@@ -278,10 +288,13 @@ def settle_transaction(txn_id: int, db: Session = Depends(get_db),
     if txn is None:
         raise HTTPException(404, "transaction not found")
     scoping.assert_visible(db, current, txn.agent_id)
+    before = {"status": txn.status.value}
     txn.status = TxnStatus.SETTLED
     txn.settled_at = now_utc()
-    db.commit()
+    db.flush()
     commission_engine.compute_for_transaction(db, txn)
+    audit.record(db, current.id, "settle", "transaction", txn.id,
+                 before=before, after={"status": txn.status.value})
     db.commit()
     return txn
 
@@ -293,10 +306,13 @@ def cancel_transaction(txn_id: int, db: Session = Depends(get_db),
     if txn is None:
         raise HTTPException(404, "transaction not found")
     scoping.assert_visible(db, current, txn.agent_id)
+    before = {"status": txn.status.value}
     txn.status = TxnStatus.CANCELLED
-    db.commit()
+    db.flush()
     # Clawback: writes negative reversal entries (decision 5).
     commission_engine.compute_for_transaction(db, txn)
+    audit.record(db, current.id, "cancel", "transaction", txn.id,
+                 before=before, after={"status": txn.status.value})
     db.commit()
     return txn
 
@@ -334,6 +350,13 @@ def report_agency(start: date | None = None, end: date | None = None,
 def recompute(db: Session = Depends(get_db),
               current: Agent = Depends(require_admin)):
     return {"entries": commission_engine.recompute_all(db)}
+
+
+@app.post("/accruals/run")
+def run_accruals(as_of: date | None = None, db: Session = Depends(get_db),
+                 current: Agent = Depends(require_admin)):
+    """Generate trail-product commission entries that have come due (admin)."""
+    return {"new_entries": commission_engine.run_accruals(db, as_of=as_of)}
 
 
 # --- Exports -----------------------------------------------------------------
@@ -393,6 +416,8 @@ def lock_period(ym: str, db: Session = Depends(get_db),
                 current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
     period = periods.lock_period(db, year, month)
+    audit.record(db, current.id, "lock", "period", ym, after={"is_locked": True})
+    db.commit()
     return {"period": ym, "is_locked": period.is_locked,
             "locked_at": period.locked_at.isoformat() if period.locked_at else None}
 
@@ -402,6 +427,8 @@ def unlock_period(ym: str, db: Session = Depends(get_db),
                   current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
     periods.unlock_period(db, year, month)
+    audit.record(db, current.id, "unlock", "period", ym, after={"is_locked": False})
+    db.commit()
     return {"period": ym, "is_locked": False}
 
 
@@ -410,7 +437,12 @@ def unlock_period(ym: str, db: Session = Depends(get_db),
 def run_payout(period: str, db: Session = Depends(get_db),
                current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(period)
-    return payouts.run_payout(db, year, month)
+    result = payouts.run_payout(db, year, month)
+    audit.record(db, current.id, "run", "payout", period,
+                 after={"total": result["total"],
+                        "new_entries_paid": result["new_entries_paid"]})
+    db.commit()
+    return result
 
 
 @app.get("/payouts/{ym}")
@@ -418,3 +450,13 @@ def get_payout(ym: str, db: Session = Depends(get_db),
                current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
     return payouts.payout_summary(db, year, month)
+
+
+# --- Audit log (admin) -------------------------------------------------------
+@app.get("/audit", response_model=list[schemas.AuditOut])
+def list_audit(limit: int = 200, db: Session = Depends(get_db),
+               current: Agent = Depends(require_admin)):
+    from app.models.models import AuditEntry
+    return db.execute(
+        select(AuditEntry).order_by(AuditEntry.id.desc()).limit(limit)
+    ).scalars().all()

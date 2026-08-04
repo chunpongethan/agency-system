@@ -1,0 +1,5 @@
+code,name,email,level,upline_code,role,password
+B001,Alice Root,alice@demo.io,1,,admin,demo1234
+B002,Bob Mid,bob@demo.io,2,B001,manager,demo1234
+B003,Carol Sub,carol@demo.io,3,B002,manager,demo1234
+B004,Dan Front,dan@demo.io,4,B003,agent,demo1234
