@@ -31,7 +31,8 @@ def db():
     prod = Product(code="P1", name="Plan", type=ProductType.INSURANCE,
                    base_commission_rate=Decimal("0.05"))
     session.add(prod)
-    for gap, rate in [(1, "0.015"), (2, "0.0075"), (3, "0.0025")]:
+    # Overrides are a % of the closer's commission: gap1 25%, gap2 20%, gap3 4%.
+    for gap, rate in [(1, "0.25"), (2, "0.20"), (3, "0.04"), (4, "0.01")]:
         session.add(OverrideRule(product_type=ProductType.INSURANCE,
                                  level_gap=gap, override_rate=Decimal(rate)))
     client = Client(ref="C1", name="Client", agent_id=l4.id)
@@ -60,10 +61,10 @@ def test_direct_and_override_chain(db):
 
     assert len(entries) == 4  # closer + 3 uplines
     assert by_agent[db._agents["l4"].id].kind == CommissionKind.DIRECT
-    assert by_agent[db._agents["l4"].id].amount == Decimal("5000.00")   # 5%
-    assert by_agent[db._agents["l3"].id].amount == Decimal("1500.00")   # 1.5%
-    assert by_agent[db._agents["l2"].id].amount == Decimal("750.00")    # 0.75%
-    assert by_agent[db._agents["l1"].id].amount == Decimal("250.00")    # 0.25%
+    assert by_agent[db._agents["l4"].id].amount == Decimal("5000.00")   # 5% of 100k
+    assert by_agent[db._agents["l3"].id].amount == Decimal("1250.00")   # gap1: 25% of 5000
+    assert by_agent[db._agents["l2"].id].amount == Decimal("1000.00")   # gap2: 20% of 5000
+    assert by_agent[db._agents["l1"].id].amount == Decimal("200.00")    # gap3: 4% of 5000
 
 
 def test_idempotent_recompute(db):

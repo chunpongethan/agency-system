@@ -30,11 +30,25 @@ class Base(DeclarativeBase):
 
 
 class AgentLevel(enum.IntEnum):
-    """Lower number = higher in the hierarchy."""
-    L1 = 1  # e.g. Managing Director / top of an agency line
-    L2 = 2  # e.g. Senior Manager
-    L3 = 3  # e.g. Manager
-    L4 = 4  # e.g. Agent / frontline relationship manager
+    """
+    Convenience constants for the top few tree depths. `level` is the agent's
+    depth in the hierarchy (1 = top/root, increments downward) and is stored as a
+    plain integer — a manager may have an *unlimited* depth of downline, so level
+    is NOT capped at 4. These constants just make seed/test code readable.
+    """
+    L1 = 1
+    L2 = 2
+    L3 = 3
+    L4 = 4
+
+
+class Title(str, enum.Enum):
+    """Business rank a downline agent holds, assigned by an admin. Independent of
+    tree depth and of the auth `role`."""
+    BUSINESS_MANAGER = "business_manager"
+    DISTRICT_MANAGER = "district_manager"
+    DISTRICT_DIRECTOR = "district_director"
+    PRINCIPAL_PARTNER = "principal_partner"
 
 
 class ProductType(str, enum.Enum):
@@ -76,7 +90,10 @@ class Agent(Base):
     code: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(160), unique=True)
-    level: Mapped[AgentLevel] = mapped_column(Enum(AgentLevel))
+    # Depth in the tree (1 = top). Plain integer: hierarchy depth is unbounded.
+    level: Mapped[int] = mapped_column(Integer)
+    # Business rank/position, assigned by an admin (nullable for legacy rows).
+    title: Mapped[Title | None] = mapped_column(Enum(Title), nullable=True)
     upline_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     joined_at: Mapped[date] = mapped_column(Date, default=date.today)
@@ -137,7 +154,10 @@ class OverrideRule(Base):
     """
     Defines the override an upline earns on a downline's sale, keyed by the
     number of levels between them (1 = direct upline, 2 = upline's upline...).
-    Rate applies to the same base the direct commission is computed on.
+
+    Rate applies to the *closing agent's direct commission* (not the notional):
+    an upline at gap g earns `override_rate` × the closer's commission. Overrides
+    reach up to gap 4; gap 5+ earn nothing.
 
     Effective-dated: the engine picks the rule in force on the transaction's
     trade_date. Keep a single active rule per (product_type, level_gap) at any
@@ -147,7 +167,7 @@ class OverrideRule(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     product_type: Mapped[ProductType] = mapped_column(Enum(ProductType))
-    level_gap: Mapped[int] = mapped_column(Integer)  # 1..3
+    level_gap: Mapped[int] = mapped_column(Integer)  # 1..4
     override_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4))
     valid_from: Mapped[date] = mapped_column(Date, default=date(1900, 1, 1))
     valid_to: Mapped[date | None] = mapped_column(Date, nullable=True)

@@ -25,6 +25,7 @@ class MeOut(BaseModel):
     email: str
     level: int
     role: str
+    title: str | None = None
     upline_id: int | None = None
 
 
@@ -36,7 +37,14 @@ class AgentIn(BaseModel):
     level: int
     upline_id: int | None = None
     role: str = "agent"
+    title: str | None = None
     password: str | None = None
+
+
+class AgentUpdate(BaseModel):
+    title: str | None = None
+    role: str | None = None
+    is_active: bool | None = None
 
 
 class AgentOut(BaseModel):
@@ -48,6 +56,7 @@ class AgentOut(BaseModel):
     level: int
     upline_id: int | None = None
     role: str
+    title: str | None = None
     is_active: bool
 
 

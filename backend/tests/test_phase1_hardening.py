@@ -52,11 +52,16 @@ def _insurance_rules(db, gap_rates, valid_from=date(1900, 1, 1), valid_to=None):
 # --------------------------------------------------------------------------- #
 # Agent validation
 # --------------------------------------------------------------------------- #
-def test_validation_rejects_out_of_range_level(db):
-    with pytest.raises(agent_service.ValidationError):
-        agent_service.validate_agent(db, level=5, upline_id=None)
+def test_validation_rejects_non_positive_level(db):
     with pytest.raises(agent_service.ValidationError):
         agent_service.validate_agent(db, level=0, upline_id=None)
+    with pytest.raises(agent_service.ValidationError):
+        agent_service.validate_agent(db, level=-1, upline_id=None)
+
+
+def test_validation_allows_unlimited_depth(db):
+    # A 5th level under the existing L4 is valid — depth is not capped at 4.
+    agent_service.validate_agent(db, level=5, upline_id=db._agents["l4"].id)
 
 
 def test_validation_rejects_wrong_upline_level(db):
@@ -110,12 +115,13 @@ def test_effective_dated_rule_selection(db):
     old_entries = commission_engine.compute_for_transaction(db, old)
     new_entries = commission_engine.compute_for_transaction(db, new)
 
+    # Override base is the closer's direct commission (5% of 100k = 5000).
     gap1_old = next(e for e in old_entries if e.level_gap == 1)
     gap1_new = next(e for e in new_entries if e.level_gap == 1)
-    assert gap1_old.rate == Decimal("0.010")   # 1% pre-2024
-    assert gap1_old.amount == Decimal("1000.00")
-    assert gap1_new.rate == Decimal("0.020")   # 2% from 2024
-    assert gap1_new.amount == Decimal("2000.00")
+    assert gap1_old.rate == Decimal("0.010")   # 1% of commission pre-2024
+    assert gap1_old.amount == Decimal("50.00")  # 1% of 5000
+    assert gap1_new.rate == Decimal("0.020")   # 2% of commission from 2024
+    assert gap1_new.amount == Decimal("100.00")  # 2% of 5000
 
 
 # --------------------------------------------------------------------------- #
@@ -176,7 +182,7 @@ def test_upfront_product_single_period(db):
 # Clawback netting
 # --------------------------------------------------------------------------- #
 def test_clawback_nets_to_zero(db):
-    _insurance_rules(db, [(1, "0.015"), (2, "0.0075"), (3, "0.0025")])
+    _insurance_rules(db, [(1, "0.25"), (2, "0.20"), (3, "0.04")])
     prod = Product(code="P1", name="Plan", type=ProductType.INSURANCE,
                    base_commission_rate=Decimal("0.05"))
     db.add(prod); db.flush()
@@ -189,7 +195,8 @@ def test_clawback_nets_to_zero(db):
 
     commission_engine.compute_for_transaction(db, txn)
     settled_total = sum(e.amount for e in txn.commissions)
-    assert settled_total == Decimal("7500.00")  # 5000 + 1500 + 750 + 250
+    # direct 5000 + 25%·5000 + 20%·5000 + 4%·5000 = 5000 + 1250 + 1000 + 200
+    assert settled_total == Decimal("7450.00")
     assert all(not e.is_reversal for e in txn.commissions)
 
     # Cancel -> reversals appear, ledger nets to zero, originals still visible.
@@ -206,7 +213,7 @@ def test_clawback_nets_to_zero(db):
     txn.status = TxnStatus.SETTLED
     commission_engine.compute_for_transaction(db, txn)
     db.refresh(txn)
-    assert sum(e.amount for e in txn.commissions) == Decimal("7500.00")
+    assert sum(e.amount for e in txn.commissions) == Decimal("7450.00")
     assert all(not e.is_reversal for e in txn.commissions)
 
 

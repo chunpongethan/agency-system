@@ -2,6 +2,12 @@
 
 export type Role = "admin" | "manager" | "agent";
 
+export type Title =
+  | "business_manager"
+  | "district_manager"
+  | "district_director"
+  | "principal_partner";
+
 export interface Me {
   id: number;
   code: string;
@@ -9,6 +15,7 @@ export interface Me {
   email: string;
   level: number;
   role: Role;
+  title: Title | null;
   upline_id: number | null;
 }
 
@@ -20,6 +27,7 @@ export interface Agent {
   level: number;
   upline_id: number | null;
   role: Role;
+  title: Title | null;
   is_active: boolean;
 }
 

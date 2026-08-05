@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 from app.models.models import (
     Agent, Transaction, Product, OverrideRule,
     CommissionEntry, CommissionKind, TxnStatus,
-    CommissionSchedule, TrailFrequency,
+    CommissionSchedule, TrailFrequency, Role,
 )
 
 CENTS = Decimal("0.01")
@@ -57,14 +57,20 @@ def _add_months(d: date, months: int) -> date:
     return date(year, month, min(d.day, last_day))
 
 
-def _upline_chain(session: Session, agent: Agent, max_gap: int = 3):
-    """Yield (gap, upline_agent) for gap = 1..max_gap, stopping at the top."""
+def _upline_chain(session: Session, agent: Agent, max_gap: int = 4):
+    """Yield (gap, upline_agent) for gap = 1..max_gap, stopping at the top.
+
+    max_gap is 4: overrides reach the 1st..4th upline; deeper uplines earn 0%.
+    """
     current = agent
     gap = 0
     while current.upline_id is not None and gap < max_gap:
         gap += 1
         current = session.get(Agent, current.upline_id)
         if current is None or not current.is_active:
+            break
+        # Admins are not sellers and earn no overrides; stop at one.
+        if current.role == Role.ADMIN:
             break
         yield gap, current
 
@@ -115,11 +121,12 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     sign = Decimal("-1") if reversal else Decimal("1")
     out: list[CommissionEntry] = []
 
-    direct_amt = _money(txn.notional * product.base_commission_rate) * sign
+    # The closer's direct commission is the base every upline override is a % of.
+    base_direct = _money(txn.notional * product.base_commission_rate)
     out.append(CommissionEntry(
         transaction_id=txn.id, agent_id=closer.id,
         kind=CommissionKind.DIRECT, rate=product.base_commission_rate,
-        amount=direct_amt, level_gap=0,
+        amount=base_direct * sign, level_gap=0,
         period_index=period_index, accrual_date=accrual_date,
         is_reversal=reversal,
     ))
@@ -129,10 +136,11 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
         rate = rules.get(gap)
         if rate is None or rate == 0:
             continue
+        # Override = rate × the closer's direct commission (not the notional).
         out.append(CommissionEntry(
             transaction_id=txn.id, agent_id=upline.id,
             kind=CommissionKind.OVERRIDE, rate=rate,
-            amount=_money(txn.notional * rate) * sign, level_gap=gap,
+            amount=_money(base_direct * rate) * sign, level_gap=gap,
             period_index=period_index, accrual_date=accrual_date,
             is_reversal=reversal,
         ))
@@ -147,10 +155,10 @@ def preview(session: Session, product: Product, closer: Agent,
     that matches the settled result (period 0 only).
     """
     lines: list[dict] = []
-    direct_amt = _money(notional * product.base_commission_rate)
+    base_direct = _money(notional * product.base_commission_rate)
     lines.append({
         "agent_id": closer.id, "kind": CommissionKind.DIRECT.value,
-        "rate": product.base_commission_rate, "amount": direct_amt,
+        "rate": product.base_commission_rate, "amount": base_direct,
         "level_gap": 0, "period_index": 0,
     })
     rules = _rules_for(session, product.type, trade_date)
@@ -160,7 +168,7 @@ def preview(session: Session, product: Product, closer: Agent,
             continue
         lines.append({
             "agent_id": upline.id, "kind": CommissionKind.OVERRIDE.value,
-            "rate": rate, "amount": _money(notional * rate),
+            "rate": rate, "amount": _money(base_direct * rate),
             "level_gap": gap, "period_index": 0,
         })
     return lines

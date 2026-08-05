@@ -146,6 +146,7 @@ export default function NewTransaction() {
           <h2>Live commission preview</h2>
           <p className="muted" style={{ fontSize: 13, marginTop: -6 }}>
             What settling this sale would pay (period 0). Matches the settled ledger.
+            Override rates are a % of your commission (25/20/4/1% for the 1st–4th upline).
           </p>
           {!form.product_id && <div className="spinner">Pick a product to preview…</div>}
           {preview.isFetching && <div className="spinner">Calculating…</div>}

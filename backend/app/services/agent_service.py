@@ -1,10 +1,11 @@
 """
 Agent hierarchy validation.
 
-Rules (Phase 1):
-  - level must be in 1..4
+Rules:
+  - level (tree depth) must be >= 1 (a manager may have unlimited depth of
+    downline, so there is no upper cap)
   - if upline_id is set, the upline must exist and sit exactly one level above
-    (upline.level == agent.level - 1)
+    (upline.level == agent.level - 1); a rootless agent must be level 1
   - no cycles: an agent cannot be its own ancestor
 Violations raise ValidationError, which the API maps to HTTP 422.
 """
@@ -34,8 +35,8 @@ def _ancestor_ids(session: Session, agent_id: int) -> set[int]:
 def validate_agent(session: Session, level: int, upline_id: int | None,
                    agent_id: int | None = None) -> None:
     """Validate a proposed agent (create or update). Raises ValidationError."""
-    if level not in (1, 2, 3, 4):
-        raise ValidationError(f"level must be in 1..4, got {level}")
+    if level < 1:
+        raise ValidationError(f"level must be >= 1, got {level}")
 
     if upline_id is None:
         # Only an L1 may be rootless; lower levels need an upline.

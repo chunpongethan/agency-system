@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 
-from app.models.models import Base, Agent, AgentLevel, Client, Role
+from app.models.models import Base, Agent, Client, Role
 from app.services import agent_service
 from app.security import hash_password
 
@@ -123,7 +123,7 @@ def import_agents(session, rows: list[dict]) -> tuple[list[Agent], list[str]]:
         agent = Agent(
             code=code, name=row.get("name") or code,
             email=row.get("email") or f"{code}@example.com",
-            level=AgentLevel(level), upline_id=upline_id, role=role_enum,
+            level=level, upline_id=upline_id, role=role_enum,
             password_hash=hash_password(row["password"]) if row.get("password") else None,
         )
         session.add(agent)
