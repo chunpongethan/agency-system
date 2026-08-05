@@ -134,6 +134,26 @@ def list_agents(db: Session = Depends(get_db),
     return db.execute(select(Agent).where(Agent.id.in_(ids))).scalars().all()
 
 
+@app.patch("/agents/{agent_id}", response_model=schemas.AgentOut)
+def update_agent(agent_id: int, payload: schemas.AgentUpdate,
+                 db: Session = Depends(get_db),
+                 current: Agent = Depends(require_admin)):
+    """Admin assigns a title / role / active flag to an existing agent."""
+    agent = db.get(Agent, agent_id)
+    if agent is None:
+        raise HTTPException(404, "agent not found")
+    before = {"title": agent.title.value if agent.title else None,
+              "role": agent.role.value, "is_active": agent.is_active}
+    data = payload.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        setattr(agent, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "agent", agent.id,
+                 before=before, after=data)
+    db.commit(); db.refresh(agent)
+    return agent
+
+
 @app.get("/agents/{agent_id}/downlines", response_model=list[schemas.AgentOut])
 def downlines(agent_id: int, db: Session = Depends(get_db),
               current: Agent = Depends(get_current_agent)):
@@ -141,11 +161,16 @@ def downlines(agent_id: int, db: Session = Depends(get_db),
     return db.execute(select(Agent).where(Agent.upline_id == agent_id)).scalars().all()
 
 
-# --- Clients -----------------------------------------------------------------
+# --- Clients (owner-only) ----------------------------------------------------
+# Client details and their transactions are strictly owner-only. Admins are not
+# sellers and cannot own or read clients.
 @app.post("/clients", response_model=schemas.ClientOut)
 def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    scoping.assert_visible(db, current, payload.agent_id)
+    if scoping.is_admin(current):
+        raise HTTPException(403, "admins do not own clients")
+    if payload.agent_id != current.id:
+        raise HTTPException(403, "you may only create clients you own")
     client = Client(**payload.model_dump())
     db.add(client); db.commit(); db.refresh(client)
     return client
@@ -154,8 +179,10 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
 @app.get("/clients", response_model=list[schemas.ClientOut])
 def list_clients(db: Session = Depends(get_db),
                  current: Agent = Depends(get_current_agent)):
-    ids = scoping.visible_agent_ids(db, current)
-    return db.execute(select(Client).where(Client.agent_id.in_(ids))).scalars().all()
+    # Only your own clients — no subtree, no admin-all.
+    return db.execute(
+        select(Client).where(Client.agent_id == current.id)
+    ).scalars().all()
 
 
 @app.get("/clients/{client_id}", response_model=schemas.ClientOut)
@@ -164,7 +191,7 @@ def get_client(client_id: int, db: Session = Depends(get_db),
     client = db.get(Client, client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    scoping.assert_visible(db, current, client.agent_id)
+    scoping.assert_owns_client(current, client)
     return client
 
 
@@ -175,7 +202,7 @@ def update_client(client_id: int, payload: schemas.ClientUpdate,
     client = db.get(Client, client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    scoping.assert_visible(db, current, client.agent_id)
+    scoping.assert_owns_client(current, client)
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(client, k, v)
     db.commit(); db.refresh(client)
@@ -185,14 +212,17 @@ def update_client(client_id: int, payload: schemas.ClientUpdate,
 @app.get("/agents/{agent_id}/clients", response_model=list[schemas.ClientOut])
 def agent_clients(agent_id: int, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    scoping.assert_visible(db, current, agent_id)
+    # Owner-only: an agent may list their own clients (not a downline's).
+    if agent_id != current.id:
+        raise HTTPException(403, "you may only list your own clients")
     return db.execute(select(Client).where(Client.agent_id == agent_id)).scalars().all()
 
 
 @app.get("/agents/{agent_id}/transactions", response_model=list[schemas.TransactionOut])
 def agent_transactions(agent_id: int, db: Session = Depends(get_db),
                        current: Agent = Depends(get_current_agent)):
-    scoping.assert_visible(db, current, agent_id)
+    # Own transactions, or any if admin (admins have transaction authority).
+    scoping.assert_can_access_txn(current, agent_id)
     return db.execute(
         select(Transaction).where(Transaction.agent_id == agent_id)
         .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
@@ -245,11 +275,13 @@ def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(
 def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
                        db: Session = Depends(get_db),
                        current: Agent = Depends(get_current_agent)):
-    scoping.assert_visible(db, current, payload.agent_id)
     client = db.get(Client, payload.client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    scoping.assert_visible(db, current, client.agent_id)
+    # An agent books sales for their own clients; an admin may book for anyone.
+    if not scoping.is_admin(current):
+        if payload.agent_id != current.id or client.agent_id != current.id:
+            raise HTTPException(403, "you may only book transactions for your own clients")
     data = payload.model_dump()
     trade_date = data.get("trade_date") or date.today()
     # Period locking: reject into a locked period unless an admin routes it as an
@@ -269,7 +301,7 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
 def preview_transaction(payload: schemas.TransactionPreviewIn,
                         db: Session = Depends(get_db),
                         current: Agent = Depends(get_current_agent)):
-    scoping.assert_visible(db, current, payload.agent_id)
+    scoping.assert_can_access_txn(current, payload.agent_id)
     product = db.get(Product, payload.product_id)
     closer = db.get(Agent, payload.agent_id)
     if product is None or closer is None:
@@ -287,7 +319,7 @@ def settle_transaction(txn_id: int, db: Session = Depends(get_db),
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
-    scoping.assert_visible(db, current, txn.agent_id)
+    scoping.assert_can_access_txn(current, txn.agent_id)
     before = {"status": txn.status.value}
     txn.status = TxnStatus.SETTLED
     txn.settled_at = now_utc()
@@ -305,7 +337,7 @@ def cancel_transaction(txn_id: int, db: Session = Depends(get_db),
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
-    scoping.assert_visible(db, current, txn.agent_id)
+    scoping.assert_can_access_txn(current, txn.agent_id)
     before = {"status": txn.status.value}
     txn.status = TxnStatus.CANCELLED
     db.flush()
@@ -323,7 +355,8 @@ def client_transactions(client_id: int, db: Session = Depends(get_db),
     client = db.get(Client, client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    scoping.assert_visible(db, current, client.agent_id)
+    # The owning agent, or an admin (transaction authority), may read these.
+    scoping.assert_can_access_txn(current, client.agent_id)
     return db.execute(
         select(Transaction).where(Transaction.client_id == client_id)
     ).scalars().all()

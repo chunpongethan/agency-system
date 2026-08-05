@@ -1,20 +1,30 @@
 """
-Row-level scoping: which agents' data a principal may see.
+Row-level scoping.
 
-  - agent   -> just their own id
-  - manager -> their id plus their entire downline subtree (one recursive CTE
-               walking upline_id downward — not N queries)
-  - admin   -> all agents
+Two distinct layers of access:
 
-`assert_visible` turns an out-of-scope access into a 403 (never a silent empty
-result). Build and test this in isolation before wiring it into endpoints.
+1. **Production visibility** (`visible_agent_ids` / `assert_visible`) — used for
+   commission *reports* and the org tree:
+     - agent   -> just their own id
+     - manager -> their id plus their entire downline subtree (one recursive CTE)
+     - admin   -> all agents
+
+2. **Client/transaction ownership** (`assert_owns_client`) — client details and
+   their transactions are strictly owner-only: only the agent who owns a client
+   may read or edit that client and its transactions. Managers do NOT get their
+   downlines' client/transaction details; admins get none (admin is not a seller).
+   Admins retain a separate authority over transactions (see `is_admin`).
 """
 from __future__ import annotations
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.models import Agent, Role
+from app.models.models import Agent, Client, Role
+
+
+def is_admin(current: Agent) -> bool:
+    return current.role == Role.ADMIN
 
 
 def visible_agent_ids(session: Session, current: Agent) -> set[int]:
@@ -37,8 +47,26 @@ def visible_agent_ids(session: Session, current: Agent) -> set[int]:
 
 
 def assert_visible(session: Session, current: Agent, agent_id: int) -> None:
-    """Raise PermissionError if `agent_id` is outside `current`'s scope."""
+    """Raise PermissionError if `agent_id` is outside `current`'s production scope."""
     if agent_id not in visible_agent_ids(session, current):
         raise PermissionError(
             f"agent {current.id} may not access data for agent {agent_id}"
         )
+
+
+def assert_owns_client(current: Agent, client: Client) -> None:
+    """
+    Client details are owner-only: raise unless `current` personally owns the
+    client. Admins do not own clients and are therefore denied.
+    """
+    if current.id != client.agent_id:
+        raise PermissionError("only the client's own agent may access this client")
+
+
+def assert_can_access_txn(current: Agent, txn_agent_id: int) -> None:
+    """
+    Transactions are readable/editable by the owning agent, or by an admin
+    (admins have authority over transaction data).
+    """
+    if not is_admin(current) and current.id != txn_agent_id:
+        raise PermissionError("only the owning agent or an admin may access this transaction")

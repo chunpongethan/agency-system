@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.models import (
     Base, Agent, AgentLevel, Client, Product, ProductType,
-    OverrideRule, Transaction, TxnStatus, Role,
+    OverrideRule, Transaction, TxnStatus, Role, Title,
     CommissionSchedule, TrailFrequency,
 )
 from app.services import commission_engine
@@ -30,29 +30,41 @@ for tbl in reversed(Base.metadata.sorted_tables):
     db.execute(tbl.delete())
 db.commit()
 
-# Hierarchy: L1 -> L2 -> L3 -> L4. Roles: admin at top, managers mid, agent frontline.
+# Admin is NOT part of the selling hierarchy: no upline, no clients, earns no
+# overrides. It only administers products, agents, rules, and transactions.
+admin = Agent(code="A000", name="Admin User", email="admin@agency.hk", level=1,
+              role=Role.ADMIN, password_hash=hash_password(DEMO_PASSWORD))
+db.add(admin); db.flush()
+
+# Selling hierarchy by tree depth (level 1 = top). Roles drive production
+# visibility; titles are the assigned business rank. The A-line runs 5 deep to
+# exercise the gap-4 override and unlimited depth. The top is a MANAGER, not admin.
 md = Agent(code="A001", name="Grace Chan", email="grace@agency.hk", level=AgentLevel.L1,
-           role=Role.ADMIN, password_hash=hash_password(DEMO_PASSWORD))
+           role=Role.MANAGER, title=Title.PRINCIPAL_PARTNER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(md); db.flush()
 sm = Agent(code="A002", name="Leo Wong", email="leo@agency.hk", level=AgentLevel.L2, upline_id=md.id,
-           role=Role.MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+           role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm); db.flush()
 mgr = Agent(code="A003", name="Priya Shah", email="priya@agency.hk", level=AgentLevel.L3, upline_id=sm.id,
-            role=Role.MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+            role=Role.MANAGER, title=Title.DISTRICT_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr); db.flush()
 agent = Agent(code="A004", name="Tom Ng", email="tom@agency.hk", level=AgentLevel.L4, upline_id=mgr.id,
-              role=Role.AGENT, password_hash=hash_password(DEMO_PASSWORD))
+              role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(agent); db.flush()
+# A 5th level under Tom — sales here pay overrides up gaps 1..4 (Priya, Leo... wait Tom too).
+sub = Agent(code="A008", name="Ivy Tan", email="ivy@agency.hk", level=5, upline_id=agent.id,
+            role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+db.add(sub); db.flush()
 
-# A second line under the same L1 to exercise scoping isolation (L2 -> L3 -> L4).
+# A second line under the same L1 to exercise scoping isolation.
 sm2 = Agent(code="A005", name="Nadia Rahman", email="nadia@agency.hk", level=AgentLevel.L2, upline_id=md.id,
-            role=Role.MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+            role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm2); db.flush()
 mgr2 = Agent(code="A006", name="Ken Ito", email="ken@agency.hk", level=AgentLevel.L3, upline_id=sm2.id,
-             role=Role.MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+             role=Role.MANAGER, title=Title.DISTRICT_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr2); db.flush()
 agent2 = Agent(code="A007", name="Sara Lim", email="sara@agency.hk", level=AgentLevel.L4, upline_id=mgr2.id,
-               role=Role.AGENT, password_hash=hash_password(DEMO_PASSWORD))
+               role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(agent2); db.flush()
 
 # Products
@@ -73,14 +85,12 @@ for p in prods.values():
     db.add(p)
 db.flush()
 
-# Override rules: gap 1/2/3 per product type
-rule_map = {
-    ProductType.INSURANCE: [Decimal("0.0150"), Decimal("0.0075"), Decimal("0.0025")],
-    ProductType.FUND:      [Decimal("0.0030"), Decimal("0.0015"), Decimal("0.0005")],
-    ProductType.EAM_ACCOUNT:[Decimal("0.0020"), Decimal("0.0010"), Decimal("0.0005")],
-}
-for ptype, rates in rule_map.items():
-    for gap, rate in enumerate(rates, start=1):
+# Override rules: an upline earns a percentage of the closing agent's commission.
+# gap 1 = 25%, gap 2 = 20%, gap 3 = 4%, gap 4 = 1%; gap 5+ earns nothing.
+# Uniform across product types (admins can edit per product type in the UI).
+OVERRIDE_SCHEDULE = [Decimal("0.25"), Decimal("0.20"), Decimal("0.04"), Decimal("0.01")]
+for ptype in ProductType:
+    for gap, rate in enumerate(OVERRIDE_SCHEDULE, start=1):
         db.add(OverrideRule(product_type=ptype, level_gap=gap, override_rate=rate))
 db.flush()
 
@@ -88,7 +98,8 @@ db.flush()
 c1 = Client(ref="C001", name="Wellington Family Trust", agent_id=agent.id, risk_profile="Balanced")
 c2 = Client(ref="C002", name="K. Tanaka", agent_id=agent.id, risk_profile="Growth")
 c3 = Client(ref="C003", name="Orchid Holdings", agent_id=agent2.id, risk_profile="Conservative")
-db.add_all([c1, c2, c3]); db.flush()
+c4 = Client(ref="C004", name="Lotus Ventures", agent_id=sub.id, risk_profile="Growth")
+db.add_all([c1, c2, c3, c4]); db.flush()
 
 # Transactions
 txns = [
@@ -100,6 +111,9 @@ txns = [
                 agent_id=agent.id, notional=Decimal("1000000"), trade_date=date.today()),
     Transaction(ref="T0004", client_id=c3.id, product_id=prods["insurance"].id,
                 agent_id=agent2.id, notional=Decimal("150000"), trade_date=date.today()),
+    # Ivy (level 5) closes: overrides flow up gaps 1..4 (Tom, Priya, Leo, Grace).
+    Transaction(ref="T0005", client_id=c4.id, product_id=prods["insurance"].id,
+                agent_id=sub.id, notional=Decimal("200000"), trade_date=date.today()),
 ]
 from app.models.models import now_utc
 for t in txns:

@@ -163,20 +163,29 @@ def test_scope_agent_cannot_see_other_line_client(client):
     assert r.status_code == 403
 
 
-def test_scope_manager_sees_subtree_clients(client):
-    # A2 (manager over A-line) can read A4's client.
-    ca = client._clients["ca"]
+def test_scope_manager_cannot_see_downline_client(client):
+    # Clients are owner-only: even a manager may NOT read a downline's client.
+    ca = client._clients["ca"]  # owned by A4, in A2's subtree
     r = client.get(f"/clients/{ca}", headers=_auth(client, "A2"))
-    assert r.status_code == 200
-    # but not B4's client
+    assert r.status_code == 403
     cb = client._clients["cb"]
     r = client.get(f"/clients/{cb}", headers=_auth(client, "A2"))
     assert r.status_code == 403
 
 
-def test_scope_admin_sees_everything(client):
+def test_scope_admin_has_no_client_access(client):
+    # Admin is not a seller — no access to any client details.
     cb = client._clients["cb"]
     r = client.get(f"/clients/{cb}", headers=_auth(client, "A1"))
+    assert r.status_code == 403
+    ca = client._clients["ca"]
+    r = client.get(f"/clients/{ca}", headers=_auth(client, "A1"))
+    assert r.status_code == 403
+
+
+def test_owner_can_see_own_client(client):
+    ca = client._clients["ca"]  # owned by A4
+    r = client.get(f"/clients/{ca}", headers=_auth(client, "A4"))
     assert r.status_code == 200
 
 

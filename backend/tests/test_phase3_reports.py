@@ -24,7 +24,7 @@ def db():
     s = sessionmaker(bind=engine)()
 
     l1 = Agent(code="A1", name="Grace", email="a1@x.com", level=AgentLevel.L1,
-               role=Role.ADMIN, password_hash=hash_password("pw"))
+               role=Role.MANAGER, password_hash=hash_password("pw"))
     s.add(l1); s.flush()
     l2 = Agent(code="A2", name="Leo", email="a2@x.com", level=AgentLevel.L2,
                upline_id=l1.id, role=Role.MANAGER)
@@ -39,7 +39,7 @@ def db():
     prod = Product(code="P1", name="Plan", type=ProductType.INSURANCE,
                    base_commission_rate=Decimal("0.05"))
     s.add(prod)
-    for gap, rate in [(1, "0.015"), (2, "0.0075"), (3, "0.0025")]:
+    for gap, rate in [(1, "0.25"), (2, "0.20"), (3, "0.04")]:
         s.add(OverrideRule(product_type=ProductType.INSURANCE, level_gap=gap,
                            override_rate=Decimal(rate)))
     client = Client(ref="C1", name="Client", agent_id=l4.id)
@@ -71,8 +71,8 @@ def test_period_lock_and_snapshot(db):
     assert period.is_locked
     snap = periods.period_snapshot(db, 2024, 3)
     assert snap is not None
-    # snapshot totals reflect the settled sale (5000 + 1500 + 750 + 250)
-    assert sum(r["total"] for r in snap) == 7500.0
+    # snapshot totals reflect the settled sale (5000 + 1250 + 1000 + 200)
+    assert sum(r["total"] for r in snap) == 7450.0
 
 
 def test_locked_period_rejects_trade(db):
@@ -98,7 +98,7 @@ def test_payout_run_marks_paid_and_is_idempotent(db):
     _settle(db, "T1", date(2024, 3, 10))
     result = payouts.run_payout(db, 2024, 3)
     assert result["new_entries_paid"] == 4
-    assert result["total"] == 7500.0
+    assert result["total"] == 7450.0
     # all entries in the period now marked paid
     unpaid = [e for e in db.query(CommissionEntry).all()
               if not e.paid and (e.accrual_date or date(2024, 3, 1)).month == 3]
@@ -107,7 +107,7 @@ def test_payout_run_marks_paid_and_is_idempotent(db):
     # Re-run: nothing new, same totals (idempotent).
     again = payouts.run_payout(db, 2024, 3)
     assert again["new_entries_paid"] == 0
-    assert again["total"] == 7500.0
+    assert again["total"] == 7450.0
     assert again["payout_id"] == result["payout_id"]
 
 

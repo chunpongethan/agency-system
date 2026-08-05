@@ -7,7 +7,7 @@ import type { Me } from "../api/types";
 interface AuthState {
   me: Me | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<Me>;
   logout: () => void;
 }
 
@@ -29,11 +29,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(username: string, password: string) {
+  async function login(username: string, password: string): Promise<Me> {
     const { access_token } = await api.login(username, password);
     setToken(access_token);
     const profile = await api.me();
     setMe(profile);
+    return profile;
   }
 
   function logout() {

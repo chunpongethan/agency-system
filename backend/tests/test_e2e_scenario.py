@@ -50,8 +50,10 @@ def client():
         s.add(a); s.flush()
         return a
 
-    # A-line + a sibling B-line under the same L1.
-    a1 = mk("A1", AgentLevel.L1, Role.ADMIN)
+    # Admin sits outside the selling hierarchy (no upline, earns nothing).
+    adm = mk("ADM", 1, Role.ADMIN)
+    # A-line + a sibling B-line under one manager top (A1 is a MANAGER, not admin).
+    a1 = mk("A1", AgentLevel.L1, Role.MANAGER)
     a2 = mk("A2", AgentLevel.L2, Role.MANAGER, a1)
     a3 = mk("A3", AgentLevel.L3, Role.MANAGER, a2)
     a4 = mk("A4", AgentLevel.L4, Role.AGENT, a3)
@@ -66,10 +68,10 @@ def client():
                     commission_schedule=CommissionSchedule.TRAIL,
                     trail_frequency=TrailFrequency.QUARTERLY, trail_periods=4)
     s.add_all([insurance, trail]); s.flush()
-    for gap, rate in [(1, "0.015"), (2, "0.0075"), (3, "0.0025")]:
+    # Overrides are a % of the closer's commission (gap1 25%, gap2 20%, gap3 4%).
+    for gap, rate in [(1, "0.25"), (2, "0.20"), (3, "0.04"), (4, "0.01")]:
         s.add(OverrideRule(product_type=ProductType.INSURANCE, level_gap=gap,
                            override_rate=Decimal(rate)))
-    for gap, rate in [(1, "0.0010"), (2, "0.0005")]:
         s.add(OverrideRule(product_type=ProductType.FUND, level_gap=gap,
                            override_rate=Decimal(rate)))
     s.commit()
@@ -106,7 +108,7 @@ def line(statement, kind, ptype):
 
 def test_full_scenario(client):
     ids = client._ids
-    admin = auth(client, "A1")
+    admin = auth(client, "ADM")   # admin is outside the hierarchy
     agent = auth(client, "A4")
 
     # --- 2. Agent creates a client and books+settles an insurance sale ---------
@@ -131,9 +133,9 @@ def test_full_scenario(client):
     st_a2 = client.get(f"/reports/agent/{ids['a2']}{win}", headers=admin).json()
     st_a1 = client.get(f"/reports/agent/{ids['a1']}{win}", headers=admin).json()
     assert line(st_a4, "direct", "insurance")["amount"] == 10000.0   # 5% of 200k
-    assert line(st_a3, "override", "insurance")["amount"] == 3000.0  # gap 1: 1.5%
-    assert line(st_a2, "override", "insurance")["amount"] == 1500.0  # gap 2: 0.75%
-    assert line(st_a1, "override", "insurance")["amount"] == 500.0   # gap 3: 0.25%
+    assert line(st_a3, "override", "insurance")["amount"] == 2500.0  # gap 1: 25% of 10000
+    assert line(st_a2, "override", "insurance")["amount"] == 2000.0  # gap 2: 20% of 10000
+    assert line(st_a1, "override", "insurance")["amount"] == 400.0   # gap 3: 4% of 10000
 
     # --- 4. Trail fund: settle then accrue forward -----------------------------
     r = client.post("/transactions", headers=agent, json={
@@ -178,8 +180,15 @@ def test_full_scenario(client):
     assert again["new_entries_paid"] == 0
     assert again["total"] == payout["total"]
 
-    # --- 7. Manager sees subtree; sibling agent is isolated --------------------
+    # --- 7. Owner-only clients: managers see production, not client details ----
     mgr = auth(client, "A2")
-    assert client.get(f"/clients/{client_id}", headers=mgr).status_code == 200
+    # A manager sees a downline's PRODUCTION (report) ...
+    assert client.get(f"/reports/agent/{ids['a4']}", headers=mgr).status_code == 200
+    # ... but NOT the downline's client details (clients are owner-only).
+    assert client.get(f"/clients/{client_id}", headers=mgr).status_code == 403
+    # A sibling agent in another line is fully isolated.
     sibling = auth(client, "B4")
     assert client.get(f"/clients/{client_id}", headers=sibling).status_code == 403
+    # The owning agent can read their own client.
+    owner = auth(client, "A4")
+    assert client.get(f"/clients/{client_id}", headers=owner).status_code == 200

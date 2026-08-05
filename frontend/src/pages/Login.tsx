@@ -5,13 +5,15 @@ import { useAuth } from "../auth/AuthContext";
 export default function Login() {
   const { login, me } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState("A001");
+  const [username, setUsername] = useState("A004");
   const [password, setPassword] = useState("demo1234");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const homeFor = (role?: string) => (role === "admin" ? "/admin" : "/");
+
   if (me) {
-    navigate("/", { replace: true });
+    navigate(homeFor(me.role), { replace: true });
   }
 
   async function onSubmit(e: FormEvent) {
@@ -19,8 +21,8 @@ export default function Login() {
     setError(null);
     setBusy(true);
     try {
-      await login(username, password);
-      navigate("/", { replace: true });
+      const profile = await login(username, password);
+      navigate(homeFor(profile.role), { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -54,7 +56,7 @@ export default function Login() {
           </button>
         </div>
         <p className="hint">
-          Demo: <code>A001</code> (admin), <code>A003</code> (manager),
+          Demo: <code>A000</code> (admin), <code>A001</code> (manager),
           <code> A004</code> (agent) — password <code>demo1234</code>.
         </p>
       </form>
