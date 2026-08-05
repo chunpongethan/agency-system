@@ -8,8 +8,17 @@ import ClientDetail from "./pages/ClientDetail";
 import NewTransaction from "./pages/NewTransaction";
 import Hierarchy from "./pages/Hierarchy";
 import Reports from "./pages/Reports";
-import Admin from "./pages/Admin";
+import AdminAgents from "./pages/admin/AdminAgents";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminRules from "./pages/admin/AdminRules";
+import AdminPayouts from "./pages/admin/AdminPayouts";
 import type { ReactElement } from "react";
+
+// Where each role lands by default. Admins are not sellers, so their home is the
+// first admin section, not the seller dashboard.
+function homeFor(role: string | undefined): string {
+  return role === "admin" ? "/admin/agents" : "/";
+}
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { me, loading } = useAuth();
@@ -20,11 +29,14 @@ function RequireAuth({ children }: { children: ReactElement }) {
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactElement }) {
   const { me } = useAuth();
-  if (me && !roles.includes(me.role)) return <Navigate to="/" replace />;
+  if (me && !roles.includes(me.role)) return <Navigate to={homeFor(me.role)} replace />;
   return children;
 }
 
+const SELLERS = ["agent", "manager"];
+
 export default function App() {
+  const { me } = useAuth();
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -35,10 +47,38 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/clients" element={<Clients />} />
-        <Route path="/clients/:id" element={<ClientDetail />} />
-        <Route path="/transactions/new" element={<NewTransaction />} />
+        <Route
+          path="/"
+          element={
+            <RequireRole roles={SELLERS}>
+              <Dashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/clients"
+          element={
+            <RequireRole roles={SELLERS}>
+              <Clients />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/clients/:id"
+          element={
+            <RequireRole roles={SELLERS}>
+              <ClientDetail />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/transactions/new"
+          element={
+            <RequireRole roles={SELLERS}>
+              <NewTransaction />
+            </RequireRole>
+          }
+        />
         <Route
           path="/hierarchy"
           element={
@@ -49,15 +89,24 @@ export default function App() {
         />
         <Route path="/reports" element={<Reports />} />
         <Route
-          path="/admin"
-          element={
-            <RequireRole roles={["admin"]}>
-              <Admin />
-            </RequireRole>
-          }
+          path="/admin/agents"
+          element={<RequireRole roles={["admin"]}><AdminAgents /></RequireRole>}
         />
+        <Route
+          path="/admin/products"
+          element={<RequireRole roles={["admin"]}><AdminProducts /></RequireRole>}
+        />
+        <Route
+          path="/admin/rules"
+          element={<RequireRole roles={["admin"]}><AdminRules /></RequireRole>}
+        />
+        <Route
+          path="/admin/payouts"
+          element={<RequireRole roles={["admin"]}><AdminPayouts /></RequireRole>}
+        />
+        <Route path="/admin" element={<Navigate to="/admin/agents" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={homeFor(me?.role)} replace />} />
     </Routes>
   );
 }
