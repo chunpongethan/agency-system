@@ -95,6 +95,15 @@ button.ghost {
 }
 button.ghost:hover { background: #f9fafb; }
 
+/* Segmented control (e.g. Current month / Year to date) */
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.seg button {
+  border: none; background: #fff; padding: 8px 14px; font-size: 13px; cursor: pointer;
+  color: var(--muted); font-family: inherit;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
+
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .row > * { flex: 1; }
 .row > .shrink { flex: 0; }

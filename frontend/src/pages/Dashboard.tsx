@@ -1,18 +1,33 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
-import { money, currentPeriod } from "../lib/format";
+import { money, currentPeriod, yearToDate } from "../lib/format";
 import StatusBadge from "../components/StatusBadge";
+
+type View = "month" | "ytd";
 
 export default function Dashboard() {
   const { me } = useAuth();
-  const period = currentPeriod();
   const agentId = me!.id;
+  const isManager = me!.role === "manager";
+
+  const [view, setView] = useState<View>("month");
+  const month = currentPeriod();
+  const ytd = yearToDate();
+  const win = view === "ytd"
+    ? { start: ytd.start, end: ytd.end, label: ytd.label }
+    : { start: month.start, end: month.end, label: month.ym };
 
   const statement = useQuery({
-    queryKey: ["statement", agentId, period.ym],
-    queryFn: () => api.agentStatement(agentId, period.start, period.end),
+    queryKey: ["statement", agentId, view, win.start, win.end],
+    queryFn: () => api.agentStatement(agentId, win.start, win.end),
+  });
+  const team = useQuery({
+    queryKey: ["team", view, win.start, win.end],
+    queryFn: () => api.agencySummary(win.start, win.end),
+    enabled: isManager,
   });
   const clients = useQuery({
     queryKey: ["agentClients", agentId],
@@ -23,12 +38,24 @@ export default function Dashboard() {
     queryFn: () => api.agentTransactions(agentId),
   });
 
+  const teamTotal = (team.data ?? []).reduce((s, r) => s + r.total, 0);
+
   return (
     <div>
-      <h1 className="page-title">Dashboard</h1>
-      <p className="page-sub">
-        {me!.name} · this period ({period.ym})
-      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-sub">{me!.name} · {win.label}</p>
+        </div>
+        <div className="seg">
+          <button className={view === "month" ? "active" : ""} onClick={() => setView("month")}>
+            Current month
+          </button>
+          <button className={view === "ytd" ? "active" : ""} onClick={() => setView("ytd")}>
+            Year to date
+          </button>
+        </div>
+      </div>
 
       <div className="grid cols-3">
         <div className="stat">
@@ -44,12 +71,53 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="stat">
-          <div className="label">Total earned</div>
+          <div className="label">Total earned · {win.label}</div>
           <div className="value">
             {statement.data ? money(statement.data.grand_total) : "—"}
           </div>
         </div>
       </div>
+
+      {isManager && (
+        <div className="card" style={{ marginTop: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <h2>Team performance</h2>
+            <span className="muted" style={{ fontSize: 13 }}>
+              {win.label} · {(team.data?.length ?? 0)} in line · total {money(teamTotal)}
+            </span>
+          </div>
+          {team.isLoading && <div className="spinner">Loading…</div>}
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Agent</th><th>Code</th><th>Level</th>
+                <th className="num">Production</th><th className="num">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              {team.data?.map((r, i) => (
+                <tr key={r.agent_id}>
+                  <td className="muted">{i + 1}</td>
+                  <td>{r.name}{r.agent_id === agentId ? " (you)" : ""}</td>
+                  <td className="muted">{r.code}</td>
+                  <td>L{r.level}</td>
+                  <td className="num">{money(r.total)}</td>
+                  <td className="num muted">
+                    {teamTotal > 0 ? `${((r.total / teamTotal) * 100).toFixed(1)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+              {team.data?.length === 0 && (
+                <tr><td colSpan={6} className="muted">No team production in this window.</td></tr>
+              )}
+            </tbody>
+          </table>
+          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+            Production is commission earned by each agent in your line (direct + overrides).
+            See the <Link to="/hierarchy">Hierarchy</Link> for the rolled-up org tree.
+          </p>
+        </div>
+      )}
 
       <div className="grid cols-2" style={{ marginTop: 18 }}>
         <div className="card">
