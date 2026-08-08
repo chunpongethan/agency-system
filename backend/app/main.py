@@ -142,9 +142,16 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
     agent = db.get(Agent, agent_id)
     if agent is None:
         raise HTTPException(404, "agent not found")
-    before = {"title": agent.title.value if agent.title else None,
+    before = {"name": agent.name, "email": agent.email,
+              "title": agent.title.value if agent.title else None,
               "role": agent.role.value, "is_active": agent.is_active}
     data = payload.model_dump(exclude_unset=True)
+    if "email" in data and data["email"] != agent.email:
+        clash = db.execute(
+            select(Agent).where(Agent.email == data["email"], Agent.id != agent_id)
+        ).scalars().first()
+        if clash is not None:
+            raise HTTPException(409, "email already in use")
     for k, v in data.items():
         setattr(agent, k, v)
     db.flush()

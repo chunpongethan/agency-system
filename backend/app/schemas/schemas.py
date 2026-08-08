@@ -42,6 +42,8 @@ class AgentIn(BaseModel):
 
 
 class AgentUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
     title: str | None = None
     role: str | None = None
     is_active: bool | None = None
