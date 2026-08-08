@@ -148,6 +148,12 @@ class OverrideRuleIn(BaseModel):
     valid_to: date | None = None
 
 
+class OverrideRuleUpdate(BaseModel):
+    override_rate: Decimal | None = None
+    valid_from: date | None = None
+    valid_to: date | None = None
+
+
 class OverrideRuleOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

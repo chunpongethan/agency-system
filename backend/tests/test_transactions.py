@@ -159,3 +159,19 @@ def test_delete_product_blocked_when_in_use(client):
     agent = auth(client, "AX")
     _book(client, agent, ids, ids["fund"])  # a transaction now references the fund
     assert client.delete(f"/products/{ids['fund']}", headers=admin).status_code == 409
+
+
+def test_admin_updates_and_deletes_override_rule(client):
+    admin = auth(client, "ADM")
+    agent = auth(client, "AX")
+    rid = client.get("/override-rules", headers=admin).json()[0]["id"]
+    # update the rate
+    r = client.patch(f"/override-rules/{rid}", headers=admin, json={"override_rate": "0.30"})
+    assert r.status_code == 200 and float(r.json()["override_rate"]) == 0.30
+    # non-admin is forbidden to update or delete
+    assert client.patch(f"/override-rules/{rid}", headers=agent,
+                        json={"override_rate": "0.1"}).status_code == 403
+    assert client.delete(f"/override-rules/{rid}", headers=agent).status_code == 403
+    # admin deletes it
+    assert client.delete(f"/override-rules/{rid}", headers=admin).status_code == 200
+    assert all(x["id"] != rid for x in client.get("/override-rules", headers=admin).json())

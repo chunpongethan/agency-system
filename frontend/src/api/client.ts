@@ -106,6 +106,10 @@ export const api = {
   overrideRules: () => request<OverrideRule[]>("/override-rules"),
   createOverrideRule: (payload: Record<string, unknown>) =>
     request<OverrideRule>("/override-rules", { method: "POST", body: JSON.stringify(payload) }),
+  updateOverrideRule: (id: number, payload: Record<string, unknown>) =>
+    request<OverrideRule>(`/override-rules/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteOverrideRule: (id: number) =>
+    request<{ deleted: number }>(`/override-rules/${id}`, { method: "DELETE" }),
 
   // Transactions
   nextTransactionRef: (period?: string) =>

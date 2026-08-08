@@ -332,6 +332,39 @@ def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(
     return rule
 
 
+@app.patch("/override-rules/{rule_id}", response_model=schemas.OverrideRuleOut)
+def update_override_rule(rule_id: int, payload: schemas.OverrideRuleUpdate,
+                         db: Session = Depends(get_db),
+                         current: Agent = Depends(require_admin)):
+    from app.models.models import OverrideRule
+    rule = db.get(OverrideRule, rule_id)
+    if rule is None:
+        raise HTTPException(404, "override rule not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "valid_from" in data and data["valid_from"] is None:
+        data.pop("valid_from")  # never null a non-nullable column
+    for k, v in data.items():
+        setattr(rule, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "override_rule", rule.id, after=data)
+    db.commit(); db.refresh(rule)
+    return rule
+
+
+@app.delete("/override-rules/{rule_id}")
+def delete_override_rule(rule_id: int, db: Session = Depends(get_db),
+                         current: Agent = Depends(require_admin)):
+    from app.models.models import OverrideRule
+    rule = db.get(OverrideRule, rule_id)
+    if rule is None:
+        raise HTTPException(404, "override rule not found")
+    audit.record(db, current.id, "delete", "override_rule", rule_id,
+                 before={"product_type": rule.product_type.value,
+                         "level_gap": rule.level_gap, "override_rate": rule.override_rate})
+    db.delete(rule); db.commit()
+    return {"deleted": rule_id}
+
+
 # --- Transactions ------------------------------------------------------------
 def _next_ref(db: Session, trade_date: date) -> str:
     """Auto transaction code: YYYY-MM-<case no> (per year-month, zero-padded)."""
