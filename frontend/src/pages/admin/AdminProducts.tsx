@@ -14,77 +14,72 @@ interface InsDetails {
   yearComm: string[]; // 10 entries
 }
 
+interface PForm {
+  code: string;
+  name: string;
+  type: string;
+  provider: string;
+  base_commission_rate: string;
+  commission_schedule: string;
+  trail_frequency: string;
+  trail_periods: string;
+  ins: InsDetails;
+}
+
 const emptyIns = (): InsDetails => ({
   payment_tenor: "10", professional_investor: "no", age_min: "0", age_max: "70",
   yearComm: Array(10).fill(""),
 });
 
-function fromProduct(p: Product): InsDetails {
+const emptyForm = (): PForm => ({
+  code: "", name: "", type: "insurance", provider: "",
+  base_commission_rate: "0.05", commission_schedule: "upfront",
+  trail_frequency: "monthly", trail_periods: "12", ins: emptyIns(),
+});
+
+function formFromProduct(p: Product): PForm {
   const yc = p.year_commissions ?? [];
   return {
-    payment_tenor: p.payment_tenor != null ? String(p.payment_tenor) : "",
-    professional_investor: p.professional_investor ? "yes" : "no",
-    age_min: p.age_min != null ? String(p.age_min) : "",
-    age_max: p.age_max != null ? String(p.age_max) : "",
-    yearComm: Array.from({ length: 10 }, (_, i) => yc[i] ?? ""),
+    code: p.code, name: p.name, type: p.type, provider: p.provider ?? "",
+    base_commission_rate: p.base_commission_rate,
+    commission_schedule: p.commission_schedule,
+    trail_frequency: p.trail_frequency ?? "monthly",
+    trail_periods: p.trail_periods != null ? String(p.trail_periods) : "12",
+    ins: {
+      payment_tenor: p.payment_tenor != null ? String(p.payment_tenor) : "",
+      professional_investor: p.professional_investor ? "yes" : "no",
+      age_min: p.age_min != null ? String(p.age_min) : "",
+      age_max: p.age_max != null ? String(p.age_max) : "",
+      yearComm: Array.from({ length: 10 }, (_, i) => yc[i] ?? ""),
+    },
   };
 }
 
-function insPayload(d: InsDetails): Record<string, unknown> {
-  return {
-    payment_tenor: d.payment_tenor ? Number(d.payment_tenor) : null,
-    professional_investor: d.professional_investor === "yes",
-    age_min: d.age_min ? Number(d.age_min) : null,
-    age_max: d.age_max ? Number(d.age_max) : null,
-    year_commissions: d.yearComm.map((v) => (v.trim() === "" ? "0" : v)),
+function buildPayload(f: PForm, forCreate: boolean): Record<string, unknown> {
+  const isIns = f.type === "insurance";
+  const payload: Record<string, unknown> = {
+    name: f.name,
+    provider: f.provider || undefined,
+    commission_schedule: f.commission_schedule,
+    // For insurance the base rate is the Yr1 commission; the backend enforces this too.
+    base_commission_rate: isIns ? (f.ins.yearComm[0]?.trim() || "0") : f.base_commission_rate,
   };
-}
-
-// Shared insurance-detail input block (used by create + edit).
-function InsuranceFields({ value, onChange }: { value: InsDetails; onChange: (d: InsDetails) => void }) {
-  return (
-    <div>
-      <div className="row">
-        <div>
-          <label>Payment tenor (years)</label>
-          <input type="number" min="1" value={value.payment_tenor}
-            onChange={(e) => onChange({ ...value, payment_tenor: e.target.value })} />
-        </div>
-        <div>
-          <label>Professional investor</label>
-          <select value={value.professional_investor}
-            onChange={(e) => onChange({ ...value, professional_investor: e.target.value })}>
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
-          </select>
-        </div>
-        <div>
-          <label>Age range — min</label>
-          <input type="number" min="0" max="120" value={value.age_min}
-            onChange={(e) => onChange({ ...value, age_min: e.target.value })} />
-        </div>
-        <div>
-          <label>Age range — max</label>
-          <input type="number" min="0" max="120" value={value.age_max}
-            onChange={(e) => onChange({ ...value, age_max: e.target.value })} />
-        </div>
-      </div>
-      <label style={{ marginTop: 10 }}>Commission schedule — Yr1 to Yr10 (%)</label>
-      <div className="year-grid">
-        {value.yearComm.map((v, i) => (
-          <div key={i} className="year-cell">
-            <span className="yr-label">Yr{i + 1}</span>
-            <input type="number" step="0.01" min="0" placeholder="0" value={v}
-              onChange={(e) => {
-                const next = [...value.yearComm];
-                next[i] = e.target.value;
-                onChange({ ...value, yearComm: next });
-              }} />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  if (forCreate) {
+    payload.code = f.code;
+    payload.type = f.type;
+  }
+  if (f.commission_schedule === "trail") {
+    payload.trail_frequency = f.trail_frequency;
+    payload.trail_periods = Number(f.trail_periods);
+  }
+  if (isIns) {
+    payload.payment_tenor = f.ins.payment_tenor ? Number(f.ins.payment_tenor) : null;
+    payload.professional_investor = f.ins.professional_investor === "yes";
+    payload.age_min = f.ins.age_min ? Number(f.ins.age_min) : null;
+    payload.age_max = f.ins.age_max ? Number(f.ins.age_max) : null;
+    payload.year_commissions = f.ins.yearComm.map((v) => (v.trim() === "" ? "0" : v));
+  }
+  return payload;
 }
 
 function ageRange(p: Product): string {
@@ -92,72 +87,160 @@ function ageRange(p: Product): string {
   return `${p.age_min ?? 0}–${p.age_max ?? "?"}`;
 }
 
+// Shared field set for create + edit. code/type are read-only when editing.
+function ProductFields({ value, onChange, isEdit }:
+  { value: PForm; onChange: (f: PForm) => void; isEdit: boolean }) {
+  const isIns = value.type === "insurance";
+  const setIns = (ins: InsDetails) => onChange({ ...value, ins });
+  return (
+    <>
+      <div className="row">
+        <div><label>Code</label>
+          <input value={value.code} required readOnly={isEdit} disabled={isEdit}
+            onChange={(e) => onChange({ ...value, code: e.target.value })} /></div>
+        <div><label>Name</label>
+          <input value={value.name} required onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
+        <div><label>Provider</label>
+          <input value={value.provider} onChange={(e) => onChange({ ...value, provider: e.target.value })} /></div>
+      </div>
+      <div className="row">
+        <div><label>Type</label>
+          <select value={value.type} disabled={isEdit}
+            onChange={(e) => onChange({ ...value, type: e.target.value })}>
+            {PRODUCT_TYPES.map((t) => <option key={t}>{t}</option>)}
+          </select></div>
+        {isIns ? (
+          <div><label>Base rate</label>
+            <input value={value.ins.yearComm[0]?.trim() ? pct(value.ins.yearComm[0]) : "= Yr1 commission"}
+              readOnly disabled /></div>
+        ) : (
+          <div><label>Base rate (of notional)</label>
+            <input value={value.base_commission_rate}
+              onChange={(e) => onChange({ ...value, base_commission_rate: e.target.value })} /></div>
+        )}
+        <div><label>Schedule</label>
+          <select value={value.commission_schedule}
+            onChange={(e) => onChange({ ...value, commission_schedule: e.target.value })}>
+            <option value="upfront">upfront</option>
+            <option value="trail">trail</option>
+          </select></div>
+      </div>
+      {value.commission_schedule === "trail" && (
+        <div className="row">
+          <div><label>Frequency</label>
+            <select value={value.trail_frequency}
+              onChange={(e) => onChange({ ...value, trail_frequency: e.target.value })}>
+              <option>monthly</option><option>quarterly</option><option>annual</option>
+            </select></div>
+          <div><label>Periods</label>
+            <input type="number" value={value.trail_periods}
+              onChange={(e) => onChange({ ...value, trail_periods: e.target.value })} /></div>
+        </div>
+      )}
+      {isIns && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+          <h2 style={{ fontSize: 14 }}>Insurance details</h2>
+          <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>
+            The base (upfront) rate is set to the Yr1 commission below.
+          </p>
+          <div className="row">
+            <div><label>Payment tenor (years)</label>
+              <input type="number" min="1" value={value.ins.payment_tenor}
+                onChange={(e) => setIns({ ...value.ins, payment_tenor: e.target.value })} /></div>
+            <div><label>Professional investor</label>
+              <select value={value.ins.professional_investor}
+                onChange={(e) => setIns({ ...value.ins, professional_investor: e.target.value })}>
+                <option value="no">No</option><option value="yes">Yes</option>
+              </select></div>
+            <div><label>Age range — min</label>
+              <input type="number" min="0" max="120" value={value.ins.age_min}
+                onChange={(e) => setIns({ ...value.ins, age_min: e.target.value })} /></div>
+            <div><label>Age range — max</label>
+              <input type="number" min="0" max="120" value={value.ins.age_max}
+                onChange={(e) => setIns({ ...value.ins, age_max: e.target.value })} /></div>
+          </div>
+          <label style={{ marginTop: 10 }}>Commission schedule — Yr1 to Yr10 (%)</label>
+          <div className="year-grid">
+            {value.ins.yearComm.map((v, i) => (
+              <div key={i} className="year-cell">
+                <span className="yr-label">Yr{i + 1}{i === 0 ? " · base" : ""}</span>
+                <input type="number" step="0.01" min="0" placeholder="0" value={v}
+                  onChange={(e) => {
+                    const next = [...value.ins.yearComm];
+                    next[i] = e.target.value;
+                    setIns({ ...value.ins, yearComm: next });
+                  }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function AdminProducts() {
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
 
-  const [prod, setProd] = useState({
-    code: "", name: "", type: "insurance", provider: "",
-    base_commission_rate: "0.05", commission_schedule: "upfront",
-    trail_frequency: "monthly", trail_periods: "12",
-  });
-  const [ins, setIns] = useState<InsDetails>(emptyIns());
-  const [prodErr, setProdErr] = useState<string | null>(null);
-
+  const [form, setForm] = useState<PForm>(emptyForm());
+  const [createErr, setCreateErr] = useState<string | null>(null);
   const createProduct = useMutation({
-    mutationFn: () => {
-      const payload: Record<string, unknown> = {
-        code: prod.code, name: prod.name, type: prod.type,
-        provider: prod.provider || undefined,
-        base_commission_rate: prod.base_commission_rate,
-        commission_schedule: prod.commission_schedule,
-      };
-      if (prod.commission_schedule === "trail") {
-        payload.trail_frequency = prod.trail_frequency;
-        payload.trail_periods = Number(prod.trail_periods);
-      }
-      if (prod.type === "insurance") Object.assign(payload, insPayload(ins));
-      return api.createProduct(payload);
-    },
+    mutationFn: () => api.createProduct(buildPayload(form, true)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      setProd({ ...prod, code: "", name: "" });
-      setIns(emptyIns());
-      setProdErr(null);
+      setForm(emptyForm());
+      setCreateErr(null);
     },
-    onError: (e) => setProdErr(e instanceof ApiError ? e.message : "Failed"),
+    onError: (e) => setCreateErr(e instanceof ApiError ? e.message : "Failed"),
   });
 
-  // --- Editing an existing insurance product's details ---
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editIns, setEditIns] = useState<InsDetails>(emptyIns());
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<PForm>(emptyForm());
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateProduct = useMutation({
-    mutationFn: () => api.updateProduct(editingId!, insPayload(editIns)),
+    mutationFn: () => api.updateProduct(editId!, buildPayload(editForm, false)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      setEditingId(null);
+      setEditId(null);
       setEditErr(null);
     },
     onError: (e) => setEditErr(e instanceof ApiError ? e.message : "Failed"),
   });
 
+  const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const removeProduct = useMutation({
+    mutationFn: (id: number) => api.deleteProduct(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setActionMsg("Product deleted.");
+      setTimeout(() => setActionMsg(null), 3000);
+    },
+    onError: (e) => { setActionMsg(e instanceof ApiError ? e.message : "Delete failed"); },
+  });
+
   function startEdit(p: Product) {
-    setEditingId(p.id);
-    setEditIns(fromProduct(p));
+    setEditId(p.id);
+    setEditForm(formFromProduct(p));
     setEditErr(null);
+  }
+  function confirmDelete(p: Product) {
+    if (window.confirm(`Delete product ${p.name} (${p.code})? This cannot be undone.`)) {
+      removeProduct.mutate(p.id);
+    }
   }
 
   return (
     <div>
       <h1 className="page-title">Products</h1>
       <p className="page-sub">
-        Sellable products and their commission rates. Insurance products carry extra details
-        (tenor, age range, professional-investor flag, Yr1–Yr10 schedule) maintained here.
+        Create, edit and delete products. Insurance products carry extra details (tenor, age range,
+        professional-investor flag, Yr1–Yr10 schedule); their base rate equals the Yr1 commission.
       </p>
 
       <div className="card">
         <h2>Catalogue</h2>
+        {actionMsg && <div className={actionMsg.includes("deleted") ? "success" : "error"}>{actionMsg}</div>}
         <table>
           <thead>
             <tr>
@@ -176,10 +259,10 @@ export default function AdminProducts() {
                     ? `tenor ${p.payment_tenor ?? "—"}y · age ${ageRange(p)} · PI ${p.professional_investor ? "Y" : "N"}`
                     : "—"}
                 </td>
-                <td className="num">
-                  {p.type === "insurance" && (
-                    <button className="ghost" onClick={() => startEdit(p)}>Edit details</button>
-                  )}
+                <td className="num" style={{ whiteSpace: "nowrap" }}>
+                  <button className="ghost" onClick={() => startEdit(p)}>Edit</button>{" "}
+                  <button className="ghost" onClick={() => confirmDelete(p)}
+                    style={{ color: "var(--bad)" }}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -187,60 +270,24 @@ export default function AdminProducts() {
         </table>
       </div>
 
-      {editingId != null && (
-        <div className="card">
-          <h2>Edit insurance details — {products.data?.find((p) => p.id === editingId)?.name}</h2>
+      {editId != null && (
+        <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateProduct.mutate(); }}>
+          <h2>Edit product — {editForm.name} ({editForm.code})</h2>
           {editErr && <div className="error">{editErr}</div>}
-          <InsuranceFields value={editIns} onChange={setEditIns} />
+          <ProductFields value={editForm} onChange={setEditForm} isEdit />
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-            <button className="primary" onClick={() => updateProduct.mutate()} disabled={updateProduct.isPending}>
-              {updateProduct.isPending ? "Saving…" : "Save details"}
+            <button className="primary" type="submit" disabled={updateProduct.isPending}>
+              {updateProduct.isPending ? "Saving…" : "Save changes"}
             </button>
-            <button className="ghost" onClick={() => setEditingId(null)}>Cancel</button>
+            <button className="ghost" type="button" onClick={() => setEditId(null)}>Cancel</button>
           </div>
-        </div>
+        </form>
       )}
 
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createProduct.mutate(); }}>
         <h2>Add product</h2>
-        {prodErr && <div className="error">{prodErr}</div>}
-        <div className="row">
-          <div><label>Code</label>
-            <input value={prod.code} required onChange={(e) => setProd({ ...prod, code: e.target.value })} /></div>
-          <div><label>Name</label>
-            <input value={prod.name} required onChange={(e) => setProd({ ...prod, name: e.target.value })} /></div>
-          <div><label>Provider</label>
-            <input value={prod.provider} onChange={(e) => setProd({ ...prod, provider: e.target.value })} /></div>
-        </div>
-        <div className="row">
-          <div><label>Type</label>
-            <select value={prod.type} onChange={(e) => setProd({ ...prod, type: e.target.value })}>
-              {PRODUCT_TYPES.map((t) => <option key={t}>{t}</option>)}
-            </select></div>
-          <div><label>Base rate (of notional)</label>
-            <input value={prod.base_commission_rate} onChange={(e) => setProd({ ...prod, base_commission_rate: e.target.value })} /></div>
-          <div><label>Schedule</label>
-            <select value={prod.commission_schedule} onChange={(e) => setProd({ ...prod, commission_schedule: e.target.value })}>
-              <option value="upfront">upfront</option>
-              <option value="trail">trail</option>
-            </select></div>
-        </div>
-        {prod.commission_schedule === "trail" && (
-          <div className="row">
-            <div><label>Frequency</label>
-              <select value={prod.trail_frequency} onChange={(e) => setProd({ ...prod, trail_frequency: e.target.value })}>
-                <option>monthly</option><option>quarterly</option><option>annual</option>
-              </select></div>
-            <div><label>Periods</label>
-              <input type="number" value={prod.trail_periods} onChange={(e) => setProd({ ...prod, trail_periods: e.target.value })} /></div>
-          </div>
-        )}
-        {prod.type === "insurance" && (
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-            <h2 style={{ fontSize: 14 }}>Insurance details</h2>
-            <InsuranceFields value={ins} onChange={setIns} />
-          </div>
-        )}
+        {createErr && <div className="error">{createErr}</div>}
+        <ProductFields value={form} onChange={setForm} isEdit={false} />
         <div style={{ marginTop: 12 }}>
           <button className="primary" type="submit" disabled={createProduct.isPending}>Add product</button>
         </div>

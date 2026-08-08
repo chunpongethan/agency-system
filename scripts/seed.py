@@ -69,11 +69,12 @@ db.add(agent2); db.flush()
 
 # Products
 prods = {
+    # Base (upfront) rate = Yr1 commission (0.05) for insurance products.
     "insurance": Product(code="INS-WL", name="Whole Life Plan", type=ProductType.INSURANCE,
                          provider="Sun Life", base_commission_rate=Decimal("0.0500"),
                          payment_tenor=10, professional_investor=False, age_min=0, age_max=70,
-                         year_commissions=["0.30", "0.10", "0.05", "0.05", "0.05",
-                                           "0.03", "0.03", "0.02", "0.02", "0.01"]),
+                         year_commissions=["0.05", "0.03", "0.02", "0.02", "0.01",
+                                           "0.01", "0.01", "0.005", "0.005", "0.005"]),
     "fund": Product(code="FND-GEQ", name="Global Equity Fund", type=ProductType.FUND,
                     provider="BlackRock", base_commission_rate=Decimal("0.0100")),
     "eam": Product(code="EAM-DPM", name="Discretionary EAM Account", type=ProductType.EAM_ACCOUNT,

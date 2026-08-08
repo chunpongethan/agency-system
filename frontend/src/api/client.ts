@@ -99,6 +99,8 @@ export const api = {
     request<Product>("/products", { method: "POST", body: JSON.stringify(payload) }),
   updateProduct: (id: number, payload: Record<string, unknown>) =>
     request<Product>(`/products/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteProduct: (id: number) =>
+    request<{ deleted: number }>(`/products/${id}`, { method: "DELETE" }),
 
   // Override rules (admin)
   overrideRules: () => request<OverrideRule[]>("/override-rules"),

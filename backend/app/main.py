@@ -16,11 +16,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from sqlalchemy import create_engine, select, or_
+from sqlalchemy import create_engine, select, or_, func
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.models import (
-    Base, Agent, Client, Product, Transaction, TxnStatus, Role, now_utc,
+    Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType, now_utc,
 )
 from app.schemas import schemas
 from app.security import verify_password, create_access_token, decode_token, hash_password
@@ -236,11 +236,20 @@ def _encode_year_commissions(data: dict) -> None:
         data["year_commissions"] = [str(x) for x in data["year_commissions"]]
 
 
+def _sync_insurance_base_rate(data: dict) -> None:
+    """For insurance products the base (upfront) rate is the Yr1 commission."""
+    yc = data.get("year_commissions")
+    if yc:
+        data["base_commission_rate"] = Decimal(str(yc[0]))
+
+
 @app.post("/products", response_model=schemas.ProductOut)
 def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
     data = payload.model_dump()
     _encode_year_commissions(data)
+    if data.get("type") == ProductType.INSURANCE.value:
+        _sync_insurance_base_rate(data)
     product = Product(**data)
     db.add(product); db.flush()
     audit.record(db, current.id, "create", "product", product.id, after=data)
@@ -258,12 +267,33 @@ def update_product(product_id: int, payload: schemas.ProductUpdate,
         raise HTTPException(404, "product not found")
     data = payload.model_dump(exclude_unset=True)
     _encode_year_commissions(data)
+    if product.type == ProductType.INSURANCE and data.get("year_commissions"):
+        _sync_insurance_base_rate(data)
     for k, v in data.items():
         setattr(product, k, v)
     db.flush()
     audit.record(db, current.id, "update", "product", product.id, after=data)
     db.commit(); db.refresh(product)
     return product
+
+
+@app.delete("/products/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db),
+                   current: Agent = Depends(require_admin)):
+    """Delete a product. Refused (409) if any transactions reference it."""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(404, "product not found")
+    used = db.execute(
+        select(func.count()).select_from(Transaction)
+        .where(Transaction.product_id == product_id)
+    ).scalar()
+    if used:
+        raise HTTPException(409, "cannot delete a product with transactions; deactivate it instead")
+    audit.record(db, current.id, "delete", "product", product_id,
+                 before={"code": product.code, "name": product.name})
+    db.delete(product); db.commit()
+    return {"deleted": product_id}
 
 
 @app.get("/products", response_model=list[schemas.ProductOut])

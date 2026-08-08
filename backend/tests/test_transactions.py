@@ -122,3 +122,40 @@ def test_only_admin_maintains_products(client):
     }).status_code == 403
     assert client.patch(f"/products/{client._ids['ins']}", headers=agent,
                         json={"age_min": 1}).status_code == 403
+
+
+def test_insurance_base_rate_follows_yr1(client):
+    admin = auth(client, "ADM")
+    # base_commission_rate is overridden to the Yr1 commission for insurance.
+    r = client.post("/products", headers=admin, json={
+        "code": "INSY", "name": "Y", "type": "insurance", "base_commission_rate": "0.99",
+        "year_commissions": ["0.20", "0.05", "0", "0", "0", "0", "0", "0", "0", "0"],
+    })
+    assert r.status_code == 200, r.text
+    pid = r.json()["id"]
+    assert float(r.json()["base_commission_rate"]) == 0.20  # = Yr1, not 0.99
+    # editing Yr1 moves the base rate with it
+    r2 = client.patch(f"/products/{pid}", headers=admin,
+                      json={"year_commissions": ["0.15", "0.05"]})
+    assert float(r2.json()["base_commission_rate"]) == 0.15
+
+
+def test_delete_product_admin_only_and_unused(client):
+    admin = auth(client, "ADM")
+    agent = auth(client, "AX")
+    pid = client.post("/products", headers=admin, json={
+        "code": "DEL", "name": "d", "type": "fund", "base_commission_rate": "0.01",
+    }).json()["id"]
+    # non-admin cannot delete
+    assert client.delete(f"/products/{pid}", headers=agent).status_code == 403
+    # admin can delete an unused product
+    assert client.delete(f"/products/{pid}", headers=admin).status_code == 200
+    assert all(p["code"] != "DEL" for p in client.get("/products", headers=agent).json())
+
+
+def test_delete_product_blocked_when_in_use(client):
+    ids = client._ids
+    admin = auth(client, "ADM")
+    agent = auth(client, "AX")
+    _book(client, agent, ids, ids["fund"])  # a transaction now references the fund
+    assert client.delete(f"/products/{ids['fund']}", headers=admin).status_code == 409
