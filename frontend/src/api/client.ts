@@ -97,6 +97,8 @@ export const api = {
   products: () => request<Product[]>("/products"),
   createProduct: (payload: Record<string, unknown>) =>
     request<Product>("/products", { method: "POST", body: JSON.stringify(payload) }),
+  updateProduct: (id: number, payload: Record<string, unknown>) =>
+    request<Product>(`/products/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
 
   // Override rules (admin)
   overrideRules: () => request<OverrideRule[]>("/override-rules"),
@@ -104,6 +106,8 @@ export const api = {
     request<OverrideRule>("/override-rules", { method: "POST", body: JSON.stringify(payload) }),
 
   // Transactions
+  nextTransactionRef: (period?: string) =>
+    request<{ ref: string }>(`/transactions/next-ref${period ? `?period=${period}` : ""}`),
   createTransaction: (payload: Record<string, unknown>) =>
     request<Transaction>("/transactions", { method: "POST", body: JSON.stringify(payload) }),
   previewTransaction: (payload: Record<string, unknown>) =>

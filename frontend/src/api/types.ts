@@ -53,6 +53,12 @@ export interface Product {
   commission_schedule: string;
   trail_frequency: string | null;
   trail_periods: number | null;
+  // Insurance-only product details (admin-maintained).
+  payment_tenor: number | null;
+  professional_investor: boolean | null;
+  age_min: number | null;
+  age_max: number | null;
+  year_commissions: string[] | null;
   is_active: boolean;
 }
 

@@ -230,13 +230,38 @@ def agent_transactions(agent_id: int, db: Session = Depends(get_db),
 
 
 # --- Products ----------------------------------------------------------------
+def _encode_year_commissions(data: dict) -> None:
+    """Store the Yr1..Yr10 schedule as exact decimal strings (JSON-safe)."""
+    if data.get("year_commissions") is not None:
+        data["year_commissions"] = [str(x) for x in data["year_commissions"]]
+
+
 @app.post("/products", response_model=schemas.ProductOut)
 def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
-    product = Product(**payload.model_dump())
+    data = payload.model_dump()
+    _encode_year_commissions(data)
+    product = Product(**data)
     db.add(product); db.flush()
-    audit.record(db, current.id, "create", "product", product.id,
-                 after=payload.model_dump())
+    audit.record(db, current.id, "create", "product", product.id, after=data)
+    db.commit(); db.refresh(product)
+    return product
+
+
+@app.patch("/products/{product_id}", response_model=schemas.ProductOut)
+def update_product(product_id: int, payload: schemas.ProductUpdate,
+                   db: Session = Depends(get_db),
+                   current: Agent = Depends(require_admin)):
+    """Admins maintain product details (including insurance product details)."""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise HTTPException(404, "product not found")
+    data = payload.model_dump(exclude_unset=True)
+    _encode_year_commissions(data)
+    for k, v in data.items():
+        setattr(product, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "product", product.id, after=data)
     db.commit(); db.refresh(product)
     return product
 
@@ -271,6 +296,33 @@ def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(
 
 
 # --- Transactions ------------------------------------------------------------
+def _next_ref(db: Session, trade_date: date) -> str:
+    """Auto transaction code: YYYY-MM-<case no> (per year-month, zero-padded)."""
+    prefix = f"{trade_date.year:04d}-{trade_date.month:02d}-"
+    existing = db.execute(
+        select(Transaction.ref).where(Transaction.ref.like(prefix + "%"))
+    ).scalars().all()
+    max_seq = 0
+    for r in existing:
+        try:
+            max_seq = max(max_seq, int(r.rsplit("-", 1)[1]))
+        except (ValueError, IndexError):
+            continue
+    return f"{prefix}{max_seq + 1:03d}"
+
+
+@app.get("/transactions/next-ref", response_model=schemas.NextRefOut)
+def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db),
+                         current: Agent = Depends(get_current_agent)):
+    """Preview the next auto-generated transaction code for a period (default: now)."""
+    if period:
+        year, month = periods.parse_ym(period)
+        d = date(year, month, 1)
+    else:
+        d = date.today()
+    return schemas.NextRefOut(ref=_next_ref(db, d))
+
+
 @app.post("/transactions", response_model=schemas.TransactionOut)
 def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
                        db: Session = Depends(get_db),
@@ -282,12 +334,21 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
     if not scoping.is_admin(current):
         if payload.agent_id != current.id or client.agent_id != current.id:
             raise HTTPException(403, "you may only book transactions for your own clients")
+    product = db.get(Product, payload.product_id)
+    if product is None:
+        raise HTTPException(404, "product not found")
+
     data = payload.model_dump()
     trade_date = data.get("trade_date") or date.today()
     # Period locking: reject into a locked period unless an admin routes it as an
     # adjustment into the next open period.
     allow_adjust = adjust and current.role == Role.ADMIN
     data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust)
+
+    # Auto-generate the transaction code when not supplied.
+    if not data.get("ref"):
+        data["ref"] = _next_ref(db, data["trade_date"])
+
     txn = Transaction(**data)
     db.add(txn); db.flush()
     audit.record(db, current.id, "create", "transaction", txn.id,

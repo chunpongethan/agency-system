@@ -104,6 +104,13 @@ button.ghost:hover { background: #f9fafb; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
 
+/* Year-by-year commission grid (Yr1..Yr10) */
+.year-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+@media (max-width: 700px) { .year-grid { grid-template-columns: repeat(2, 1fr); } }
+.year-cell { display: flex; flex-direction: column; }
+.year-cell .yr-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.year-cell input { padding: 6px 8px; font-size: 13px; }
+
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .row > * { flex: 1; }
 .row > .shrink { flex: 0; }

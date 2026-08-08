@@ -95,11 +95,45 @@ class ProductIn(BaseModel):
     commission_schedule: str = "upfront"
     trail_frequency: str | None = None
     trail_periods: int | None = None
+    # Insurance-only product details.
+    payment_tenor: int | None = None
+    professional_investor: bool | None = None
+    age_min: int | None = None
+    age_max: int | None = None
+    year_commissions: list[Decimal] | None = None
 
 
-class ProductOut(ProductIn):
+class ProductUpdate(BaseModel):
+    name: str | None = None
+    provider: str | None = None
+    base_commission_rate: Decimal | None = None
+    commission_schedule: str | None = None
+    trail_frequency: str | None = None
+    trail_periods: int | None = None
+    payment_tenor: int | None = None
+    professional_investor: bool | None = None
+    age_min: int | None = None
+    age_max: int | None = None
+    year_commissions: list[Decimal] | None = None
+    is_active: bool | None = None
+
+
+class ProductOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    code: str
+    name: str
+    type: str
+    provider: str | None = None
+    base_commission_rate: Decimal
+    commission_schedule: str
+    trail_frequency: str | None = None
+    trail_periods: int | None = None
+    payment_tenor: int | None = None
+    professional_investor: bool | None = None
+    age_min: int | None = None
+    age_max: int | None = None
+    year_commissions: list[str] | None = None
     is_active: bool
 
 
@@ -124,7 +158,7 @@ class OverrideRuleOut(BaseModel):
 
 # --- Transactions -----------------------------------------------------------
 class TransactionIn(BaseModel):
-    ref: str
+    ref: str | None = None  # auto-generated (YYYY-MM-NNN) when omitted
     client_id: int
     product_id: int
     agent_id: int
@@ -153,6 +187,10 @@ class TransactionOut(BaseModel):
     currency: str
     status: str
     trade_date: date
+
+
+class NextRefOut(BaseModel):
+    ref: str
 
 
 class CommissionPreviewLine(BaseModel):

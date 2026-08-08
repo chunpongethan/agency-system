@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
@@ -10,14 +10,16 @@ import type { Transaction } from "../api/types";
 export default function NewTransaction() {
   const { me } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Transaction | null>(null);
 
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
+  // Auto-generated transaction code (YYYY-MM-NNN) for the current month.
+  const nextRef = useQuery({ queryKey: ["nextRef"], queryFn: () => api.nextTransactionRef() });
 
   const [form, setForm] = useState({
-    ref: "",
     client_id: "",
     product_id: "",
     notional: "100000",
@@ -27,7 +29,12 @@ export default function NewTransaction() {
   const agentId = me!.id;
   const notionalNum = Number(form.notional) || 0;
 
-  // Live commission preview — debounced by react-query keying on inputs.
+  const selectedProduct = useMemo(
+    () => products.data?.find((p) => p.id === Number(form.product_id)),
+    [products.data, form.product_id],
+  );
+  const isInsurance = selectedProduct?.type === "insurance";
+
   const preview = useQuery({
     queryKey: ["preview", form.product_id, agentId, notionalNum],
     queryFn: () =>
@@ -42,14 +49,18 @@ export default function NewTransaction() {
   const create = useMutation({
     mutationFn: () =>
       api.createTransaction({
-        ref: form.ref,
         client_id: Number(form.client_id),
         product_id: Number(form.product_id),
         agent_id: agentId,
         notional: form.notional,
         currency: form.currency,
+        // ref omitted — the backend auto-generates YYYY-MM-NNN.
       }),
-    onSuccess: (txn) => { setCreated(txn); setError(null); },
+    onSuccess: (txn) => {
+      setCreated(txn);
+      setError(null);
+      qc.invalidateQueries({ queryKey: ["nextRef"] });
+    },
     onError: (e) => setError(e instanceof ApiError ? e.message : "Failed to create transaction"),
   });
 
@@ -57,11 +68,6 @@ export default function NewTransaction() {
     mutationFn: (id: number) => api.settleTransaction(id),
     onSuccess: (txn) => setCreated(txn),
   });
-
-  const selectedProduct = useMemo(
-    () => products.data?.find((p) => p.id === Number(form.product_id)),
-    [products.data, form.product_id],
-  );
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -77,9 +83,9 @@ export default function NewTransaction() {
         <form className="card" onSubmit={onSubmit}>
           <h2>Details</h2>
           {error && <div className="error">{error}</div>}
-          <label>Reference</label>
-          <input value={form.ref} required placeholder="e.g. T2024-091"
-            onChange={(e) => setForm({ ...form, ref: e.target.value })} />
+
+          <label>Transaction code (auto-generated)</label>
+          <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
 
           <label>Client</label>
           <select value={form.client_id} required
@@ -115,6 +121,53 @@ export default function NewTransaction() {
               </select>
             </div>
           </div>
+
+          {isInsurance && selectedProduct && (
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <h2 style={{ fontSize: 14 }}>Insurance product details</h2>
+                <span className="muted" style={{ fontSize: 11 }}>maintained by admin · read-only</span>
+              </div>
+              <div className="grid cols-3" style={{ gap: 10 }}>
+                <div className="stat">
+                  <div className="label">Payment tenor</div>
+                  <div className="value" style={{ fontSize: 18 }}>
+                    {selectedProduct.payment_tenor != null ? `${selectedProduct.payment_tenor} yrs` : "—"}
+                  </div>
+                </div>
+                <div className="stat">
+                  <div className="label">Age range</div>
+                  <div className="value" style={{ fontSize: 18 }}>
+                    {selectedProduct.age_min != null || selectedProduct.age_max != null
+                      ? `${selectedProduct.age_min ?? 0}–${selectedProduct.age_max ?? "?"}`
+                      : "—"}
+                  </div>
+                </div>
+                <div className="stat">
+                  <div className="label">Professional investor</div>
+                  <div className="value" style={{ fontSize: 18 }}>
+                    {selectedProduct.professional_investor == null
+                      ? "—" : selectedProduct.professional_investor ? "Yes" : "No"}
+                  </div>
+                </div>
+              </div>
+              {selectedProduct.year_commissions && selectedProduct.year_commissions.length > 0 && (
+                <>
+                  <label style={{ marginTop: 10 }}>Commission schedule — Yr1 to Yr10</label>
+                  <div className="year-grid">
+                    {selectedProduct.year_commissions.map((v, i) => (
+                      <div key={i} className="year-cell">
+                        <span className="yr-label">Yr{i + 1}</span>
+                        <div style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 600 }}>
+                          {pct(v)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           <div style={{ marginTop: 16 }}>
             <button className="primary" type="submit"

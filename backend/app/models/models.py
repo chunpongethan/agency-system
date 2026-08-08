@@ -12,7 +12,7 @@ from datetime import datetime, date, timezone
 from decimal import Decimal
 
 from sqlalchemy import (
-    String, Integer, ForeignKey, Numeric, DateTime, Date, Enum, Text, Boolean
+    String, Integer, ForeignKey, Numeric, DateTime, Date, Enum, Text, Boolean, JSON
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -148,6 +148,15 @@ class Product(Base):
         Enum(TrailFrequency), nullable=True
     )
     trail_periods: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Insurance product details (admin-maintained; only meaningful for insurance
+    # products). age_min/age_max are the eligible age range (e.g. 0-70);
+    # year_commissions is the Yr1..Yr10 commission schedule as decimal strings.
+    payment_tenor: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    professional_investor: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    age_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    age_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    year_commissions: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
 
 class OverrideRule(Base):
