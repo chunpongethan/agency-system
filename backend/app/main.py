@@ -16,11 +16,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
-from sqlalchemy import create_engine, select, or_, func
+from sqlalchemy import create_engine, select, or_, func, delete
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.models import (
-    Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType, now_utc,
+    Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
+    CommissionEntry, now_utc,
 )
 from app.schemas import schemas
 from app.security import verify_password, create_access_token, decode_token, hash_password
@@ -186,10 +187,11 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
 @app.get("/clients", response_model=list[schemas.ClientOut])
 def list_clients(db: Session = Depends(get_db),
                  current: Agent = Depends(get_current_agent)):
-    # Only your own clients — no subtree, no admin-all.
-    return db.execute(
-        select(Client).where(Client.agent_id == current.id)
-    ).scalars().all()
+    # Agents see their own clients; admins (the transaction operators) see all.
+    q = select(Client)
+    if not scoping.is_admin(current):
+        q = q.where(Client.agent_id == current.id)
+    return db.execute(q).scalars().all()
 
 
 @app.get("/clients/{client_id}", response_model=schemas.ClientOut)
@@ -198,7 +200,7 @@ def get_client(client_id: int, db: Session = Depends(get_db),
     client = db.get(Client, client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    scoping.assert_owns_client(current, client)
+    scoping.assert_can_read_client(current, client)
     return client
 
 
@@ -219,8 +221,8 @@ def update_client(client_id: int, payload: schemas.ClientUpdate,
 @app.get("/agents/{agent_id}/clients", response_model=list[schemas.ClientOut])
 def agent_clients(agent_id: int, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    # Owner-only: an agent may list their own clients (not a downline's).
-    if agent_id != current.id:
+    # An agent lists their own clients; an admin may list any agent's clients.
+    if not scoping.is_admin(current) and agent_id != current.id:
         raise HTTPException(403, "you may only list your own clients")
     return db.execute(select(Client).where(Client.agent_id == agent_id)).scalars().all()
 
@@ -393,27 +395,24 @@ def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db
     return schemas.NextRefOut(ref=_next_ref(db, d))
 
 
+# Adding, editing and deleting transactions is admin-only (agents are view-only).
 @app.post("/transactions", response_model=schemas.TransactionOut)
 def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
                        db: Session = Depends(get_db),
-                       current: Agent = Depends(get_current_agent)):
+                       current: Agent = Depends(require_admin)):
     client = db.get(Client, payload.client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    # An agent books sales for their own clients; an admin may book for anyone.
-    if not scoping.is_admin(current):
-        if payload.agent_id != current.id or client.agent_id != current.id:
-            raise HTTPException(403, "you may only book transactions for your own clients")
     product = db.get(Product, payload.product_id)
     if product is None:
         raise HTTPException(404, "product not found")
+    if db.get(Agent, payload.agent_id) is None:
+        raise HTTPException(404, "agent not found")
 
     data = payload.model_dump()
     trade_date = data.get("trade_date") or date.today()
-    # Period locking: reject into a locked period unless an admin routes it as an
-    # adjustment into the next open period.
-    allow_adjust = adjust and current.role == Role.ADMIN
-    data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust)
+    # Admin may route a sale dated into a locked period to the next open period.
+    data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust=adjust)
 
     # Auto-generate the transaction code when not supplied.
     if not data.get("ref"):
@@ -431,8 +430,7 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
 @app.post("/transactions/preview", response_model=schemas.CommissionPreviewOut)
 def preview_transaction(payload: schemas.TransactionPreviewIn,
                         db: Session = Depends(get_db),
-                        current: Agent = Depends(get_current_agent)):
-    scoping.assert_can_access_txn(current, payload.agent_id)
+                        current: Agent = Depends(require_admin)):
     product = db.get(Product, payload.product_id)
     closer = db.get(Agent, payload.agent_id)
     if product is None or closer is None:
@@ -444,13 +442,59 @@ def preview_transaction(payload: schemas.TransactionPreviewIn,
     return schemas.CommissionPreviewOut(lines=lines, total=total)
 
 
-@app.post("/transactions/{txn_id}/settle", response_model=schemas.TransactionOut)
-def settle_transaction(txn_id: int, db: Session = Depends(get_db),
-                       current: Agent = Depends(get_current_agent)):
+@app.patch("/transactions/{txn_id}", response_model=schemas.TransactionOut)
+def update_transaction(txn_id: int, payload: schemas.TransactionUpdate,
+                       db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    """Admin edits a transaction's fields; settled entries are recomputed."""
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
-    scoping.assert_can_access_txn(current, txn.agent_id)
+    data = payload.model_dump(exclude_unset=True)
+    if "client_id" in data and db.get(Client, data["client_id"]) is None:
+        raise HTTPException(404, "client not found")
+    if "product_id" in data and db.get(Product, data["product_id"]) is None:
+        raise HTTPException(404, "product not found")
+    if "agent_id" in data and db.get(Agent, data["agent_id"]) is None:
+        raise HTTPException(404, "agent not found")
+    before = {"notional": txn.notional, "agent_id": txn.agent_id,
+              "product_id": txn.product_id, "trade_date": txn.trade_date}
+    for k, v in data.items():
+        setattr(txn, k, v)
+    db.flush()
+    # Keep the derived ledger in step with the edited transaction.
+    commission_engine.compute_for_transaction(db, txn)
+    audit.record(db, current.id, "update", "transaction", txn.id, before=before, after=data)
+    db.commit(); db.refresh(txn)
+    return txn
+
+
+@app.delete("/transactions/{txn_id}")
+def delete_transaction(txn_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    """Delete a transaction and its (unpaid) ledger entries. 409 if any are paid."""
+    txn = db.get(Transaction, txn_id)
+    if txn is None:
+        raise HTTPException(404, "transaction not found")
+    paid = db.execute(
+        select(func.count()).select_from(CommissionEntry)
+        .where(CommissionEntry.transaction_id == txn_id, CommissionEntry.paid.is_(True))
+    ).scalar()
+    if paid:
+        raise HTTPException(409, "cannot delete a transaction with paid commission; cancel it instead")
+    db.execute(delete(CommissionEntry).where(CommissionEntry.transaction_id == txn_id))
+    audit.record(db, current.id, "delete", "transaction", txn_id,
+                 before={"ref": txn.ref, "notional": txn.notional})
+    db.delete(txn); db.commit()
+    return {"deleted": txn_id}
+
+
+@app.post("/transactions/{txn_id}/settle", response_model=schemas.TransactionOut)
+def settle_transaction(txn_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    txn = db.get(Transaction, txn_id)
+    if txn is None:
+        raise HTTPException(404, "transaction not found")
     before = {"status": txn.status.value}
     txn.status = TxnStatus.SETTLED
     txn.settled_at = now_utc()
@@ -464,11 +508,10 @@ def settle_transaction(txn_id: int, db: Session = Depends(get_db),
 
 @app.post("/transactions/{txn_id}/cancel", response_model=schemas.TransactionOut)
 def cancel_transaction(txn_id: int, db: Session = Depends(get_db),
-                       current: Agent = Depends(get_current_agent)):
+                       current: Agent = Depends(require_admin)):
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
-    scoping.assert_can_access_txn(current, txn.agent_id)
     before = {"status": txn.status.value}
     txn.status = TxnStatus.CANCELLED
     db.flush()

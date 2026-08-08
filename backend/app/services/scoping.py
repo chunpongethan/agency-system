@@ -56,11 +56,20 @@ def assert_visible(session: Session, current: Agent, agent_id: int) -> None:
 
 def assert_owns_client(current: Agent, client: Client) -> None:
     """
-    Client details are owner-only: raise unless `current` personally owns the
-    client. Admins do not own clients and are therefore denied.
+    Editing a client profile is owner-only: raise unless `current` personally
+    owns the client. Admins do not own clients and are therefore denied editing.
     """
     if current.id != client.agent_id:
-        raise PermissionError("only the client's own agent may access this client")
+        raise PermissionError("only the client's own agent may edit this client")
+
+
+def assert_can_read_client(current: Agent, client: Client) -> None:
+    """
+    Reading a client is allowed for its owning agent or for an admin (admins are
+    the sole transaction operators and must see clients to book for them).
+    """
+    if not is_admin(current) and current.id != client.agent_id:
+        raise PermissionError("only the client's own agent or an admin may read this client")
 
 
 def assert_can_access_txn(current: Agent, txn_agent_id: int) -> None:

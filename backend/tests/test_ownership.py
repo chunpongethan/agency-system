@@ -71,39 +71,48 @@ def test_client_is_owner_only(client):
     assert client.get(f"/clients/{ids['cx']}", headers=ay).status_code == 403
 
 
-def test_admin_has_no_client_access(client):
+def test_admin_can_read_but_not_own_clients(client):
     ids = client._ids
     adm = auth(client, "ADM")
-    assert client.get(f"/clients/{ids['cx']}", headers=adm).status_code == 403
-    assert client.get("/clients", headers=adm).json() == []
-    # admin cannot create a client either
-    r = client.post("/clients", headers=adm, json={"ref": "Z", "name": "z", "agent_id": ids["ax"]})
-    assert r.status_code == 403
+    # admin (the transaction operator) can read clients ...
+    assert client.get(f"/clients/{ids['cx']}", headers=adm).status_code == 200
+    assert len(client.get("/clients", headers=adm).json()) == 2  # sees all
+    # ... but cannot create or edit a client profile (owner-only)
+    assert client.post("/clients", headers=adm,
+                       json={"ref": "Z", "name": "z", "agent_id": ids["ax"]}).status_code == 403
+    assert client.patch(f"/clients/{ids['cx']}", headers=adm,
+                        json={"name": "x"}).status_code == 403
 
 
-def test_agent_cannot_book_for_others_client(client):
+def test_agents_cannot_book_transactions(client):
     ids = client._ids
     ax = auth(client, "AX")
+    # Agents are view-only for transactions — even for their own client.
     r = client.post("/transactions", headers=ax, json={
-        "ref": "T-BAD", "client_id": ids["cy"], "product_id": ids["prod"],
-        "agent_id": ids["ay"], "notional": "1000",
+        "client_id": ids["cx"], "product_id": ids["prod"],
+        "agent_id": ids["ax"], "notional": "1000",
     })
     assert r.status_code == 403
 
 
-def test_admin_has_transaction_authority(client):
+def test_admin_is_sole_transaction_operator(client):
     ids = client._ids
     adm = auth(client, "ADM")
-    # Admin books a transaction on AX's client (transaction authority) ...
+    # Admin books a transaction for an agent ...
     r = client.post("/transactions", headers=adm, json={
-        "ref": "T-ADM", "client_id": ids["cx"], "product_id": ids["prod"],
+        "client_id": ids["cx"], "product_id": ids["prod"],
         "agent_id": ids["ax"], "notional": "100000",
     })
     assert r.status_code == 200, r.text
     txn_id = r.json()["id"]
-    # ... settles and cancels it ...
+    # ... settles, edits, cancels, and deletes it ...
     assert client.post(f"/transactions/{txn_id}/settle", headers=adm).status_code == 200
+    assert client.patch(f"/transactions/{txn_id}", headers=adm,
+                        json={"notional": "50000"}).status_code == 200
     assert client.post(f"/transactions/{txn_id}/cancel", headers=adm).status_code == 200
-    # ... and may read the client's transactions (but still not the client itself).
     assert client.get(f"/clients/{ids['cx']}/transactions", headers=adm).status_code == 200
-    assert client.get(f"/clients/{ids['cx']}", headers=adm).status_code == 403
+    # an agent cannot settle/cancel/edit/delete
+    ax = auth(client, "AX")
+    assert client.post(f"/transactions/{txn_id}/settle", headers=ax).status_code == 403
+    assert client.delete(f"/transactions/{txn_id}", headers=ax).status_code == 403
+    assert client.delete(f"/transactions/{txn_id}", headers=adm).status_code == 200

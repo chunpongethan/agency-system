@@ -173,14 +173,14 @@ def test_scope_manager_cannot_see_downline_client(client):
     assert r.status_code == 403
 
 
-def test_scope_admin_has_no_client_access(client):
-    # Admin is not a seller — no access to any client details.
+def test_scope_admin_can_read_clients(client):
+    # Admin is the transaction operator and may READ any client (to book for them).
     cb = client._clients["cb"]
     r = client.get(f"/clients/{cb}", headers=_auth(client, "A1"))
-    assert r.status_code == 403
+    assert r.status_code == 200
     ca = client._clients["ca"]
     r = client.get(f"/clients/{ca}", headers=_auth(client, "A1"))
-    assert r.status_code == 403
+    assert r.status_code == 200
 
 
 def test_owner_can_see_own_client(client):

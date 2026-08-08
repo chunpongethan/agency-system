@@ -111,20 +111,21 @@ def test_full_scenario(client):
     admin = auth(client, "ADM")   # admin is outside the hierarchy
     agent = auth(client, "A4")
 
-    # --- 2. Agent creates a client and books+settles an insurance sale ---------
+    # --- 2. Agent owns the client; admin books+settles the insurance sale ------
     r = client.post("/clients", headers=agent, json={
         "ref": "E2E-C1", "name": "Scenario Client", "agent_id": ids["a4"],
     })
     assert r.status_code == 200, r.text
     client_id = r.json()["id"]
 
-    r = client.post("/transactions", headers=agent, json={
+    # Only admin adds transactions (booking for agent a4).
+    r = client.post("/transactions", headers=admin, json={
         "ref": "E2E-INS", "client_id": client_id, "product_id": ids["insurance"],
         "agent_id": ids["a4"], "notional": "200000", "trade_date": TRADE.isoformat(),
     })
     assert r.status_code == 200, r.text
     ins_txn = r.json()["id"]
-    assert client.post(f"/transactions/{ins_txn}/settle", headers=agent).status_code == 200
+    assert client.post(f"/transactions/{ins_txn}/settle", headers=admin).status_code == 200
 
     # --- 3. Ledger: direct to closer + overrides at gaps 1/2/3 -----------------
     win = f"?start={TRADE.isoformat()}&end={TRADE.isoformat()}"
@@ -138,13 +139,13 @@ def test_full_scenario(client):
     assert line(st_a1, "override", "insurance")["amount"] == 400.0   # gap 3: 4% of 10000
 
     # --- 4. Trail fund: settle then accrue forward -----------------------------
-    r = client.post("/transactions", headers=agent, json={
+    r = client.post("/transactions", headers=admin, json={
         "ref": "E2E-TRL", "client_id": client_id, "product_id": ids["trail"],
         "agent_id": ids["a4"], "notional": "100000", "trade_date": TRADE.isoformat(),
     })
     assert r.status_code == 200
     trail_txn = r.json()["id"]
-    assert client.post(f"/transactions/{trail_txn}/settle", headers=agent).status_code == 200
+    assert client.post(f"/transactions/{trail_txn}/settle", headers=admin).status_code == 200
 
     # On settle only period 0 exists -> one direct fund entry.
     st = client.get(f"/reports/agent/{ids['a4']}", headers=admin).json()
@@ -157,7 +158,7 @@ def test_full_scenario(client):
     assert line(st, "direct", "fund")["amount"] == 750.0  # 3 × (0.25% of 100k)
 
     # --- 5. Cancel the insurance sale -> statement line nets to zero -----------
-    assert client.post(f"/transactions/{ins_txn}/cancel", headers=agent).status_code == 200
+    assert client.post(f"/transactions/{ins_txn}/cancel", headers=admin).status_code == 200
     st_a4 = client.get(f"/reports/agent/{ids['a4']}{win}", headers=admin).json()
     ins_line = line(st_a4, "direct", "insurance")
     assert ins_line["amount"] == 0.0     # 10000 + (-10000)
@@ -165,8 +166,8 @@ def test_full_scenario(client):
 
     # --- 6. Lock the period, run a payout --------------------------------------
     assert client.post(f"/periods/{YM}/lock", headers=admin).status_code == 200
-    # A new sale into the locked period is rejected (409).
-    r = client.post("/transactions", headers=agent, json={
+    # A new sale into the locked period is rejected (409) unless admin adjusts.
+    r = client.post("/transactions", headers=admin, json={
         "ref": "E2E-LATE", "client_id": client_id, "product_id": ids["insurance"],
         "agent_id": ids["a4"], "notional": "50000", "trade_date": TRADE.isoformat(),
     })

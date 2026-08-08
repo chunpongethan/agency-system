@@ -184,6 +184,15 @@ class TransactionPreviewIn(BaseModel):
     trade_date: date | None = None
 
 
+class TransactionUpdate(BaseModel):
+    client_id: int | None = None
+    product_id: int | None = None
+    agent_id: int | None = None
+    notional: Decimal | None = None
+    currency: str | None = None
+    trade_date: date | None = None
+
+
 class TransactionOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

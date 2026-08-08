@@ -58,7 +58,7 @@ export default function App() {
         <Route
           path="/clients"
           element={
-            <RequireRole roles={SELLERS}>
+            <RequireRole roles={["agent", "manager", "admin"]}>
               <Clients />
             </RequireRole>
           }
@@ -66,7 +66,7 @@ export default function App() {
         <Route
           path="/clients/:id"
           element={
-            <RequireRole roles={SELLERS}>
+            <RequireRole roles={["agent", "manager", "admin"]}>
               <ClientDetail />
             </RequireRole>
           }
@@ -74,7 +74,7 @@ export default function App() {
         <Route
           path="/transactions/new"
           element={
-            <RequireRole roles={SELLERS}>
+            <RequireRole roles={["admin"]}>
               <NewTransaction />
             </RequireRole>
           }

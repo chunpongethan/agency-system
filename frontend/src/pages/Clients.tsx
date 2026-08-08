@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 
 export default function Clients() {
   const { me } = useAuth();
+  const isAdmin = me!.role === "admin";
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +48,13 @@ export default function Clients() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h1 className="page-title">Clients</h1>
-          <p className="page-sub">Clients within your scope</p>
+          <p className="page-sub">{isAdmin ? "All clients (read-only)" : "Your clients"}</p>
         </div>
-        <button className="primary" onClick={() => setShowForm((s) => !s)}>
-          {showForm ? "Cancel" : "+ New client"}
-        </button>
+        {!isAdmin && (
+          <button className="primary" onClick={() => setShowForm((s) => !s)}>
+            {showForm ? "Cancel" : "+ New client"}
+          </button>
+        )}
       </div>
 
       {showForm && (

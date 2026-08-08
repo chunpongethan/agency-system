@@ -2,32 +2,37 @@ import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
 import { money, pct } from "../lib/format";
 import StatusBadge from "../components/StatusBadge";
 import type { Transaction } from "../api/types";
 
 export default function NewTransaction() {
-  const { me } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Transaction | null>(null);
 
+  const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
-  // Auto-generated transaction code (YYYY-MM-NNN) for the current month.
   const nextRef = useQuery({ queryKey: ["nextRef"], queryFn: () => api.nextTransactionRef() });
 
   const [form, setForm] = useState({
+    agent_id: "",
     client_id: "",
     product_id: "",
     notional: "100000",
     currency: "USD",
   });
 
-  const agentId = me!.id;
+  const agentId = Number(form.agent_id) || 0;
   const notionalNum = Number(form.notional) || 0;
+
+  // Only closing agents (not admins) who are active.
+  const closerOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.is_active);
+  // Clients belonging to the chosen closing agent.
+  const clientOptions = (clients.data ?? []).filter((c) => c.agent_id === agentId);
+  const agentName = (id: number) => agents.data?.find((a) => a.id === id)?.name ?? `#${id}`;
 
   const selectedProduct = useMemo(
     () => products.data?.find((p) => p.id === Number(form.product_id)),
@@ -43,7 +48,7 @@ export default function NewTransaction() {
         agent_id: agentId,
         notional: form.notional,
       }),
-    enabled: !!form.product_id && notionalNum > 0,
+    enabled: !!form.product_id && !!agentId && notionalNum > 0,
   });
 
   const create = useMutation({
@@ -54,7 +59,6 @@ export default function NewTransaction() {
         agent_id: agentId,
         notional: form.notional,
         currency: form.currency,
-        // ref omitted — the backend auto-generates YYYY-MM-NNN.
       }),
     onSuccess: (txn) => {
       setCreated(txn);
@@ -77,7 +81,7 @@ export default function NewTransaction() {
   return (
     <div>
       <h1 className="page-title">New transaction</h1>
-      <p className="page-sub">Book a sale and preview the commission before settling</p>
+      <p className="page-sub">Book a sale on behalf of an agent, and preview the commission before settling</p>
 
       <div className="grid cols-2">
         <form className="card" onSubmit={onSubmit}>
@@ -87,11 +91,20 @@ export default function NewTransaction() {
           <label>Transaction code (auto-generated)</label>
           <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
 
-          <label>Client</label>
-          <select value={form.client_id} required
+          <label>Closing agent</label>
+          <select value={form.agent_id} required
+            onChange={(e) => setForm({ ...form, agent_id: e.target.value, client_id: "" })}>
+            <option value="">Select an agent…</option>
+            {closerOptions.map((a) => (
+              <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+            ))}
+          </select>
+
+          <label>Client {form.agent_id && clientOptions.length === 0 ? "(this agent has no clients)" : ""}</label>
+          <select value={form.client_id} required disabled={!form.agent_id}
             onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-            <option value="">Select a client…</option>
-            {clients.data?.map((c) => (
+            <option value="">{form.agent_id ? "Select a client…" : "Pick an agent first"}</option>
+            {clientOptions.map((c) => (
               <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>
             ))}
           </select>
@@ -139,8 +152,7 @@ export default function NewTransaction() {
                   <div className="label">Age range</div>
                   <div className="value" style={{ fontSize: 18 }}>
                     {selectedProduct.age_min != null || selectedProduct.age_max != null
-                      ? `${selectedProduct.age_min ?? 0}–${selectedProduct.age_max ?? "?"}`
-                      : "—"}
+                      ? `${selectedProduct.age_min ?? 0}–${selectedProduct.age_max ?? "?"}` : "—"}
                   </div>
                 </div>
                 <div className="stat">
@@ -158,9 +170,7 @@ export default function NewTransaction() {
                     {selectedProduct.year_commissions.map((v, i) => (
                       <div key={i} className="year-cell">
                         <span className="yr-label">Yr{i + 1}</span>
-                        <div style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 600 }}>
-                          {pct(v)}
-                        </div>
+                        <div style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 600 }}>{pct(v)}</div>
                       </div>
                     ))}
                   </div>
@@ -170,8 +180,7 @@ export default function NewTransaction() {
           )}
 
           <div style={{ marginTop: 16 }}>
-            <button className="primary" type="submit"
-              disabled={create.isPending || !!created}>
+            <button className="primary" type="submit" disabled={create.isPending || !!created}>
               {created ? "Booked" : create.isPending ? "Booking…" : "Book transaction"}
             </button>
           </div>
@@ -181,13 +190,11 @@ export default function NewTransaction() {
               Booked {created.ref} <StatusBadge status={created.status} />
               <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
                 {created.status === "pending" && (
-                  <button className="ghost" type="button"
-                    onClick={() => settle.mutate(created.id)}>
+                  <button className="ghost" type="button" onClick={() => settle.mutate(created.id)}>
                     {settle.isPending ? "Settling…" : "Settle now"}
                   </button>
                 )}
-                <button className="ghost" type="button"
-                  onClick={() => navigate(`/clients/${created.client_id}`)}>
+                <button className="ghost" type="button" onClick={() => navigate(`/clients/${created.client_id}`)}>
                   View client
                 </button>
               </div>
@@ -199,9 +206,9 @@ export default function NewTransaction() {
           <h2>Live commission preview</h2>
           <p className="muted" style={{ fontSize: 13, marginTop: -6 }}>
             What settling this sale would pay (period 0). Matches the settled ledger.
-            Override rates are a % of your commission (25/20/4/1% for the 1st–4th upline).
+            Override rates are a % of the agent's commission (25/20/4/1% for the 1st–4th upline).
           </p>
-          {!form.product_id && <div className="spinner">Pick a product to preview…</div>}
+          {(!form.product_id || !form.agent_id) && <div className="spinner">Pick an agent and product to preview…</div>}
           {preview.isFetching && <div className="spinner">Calculating…</div>}
           {preview.data && (
             <>
@@ -215,7 +222,7 @@ export default function NewTransaction() {
                 <tbody>
                   {preview.data.lines.map((l, i) => (
                     <tr key={i}>
-                      <td>{l.agent_id === agentId ? "You" : `Agent #${l.agent_id}`}</td>
+                      <td>{agentName(l.agent_id)}</td>
                       <td>{l.kind}</td>
                       <td>{l.level_gap}</td>
                       <td className="num">{pct(l.rate)}</td>
@@ -226,9 +233,7 @@ export default function NewTransaction() {
                 <tfoot>
                   <tr>
                     <td colSpan={4} style={{ fontWeight: 700 }}>Total paid out</td>
-                    <td className="num" style={{ fontWeight: 700 }}>
-                      {money(preview.data.total, form.currency)}
-                    </td>
+                    <td className="num" style={{ fontWeight: 700 }}>{money(preview.data.total, form.currency)}</td>
                   </tr>
                 </tfoot>
               </table>

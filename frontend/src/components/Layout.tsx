@@ -14,8 +14,8 @@ export default function Layout() {
         <div className="brand">Agency System</div>
         <nav>
           {isSeller && <NavLink to="/" end>Dashboard</NavLink>}
-          {isSeller && <NavLink to="/clients">Clients</NavLink>}
-          {isSeller && <NavLink to="/transactions/new">New transaction</NavLink>}
+          {(isSeller || isAdmin) && <NavLink to="/clients">Clients</NavLink>}
+          {isAdmin && <NavLink to="/transactions/new">New transaction</NavLink>}
           {(isManager || isAdmin) && <NavLink to="/hierarchy">Hierarchy</NavLink>}
           <NavLink to="/reports">Reports</NavLink>
           {isAdmin && (

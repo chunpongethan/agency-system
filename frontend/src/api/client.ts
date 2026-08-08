@@ -125,6 +125,10 @@ export const api = {
     request<Transaction>(`/transactions/${id}/settle`, { method: "POST" }),
   cancelTransaction: (id: number) =>
     request<Transaction>(`/transactions/${id}/cancel`, { method: "POST" }),
+  updateTransaction: (id: number, payload: Record<string, unknown>) =>
+    request<Transaction>(`/transactions/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteTransaction: (id: number) =>
+    request<{ deleted: number }>(`/transactions/${id}`, { method: "DELETE" }),
 
   // Reports
   agentStatement: (id: number, start?: string, end?: string) =>
