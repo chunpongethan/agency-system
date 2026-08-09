@@ -20,6 +20,10 @@ export default function Dashboard() {
     ? { start: ytd.start, end: ytd.end, label: ytd.label }
     : { start: month.start, end: month.end, label: month.ym };
 
+  const scorecard = useQuery({
+    queryKey: ["scorecard", agentId],
+    queryFn: () => api.agentScorecard(agentId),
+  });
   const statement = useQuery({
     queryKey: ["statement", agentId, view, win.start, win.end],
     queryFn: () => api.agentStatement(agentId, win.start, win.end),
@@ -57,7 +61,59 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid cols-3">
+      {scorecard.data && (() => {
+        const p = scorecard.data.periods;
+        const rows: { label: string; key: "afyp" | "direct" | "override" }[] = [
+          { label: "AFYP", key: "afyp" },
+          { label: "Comm.", key: "direct" },
+          { label: "Override", key: "override" },
+        ];
+        return (
+          <div className="card" style={{ marginTop: 18 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "baseline", marginBottom: 14 }}>
+              <div>
+                <span className="muted" style={{ fontSize: 12 }}>Agent</span><br />
+                <strong>{scorecard.data.agent.name}</strong>{" "}
+                <span className="muted">({scorecard.data.agent.code})</span>
+              </div>
+              <div>
+                <span className="muted" style={{ fontSize: 12 }}>Manager</span><br />
+                {scorecard.data.manager
+                  ? <>{scorecard.data.manager.name} <span className="muted">({scorecard.data.manager.code})</span></>
+                  : <span className="muted">—</span>}
+              </div>
+              <div>
+                <span className="muted" style={{ fontSize: 12 }}>District</span><br />
+                {scorecard.data.district
+                  ? <span className="badge unit">{scorecard.data.district}</span>
+                  : <span className="muted">—</span>}
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th className="num">YTD</th>
+                  <th className="num">Last month</th>
+                  <th className="num">Current month</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.key}>
+                    <td><strong>{r.label}</strong></td>
+                    <td className="num">{money(p.ytd[r.key])}</td>
+                    <td className="num">{money(p.last_month[r.key])}</td>
+                    <td className="num">{money(p.current_month[r.key])}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
+      <div className="grid cols-3" style={{ marginTop: 18 }}>
         <div className="stat">
           <div className="label">Direct commission</div>
           <div className="value good">

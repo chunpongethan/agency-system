@@ -14,7 +14,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    Agent, Transaction, Product, CommissionEntry, CommissionKind, TxnStatus,
+    Agent, Transaction, Product, CommissionEntry, CommissionKind, TxnStatus, Role,
 )
 
 
@@ -143,6 +143,65 @@ def production_by_agent(session: Session, agent_ids: set[int],
     for aid, comm in session.execute(cq):
         out[aid]["commission"] = Decimal(comm)
     return out
+
+
+def _production_split(session: Session, agent_id: int,
+                      start: date, end: date) -> dict:
+    """AFYP plus commission split into direct vs override for one agent/window."""
+    aq = _window(
+        select(func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
+        .join(Product, Transaction.product_id == Product.id)
+        .where(Transaction.status == TxnStatus.SETTLED)
+        .where(Transaction.agent_id == agent_id),
+        start, end,
+    )
+    afyp = Decimal(session.execute(aq).scalar_one())
+
+    cq = _window(
+        select(CommissionEntry.kind,
+               func.coalesce(func.sum(CommissionEntry.amount), 0))
+        .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
+        .where(CommissionEntry.agent_id == agent_id)
+        .group_by(CommissionEntry.kind),
+        start, end,
+    )
+    direct = Decimal("0")
+    override = Decimal("0")
+    for kind, amount in session.execute(cq):
+        if kind == CommissionKind.DIRECT:
+            direct += Decimal(amount)
+        else:
+            override += Decimal(amount)
+    return {"afyp": float(afyp), "direct": float(direct), "override": float(override)}
+
+
+def _nearest_upline_manager(session: Session, agent: Agent) -> Agent | None:
+    seen: set[int] = set()
+    cur = session.get(Agent, agent.upline_id) if agent.upline_id else None
+    while cur is not None and cur.id not in seen:
+        if cur.role == Role.MANAGER:
+            return cur
+        seen.add(cur.id)
+        cur = session.get(Agent, cur.upline_id) if cur.upline_id else None
+    return None
+
+
+def agent_scorecard(session: Session, agent_id: int) -> dict:
+    """Header card for an agent: identity, manager, district (unit), and AFYP /
+    direct commission / override across YTD, last month and current month."""
+    agent = session.get(Agent, agent_id)
+    manager = _nearest_upline_manager(session, agent)
+    # District = the agent's own unit code (managers) or their manager's unit.
+    district = agent.unit_code or (manager.unit_code if manager else None)
+    windows = three_period_windows()
+    periods = {k: _production_split(session, agent_id, s, e)
+               for k, (s, e) in windows.items()}
+    return {
+        "agent": {"id": agent.id, "code": agent.code, "name": agent.name},
+        "manager": {"name": manager.name, "code": manager.code} if manager else None,
+        "district": district,
+        "periods": periods,
+    }
 
 
 def team_production(session: Session, agent_ids: set[int]) -> list[dict]:

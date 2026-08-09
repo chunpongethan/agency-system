@@ -45,6 +45,23 @@ export interface TeamProductionRow {
   current_month: PeriodProduction;
 }
 
+export interface ScorecardPeriod {
+  afyp: number;
+  direct: number;
+  override: number;
+}
+
+export interface AgentScorecard {
+  agent: { id: number; code: string; name: string };
+  manager: { name: string; code: string } | null;
+  district: string | null;
+  periods: {
+    ytd: ScorecardPeriod;
+    last_month: ScorecardPeriod;
+    current_month: ScorecardPeriod;
+  };
+}
+
 export interface Client {
   id: number;
   ref: string;

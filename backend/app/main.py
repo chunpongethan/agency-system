@@ -553,6 +553,13 @@ def report_agency(start: date | None = None, end: date | None = None,
     return reports.agency_summary(db, start, end, agent_ids=ids)
 
 
+@app.get("/reports/agent/{agent_id}/scorecard")
+def report_agent_scorecard(agent_id: int, db: Session = Depends(get_db),
+                           current: Agent = Depends(get_current_agent)):
+    scoping.assert_visible(db, current, agent_id)
+    return reports.agent_scorecard(db, agent_id)
+
+
 @app.post("/reports/recompute")
 def recompute(db: Session = Depends(get_db),
               current: Agent = Depends(require_admin)):
