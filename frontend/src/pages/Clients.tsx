@@ -10,6 +10,7 @@ export default function Clients() {
   const isAdmin = me!.role === "admin";
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     ref: "",
@@ -109,35 +110,61 @@ export default function Clients() {
       <div className="card">
         {clients.isLoading && <div className="spinner">Loading…</div>}
         {clients.error && <div className="error">Failed to load clients.</div>}
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th><th>Ref</th><th>Risk</th><th>Email</th><th>Owner</th><th>Unit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.data?.map((c) => {
-              const owner = agentsById.get(c.agent_id);
-              const unit = resolveUnit(owner, agentsById);
-              return (
-                <tr key={c.id}>
-                  <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
-                  <td className="muted">{c.ref}</td>
-                  <td>{c.risk_profile ?? "—"}</td>
-                  <td className="muted">{c.email ?? "—"}</td>
-                  <td>
-                    {owner ? owner.name : `#${c.agent_id}`}{" "}
-                    {owner && <span className="muted">({owner.code})</span>}
-                  </td>
-                  <td>{unit ? <span className="badge unit">{unit}</span> : <span className="muted">—</span>}</td>
-                </tr>
-              );
-            })}
-            {clients.data?.length === 0 && (
-              <tr><td colSpan={6} className="muted">No clients in scope.</td></tr>
-            )}
-          </tbody>
-        </table>
+        {(() => {
+          const rows = (clients.data ?? []).map((c) => {
+            const owner = agentsById.get(c.agent_id);
+            const unit = resolveUnit(owner, agentsById);
+            return { c, owner, unit };
+          });
+          const q = search.trim().toLowerCase();
+          const filtered = q
+            ? rows.filter(({ c, owner, unit }) =>
+                [c.name, c.ref, c.email, c.risk_profile, owner?.name, owner?.code, unit]
+                  .some((v) => v && v.toLowerCase().includes(q)),
+              )
+            : rows;
+          return (
+            <>
+              <div style={{ marginBottom: 14, maxWidth: 340 }}>
+                <input
+                  type="search"
+                  placeholder="Search name, ref, email, owner, unit…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th><th>Ref</th><th>Risk</th><th>Email</th><th>Owner</th><th>Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(({ c, owner, unit }) => (
+                    <tr key={c.id}>
+                      <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
+                      <td className="muted">{c.ref}</td>
+                      <td>{c.risk_profile ?? "—"}</td>
+                      <td className="muted">{c.email ?? "—"}</td>
+                      <td>
+                        {owner ? owner.name : `#${c.agent_id}`}{" "}
+                        {owner && <span className="muted">({owner.code})</span>}
+                      </td>
+                      <td>{unit ? <span className="badge unit">{unit}</span> : <span className="muted">—</span>}</td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="muted">
+                        {rows.length === 0 ? "No clients in scope." : "No clients match your search."}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

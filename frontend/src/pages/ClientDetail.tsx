@@ -85,7 +85,7 @@ export default function ClientDetail() {
       <h1 className="page-title">{client.data!.name}</h1>
       <p className="page-sub">{client.data!.ref}</p>
 
-      <div className="grid cols-2">
+      <div>
         <form className="card" onSubmit={(e) => { e.preventDefault(); if (canEditProfile) save.mutate(); }}>
           <h2>Profile {isAdmin && <span className="muted" style={{ fontSize: 12 }}>(read-only — owner edits)</span>}</h2>
           {msg && <div className="success">{msg}</div>}
