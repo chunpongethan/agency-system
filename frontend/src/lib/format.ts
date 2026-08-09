@@ -6,6 +6,7 @@ function numberLocale(): string {
 
 export function money(n: number | string, currency = "USD"): string {
   const v = typeof n === "string" ? Number(n) : n;
+  if (v == null || !Number.isFinite(v)) return "—";
   return new Intl.NumberFormat(numberLocale(), {
     style: "currency",
     currency,
@@ -15,6 +16,7 @@ export function money(n: number | string, currency = "USD"): string {
 
 export function pct(rate: number | string): string {
   const v = typeof rate === "string" ? Number(rate) : rate;
+  if (v == null || !Number.isFinite(v)) return "—";
   return `${(v * 100).toFixed(2)}%`;
 }
 
