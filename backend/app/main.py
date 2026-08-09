@@ -736,6 +736,16 @@ def get_payout(ym: str, db: Session = Depends(get_db),
     return payouts.payout_summary(db, year, month)
 
 
+@app.get("/payouts/{ym}/export")
+def export_payout(ym: str, format: str = "csv", lang: str = "zh-Hant", currency: str = "USD",
+                  db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    year, month = periods.parse_ym(ym)
+    payout = payouts.payout_summary(db, year, month)
+    if format == "pdf":
+        return _export_response(exports.payout_to_pdf(payout, lang, currency), "pdf", f"payout_{ym}")
+    return _export_response(exports.payout_to_csv(payout, lang, currency), "csv", f"payout_{ym}")
+
+
 # --- Audit log (admin) -------------------------------------------------------
 @app.get("/audit", response_model=list[schemas.AuditOut])
 def list_audit(limit: int = 200, db: Session = Depends(get_db),

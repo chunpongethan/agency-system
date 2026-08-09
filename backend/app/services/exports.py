@@ -270,3 +270,61 @@ def agency_summary_to_pdf(summary: list[dict], lang: str | None = None, currency
     elems.append(_table(data, col_widths=[24 * mm, 46 * mm, 16 * mm, 34 * mm, 34 * mm, 34 * mm, 34 * mm]))
     doc.build(elems)
     return buf.getvalue()
+
+
+# --------------------------------------------------------------------------- #
+# Payout result (per-agent payable, split into commission / override)
+# --------------------------------------------------------------------------- #
+def _payout_header(payout: dict, lang: str | None, currency: str | None) -> list[list[str]]:
+    return [
+        [i18n.label("period", lang), payout.get("period", "")],
+        [i18n.label("currency", lang), currency if currency in _FX else "USD"],
+    ]
+
+
+def _payout_totals(payout: dict) -> tuple[float, float]:
+    rows = payout.get("payable", [])
+    return (sum(r.get("direct", 0) for r in rows), sum(r.get("override", 0) for r in rows))
+
+
+def payout_to_csv(payout: dict, lang: str | None = None, currency: str | None = None) -> str:
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    for k, v in _payout_header(payout, lang, currency):
+        w.writerow([k, v])
+    w.writerow([])
+    w.writerow([i18n.label("name", lang), i18n.label("code", lang), i18n.label("unit", lang),
+                i18n.label("commission", lang), i18n.label("override", lang), i18n.label("payable", lang)])
+    for r in payout.get("payable", []):
+        w.writerow([r.get("agent_name") or f'#{r["agent_id"]}', r.get("agent_code") or "",
+                    r.get("unit_code") or "", _money(r.get("direct", 0), currency),
+                    _money(r.get("override", 0), currency), _money(r.get("total", 0), currency)])
+    direct_tot, override_tot = _payout_totals(payout)
+    w.writerow([i18n.label("total", lang), "", "",
+                _money(direct_tot, currency), _money(override_tot, currency),
+                _money(payout.get("total", 0), currency)])
+    return _BOM + buf.getvalue()
+
+
+def payout_to_pdf(payout: dict, lang: str | None = None, currency: str | None = None) -> bytes:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title=i18n.label("payout_doc", lang))
+    elems = [Paragraph(i18n.label("payout_title", lang), _title_style()), Spacer(1, 5 * mm)]
+    elems.append(_table(_payout_header(payout, lang, currency), col_widths=[40 * mm, 120 * mm]))
+    elems.append(Spacer(1, 5 * mm))
+
+    data = [[i18n.label("name", lang), i18n.label("code", lang), i18n.label("unit", lang),
+             i18n.label("commission", lang), i18n.label("override", lang), i18n.label("payable", lang)]]
+    for r in payout.get("payable", []):
+        data.append([r.get("agent_name") or f'#{r["agent_id"]}', r.get("agent_code") or "",
+                     r.get("unit_code") or "", _money(r.get("direct", 0), currency),
+                     _money(r.get("override", 0), currency), _money(r.get("total", 0), currency)])
+    direct_tot, override_tot = _payout_totals(payout)
+    data.append([i18n.label("total", lang), "", "",
+                 _money(direct_tot, currency), _money(override_tot, currency),
+                 _money(payout.get("total", 0), currency)])
+    highlight = [len(data) - 1]   # tint the totals row
+    elems.append(_table(data, col_widths=[52 * mm, 26 * mm, 26 * mm, 38 * mm, 38 * mm, 38 * mm],
+                        highlight_rows=highlight))
+    doc.build(elems)
+    return buf.getvalue()

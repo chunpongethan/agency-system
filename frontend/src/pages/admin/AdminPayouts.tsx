@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, errorText } from "../../api/client";
+import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { money, currentPeriod } from "../../lib/format";
 import type { PayoutResult, PeriodInfo } from "../../api/types";
 
 export default function AdminPayouts() {
-  const { t } = useI18n();
+  const { t, lang, currency } = useI18n();
   const qc = useQueryClient();
   const [ym, setYm] = useState(currentPeriod().ym);
   const period = useQuery<PeriodInfo>({
@@ -61,7 +61,19 @@ export default function AdminPayouts() {
 
       {(payoutErr || payout) && (
         <div className="card">
-          <h2>{t("admin.payouts.result")}</h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2 style={{ margin: 0 }}>{t("admin.payouts.result")}</h2>
+            {payout && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="ghost"
+                  onClick={() => downloadFile(`/payouts/${payout.period}/export?format=csv&lang=${lang}&currency=${currency}`,
+                    `payout_${payout.period}.csv`)}>{t("reports.downloadCsv")}</button>
+                <button className="ghost"
+                  onClick={() => downloadFile(`/payouts/${payout.period}/export?format=pdf&lang=${lang}&currency=${currency}`,
+                    `payout_${payout.period}.pdf`)}>{t("reports.downloadPdf")}</button>
+              </div>
+            )}
+          </div>
           {payoutErr && <div className="error">{payoutErr}</div>}
           {payout && (
             <>
