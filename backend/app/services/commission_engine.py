@@ -114,29 +114,71 @@ def _due_periods(product: Product, txn: Transaction, as_of: date) -> list[tuple[
     return due
 
 
+def _role_shares(txn: Transaction) -> tuple[dict[int, Decimal], int]:
+    """Percentage of the direct commission each distinct agent earns, combining
+    an agent that holds more than one role. Returns (shares, lead_agent_id).
+
+    lead/sales_dev fall back to the closing agent (agent_id) when unset, so a
+    legacy single-agent transaction behaves exactly as before (100% direct to the
+    closer, overrides up the closer's chain).
+    """
+    closing_id = txn.agent_id
+    lead_id = txn.lead_agent_id or closing_id
+    sales_dev_id = txn.sales_dev_agent_id or closing_id
+    roles = [
+        (lead_id, txn.lead_pct or Decimal("0")),
+        (sales_dev_id, txn.sales_dev_pct or Decimal("0")),
+        (closing_id, txn.closing_pct if txn.closing_pct is not None else Decimal("100")),
+    ]
+    shares: dict[int, Decimal] = {}
+    for aid, pct in roles:
+        shares[aid] = shares.get(aid, Decimal("0")) + Decimal(pct)
+    return shares, lead_id
+
+
 def _period_entries(session: Session, txn: Transaction, product: Product,
-                    closer: Agent, period_index: int, accrual_date: date,
+                    period_index: int, accrual_date: date,
                     reversal: bool) -> list[CommissionEntry]:
-    """Build (positive, and if reversal also negative) entries for one period."""
+    """Build (positive, and if reversal also negative) entries for one period.
+
+    The direct commission is split among the role-agents by percentage; overrides
+    flow up the LEAD agent's hierarchy, computed on the full direct commission.
+    """
     sign = Decimal("-1") if reversal else Decimal("1")
     out: list[CommissionEntry] = []
 
-    # The closer's direct commission is the base every upline override is a % of.
+    # The full direct commission is the base every upline override is a % of.
     base_direct = _money(txn.notional * product.base_commission_rate)
-    out.append(CommissionEntry(
-        transaction_id=txn.id, agent_id=closer.id,
-        kind=CommissionKind.DIRECT, rate=product.base_commission_rate,
-        amount=base_direct * sign, level_gap=0,
-        period_index=period_index, accrual_date=accrual_date,
-        is_reversal=reversal,
-    ))
 
+    shares, lead_id = _role_shares(txn)
+    # Split base_direct by percentage; quantize each and give any rounding
+    # residue to the largest share so the parts sum back to base_direct exactly.
+    split: list[tuple[int, Decimal]] = []
+    for aid, pct in shares.items():
+        split.append((aid, _money(base_direct * pct / Decimal("100"))))
+    residue = base_direct - sum((amt for _, amt in split), Decimal("0"))
+    if split and residue != 0:
+        idx = max(range(len(split)), key=lambda i: split[i][1])
+        split[idx] = (split[idx][0], split[idx][1] + residue)
+
+    for aid, amount in split:
+        if amount == 0:
+            continue
+        out.append(CommissionEntry(
+            transaction_id=txn.id, agent_id=aid,
+            kind=CommissionKind.DIRECT, rate=product.base_commission_rate,
+            amount=amount * sign, level_gap=0,
+            period_index=period_index, accrual_date=accrual_date,
+            is_reversal=reversal,
+        ))
+
+    lead = session.get(Agent, lead_id)
     rules = _rules_for(session, product.type, txn.trade_date)
-    for gap, upline in _upline_chain(session, closer):
+    for gap, upline in _upline_chain(session, lead):
         rate = rules.get(gap)
         if rate is None or rate == 0:
             continue
-        # Override = rate × the closer's direct commission (not the notional).
+        # Override = rate × the full direct commission (not the notional).
         out.append(CommissionEntry(
             transaction_id=txn.id, agent_id=upline.id,
             kind=CommissionKind.OVERRIDE, rate=rate,
@@ -147,22 +189,37 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     return out
 
 
-def preview(session: Session, product: Product, closer: Agent,
-            notional: Decimal, trade_date: date) -> list[dict]:
+def preview(session: Session, product: Product, notional: Decimal, trade_date: date,
+            lead_id: int, sales_dev_id: int, closing_id: int,
+            lead_pct: Decimal, sales_dev_pct: Decimal, closing_pct: Decimal) -> list[dict]:
     """
     Compute the commission lines a settlement *would* produce, without persisting
-    anything. Used by POST /transactions/preview so the UI can show a live preview
-    that matches the settled result (period 0 only).
+    anything. Mirrors _period_entries for period 0: the direct commission split
+    among the role-agents, plus overrides up the lead agent's chain.
     """
     lines: list[dict] = []
     base_direct = _money(notional * product.base_commission_rate)
-    lines.append({
-        "agent_id": closer.id, "kind": CommissionKind.DIRECT.value,
-        "rate": product.base_commission_rate, "amount": base_direct,
-        "level_gap": 0, "period_index": 0,
-    })
+
+    shares: dict[int, Decimal] = {}
+    for aid, pct in ((lead_id, lead_pct), (sales_dev_id, sales_dev_pct), (closing_id, closing_pct)):
+        shares[aid] = shares.get(aid, Decimal("0")) + Decimal(pct or 0)
+    split = [(aid, _money(base_direct * pct / Decimal("100"))) for aid, pct in shares.items()]
+    residue = base_direct - sum((amt for _, amt in split), Decimal("0"))
+    if split and residue != 0:
+        idx = max(range(len(split)), key=lambda i: split[i][1])
+        split[idx] = (split[idx][0], split[idx][1] + residue)
+    for aid, amount in split:
+        if amount == 0:
+            continue
+        lines.append({
+            "agent_id": aid, "kind": CommissionKind.DIRECT.value,
+            "rate": product.base_commission_rate, "amount": amount,
+            "level_gap": 0, "period_index": 0,
+        })
+
+    lead = session.get(Agent, lead_id)
     rules = _rules_for(session, product.type, trade_date)
-    for gap, upline in _upline_chain(session, closer):
+    for gap, upline in _upline_chain(session, lead):
         rate = rules.get(gap)
         if rate is None or rate == 0:
             continue
@@ -175,11 +232,11 @@ def preview(session: Session, product: Product, closer: Agent,
 
 
 def _build_all(session: Session, txn: Transaction, product: Product,
-               closer: Agent, as_of: date, reversal: bool) -> list[CommissionEntry]:
+               as_of: date, reversal: bool) -> list[CommissionEntry]:
     out: list[CommissionEntry] = []
     for period_index, accrual_date in _due_periods(product, txn, as_of):
         out += _period_entries(
-            session, txn, product, closer, period_index, accrual_date, reversal=reversal
+            session, txn, product, period_index, accrual_date, reversal=reversal
         )
     return out
 
@@ -227,18 +284,17 @@ def compute_for_transaction(session: Session, txn: Transaction,
         return []
 
     product = session.get(Product, txn.product_id)
-    closer = session.get(Agent, txn.agent_id)
     reversal_too = txn.status == TxnStatus.CANCELLED
 
     def _key(e: CommissionEntry):
         return (e.period_index, e.agent_id, e.kind, e.is_reversal)
 
     to_add: list[CommissionEntry] = []
-    for e in _build_all(session, txn, product, closer, as_of, reversal=False):
+    for e in _build_all(session, txn, product, as_of, reversal=False):
         if _key(e) not in paid_keys:
             to_add.append(e)
     if reversal_too:
-        for e in _build_all(session, txn, product, closer, as_of, reversal=True):
+        for e in _build_all(session, txn, product, as_of, reversal=True):
             if _key(e) not in paid_keys:
                 to_add.append(e)
 

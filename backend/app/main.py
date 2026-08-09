@@ -446,8 +446,9 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
     product = db.get(Product, payload.product_id)
     if product is None:
         raise HTTPException(404, "product not found")
-    if db.get(Agent, payload.agent_id) is None:
-        raise HTTPException(404, "agent not found")
+    for aid in (payload.agent_id, payload.lead_agent_id, payload.sales_dev_agent_id):
+        if aid is not None and db.get(Agent, aid) is None:
+            raise HTTPException(404, "agent not found")
 
     data = payload.model_dump()
     trade_date = data.get("trade_date") or date.today()
@@ -472,11 +473,15 @@ def preview_transaction(payload: schemas.TransactionPreviewIn,
                         db: Session = Depends(get_db),
                         current: Agent = Depends(require_admin)):
     product = db.get(Product, payload.product_id)
-    closer = db.get(Agent, payload.agent_id)
-    if product is None or closer is None:
+    if product is None or db.get(Agent, payload.agent_id) is None:
         raise HTTPException(404, "product or agent not found")
+    closing_id = payload.agent_id
+    lead_id = payload.lead_agent_id or closing_id
+    sales_dev_id = payload.sales_dev_agent_id or closing_id
     lines = commission_engine.preview(
-        db, product, closer, payload.notional, payload.trade_date or date.today()
+        db, product, payload.notional, payload.trade_date or date.today(),
+        lead_id, sales_dev_id, closing_id,
+        payload.lead_pct, payload.sales_dev_pct, payload.closing_pct,
     )
     total = sum((line["amount"] for line in lines), start=Decimal("0"))
     return schemas.CommissionPreviewOut(lines=lines, total=total)

@@ -100,6 +100,11 @@ export interface Transaction {
   client_id: number;
   product_id: number;
   agent_id: number;
+  lead_agent_id?: number | null;
+  sales_dev_agent_id?: number | null;
+  lead_pct?: string | null;
+  sales_dev_pct?: string | null;
+  closing_pct?: string | null;
   notional: string;
   currency: string;
   status: string;

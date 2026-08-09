@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 
 # --- Auth -------------------------------------------------------------------
@@ -172,11 +172,30 @@ class OverrideRuleOut(BaseModel):
 
 
 # --- Transactions -----------------------------------------------------------
-class TransactionIn(BaseModel):
+# A deal is shared by three role-agents (Lead / Sales Development / Closing) that
+# split the direct commission by percentage; agent_id is the Closing agent. The
+# same agent may hold multiple roles. lead/sales_dev fall back to the closing
+# agent when omitted, so single-agent bookings still work.
+class _RoleSplit(BaseModel):
+    lead_agent_id: int | None = None
+    sales_dev_agent_id: int | None = None
+    lead_pct: Decimal = Decimal("0")
+    sales_dev_pct: Decimal = Decimal("0")
+    closing_pct: Decimal = Decimal("100")
+
+    @model_validator(mode="after")
+    def _pcts_sum_to_100(self):
+        total = (self.lead_pct or 0) + (self.sales_dev_pct or 0) + (self.closing_pct or 0)
+        if round(float(total), 2) != 100.0:
+            raise ValueError("lead + sales-dev + closing percentages must total 100")
+        return self
+
+
+class TransactionIn(_RoleSplit):
     ref: str | None = None  # auto-generated (YYYY-MM-NNN) when omitted
     client_id: int
     product_id: int
-    agent_id: int
+    agent_id: int          # closing agent
     notional: Decimal
     currency: str = "USD"
     base_currency: str = "USD"
@@ -184,9 +203,9 @@ class TransactionIn(BaseModel):
     trade_date: date | None = None
 
 
-class TransactionPreviewIn(BaseModel):
+class TransactionPreviewIn(_RoleSplit):
     product_id: int
-    agent_id: int
+    agent_id: int          # closing agent
     notional: Decimal
     trade_date: date | None = None
 
@@ -195,6 +214,11 @@ class TransactionUpdate(BaseModel):
     client_id: int | None = None
     product_id: int | None = None
     agent_id: int | None = None
+    lead_agent_id: int | None = None
+    sales_dev_agent_id: int | None = None
+    lead_pct: Decimal | None = None
+    sales_dev_pct: Decimal | None = None
+    closing_pct: Decimal | None = None
     notional: Decimal | None = None
     currency: str | None = None
     trade_date: date | None = None
@@ -207,6 +231,11 @@ class TransactionOut(BaseModel):
     client_id: int
     product_id: int
     agent_id: int
+    lead_agent_id: int | None = None
+    sales_dev_agent_id: int | None = None
+    lead_pct: Decimal | None = None
+    sales_dev_pct: Decimal | None = None
+    closing_pct: Decimal | None = None
     notional: Decimal
     currency: str
     status: str

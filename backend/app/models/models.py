@@ -194,9 +194,15 @@ class Transaction(Base):
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))  # closing agent
-    # SPLIT: single closing agent in v1. A split deal would introduce a
-    # transaction_splits join table (agent_id, split_pct) and the engine would
-    # apportion the direct commission across it. Not built in v1 (decision 4).
+    # A deal is handled by up to three role-agents that share the direct
+    # commission by percentage: Lead, Sales Development, and Closing (= agent_id).
+    # The same agent may hold more than one role. Overrides flow up the LEAD
+    # agent's hierarchy. lead/sales_dev fall back to the closing agent when unset.
+    lead_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
+    sales_dev_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
+    lead_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
+    sales_dev_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
+    closing_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("100"))
     notional: Mapped[Decimal] = mapped_column(Numeric(18, 2))       # premium / invested amount
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     # Multi-currency (decision 3): store base_currency + a nullable fx_rate for a
@@ -209,7 +215,7 @@ class Transaction(Base):
 
     client: Mapped["Client"] = relationship(back_populates="transactions")
     product: Mapped["Product"] = relationship()
-    agent: Mapped["Agent"] = relationship()
+    agent: Mapped["Agent"] = relationship(foreign_keys=[agent_id])
     commissions: Mapped[list["CommissionEntry"]] = relationship(back_populates="transaction")
 
 

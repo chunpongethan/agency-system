@@ -21,17 +21,25 @@ export default function NewTransaction() {
   const nextRef = useQuery({ queryKey: ["nextRef"], queryFn: () => api.nextTransactionRef() });
 
   const [form, setForm] = useState({
-    agent_id: "",
+    lead_agent_id: "",
+    sales_dev_agent_id: "",
+    agent_id: "",            // closing agent
     client_id: "",
     product_id: "",
     notional: "100000",
     currency: "USD",
+    lead_pct: "0",
+    sales_dev_pct: "0",
+    closing_pct: "100",
   });
 
-  const agentId = Number(form.agent_id) || 0;
+  const agentId = Number(form.agent_id) || 0;   // closing agent
   const notionalNum = Number(form.notional) || 0;
+  const pctSum = Number(form.lead_pct || 0) + Number(form.sales_dev_pct || 0) + Number(form.closing_pct || 0);
+  const pctValid = Math.round(pctSum * 100) === 10000;
+  const rolesChosen = !!form.lead_agent_id && !!form.sales_dev_agent_id && !!form.agent_id;
 
-  // Only closing agents (not admins) who are active.
+  // Non-admin active agents are eligible for any role.
   const closerOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.is_active);
   // Clients belonging to the chosen closing agent.
   const clientOptions = (clients.data ?? []).filter((c) => c.agent_id === agentId);
@@ -43,15 +51,25 @@ export default function NewTransaction() {
   );
   const isInsurance = selectedProduct?.type === "insurance";
 
+  const rolePayload = () => ({
+    lead_agent_id: form.lead_agent_id ? Number(form.lead_agent_id) : null,
+    sales_dev_agent_id: form.sales_dev_agent_id ? Number(form.sales_dev_agent_id) : null,
+    lead_pct: form.lead_pct || "0",
+    sales_dev_pct: form.sales_dev_pct || "0",
+    closing_pct: form.closing_pct || "0",
+  });
+
   const preview = useQuery({
-    queryKey: ["preview", form.product_id, agentId, notionalNum],
+    queryKey: ["preview", form.product_id, agentId, notionalNum,
+               form.lead_agent_id, form.sales_dev_agent_id, form.lead_pct, form.sales_dev_pct, form.closing_pct],
     queryFn: () =>
       api.previewTransaction({
         product_id: Number(form.product_id),
         agent_id: agentId,
         notional: form.notional,
+        ...rolePayload(),
       }),
-    enabled: !!form.product_id && !!agentId && notionalNum > 0,
+    enabled: !!form.product_id && rolesChosen && notionalNum > 0 && pctValid,
   });
 
   const create = useMutation({
@@ -62,6 +80,7 @@ export default function NewTransaction() {
         agent_id: agentId,
         notional: form.notional,
         currency: form.currency,
+        ...rolePayload(),
       }),
     onSuccess: (txn) => {
       setCreated(txn);
@@ -94,6 +113,24 @@ export default function NewTransaction() {
           <label>{t("newTxn.txnCode")}</label>
           <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
 
+          <label>{t("newTxn.leadAgent")}</label>
+          <select value={form.lead_agent_id} required
+            onChange={(e) => setForm({ ...form, lead_agent_id: e.target.value })}>
+            <option value="">{t("newTxn.selectAgent")}</option>
+            {closerOptions.map((a) => (
+              <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+            ))}
+          </select>
+
+          <label>{t("newTxn.salesDevAgent")}</label>
+          <select value={form.sales_dev_agent_id} required
+            onChange={(e) => setForm({ ...form, sales_dev_agent_id: e.target.value })}>
+            <option value="">{t("newTxn.selectAgent")}</option>
+            {closerOptions.map((a) => (
+              <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+            ))}
+          </select>
+
           <label>{t("newTxn.closingAgent")}</label>
           <select value={form.agent_id} required
             onChange={(e) => setForm({ ...form, agent_id: e.target.value, client_id: "" })}>
@@ -102,6 +139,31 @@ export default function NewTransaction() {
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
+
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <h2 style={{ fontSize: 14 }}>{t("newTxn.splitTitle")}</h2>
+              {!pctValid && <span style={{ fontSize: 12, color: "var(--bad)" }}>{t("newTxn.splitMustBe100", { sum: pctSum })}</span>}
+            </div>
+            <div className="row">
+              <div>
+                <label>{t("newTxn.pctLead")}</label>
+                <input type="number" min="0" max="100" step="1" value={form.lead_pct}
+                  onChange={(e) => setForm({ ...form, lead_pct: e.target.value })} />
+              </div>
+              <div>
+                <label>{t("newTxn.pctSalesDev")}</label>
+                <input type="number" min="0" max="100" step="1" value={form.sales_dev_pct}
+                  onChange={(e) => setForm({ ...form, sales_dev_pct: e.target.value })} />
+              </div>
+              <div>
+                <label>{t("newTxn.pctClosing")}</label>
+                <input type="number" min="0" max="100" step="1" value={form.closing_pct}
+                  onChange={(e) => setForm({ ...form, closing_pct: e.target.value })} />
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("newTxn.splitNote")}</p>
+          </div>
 
           <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
           <select value={form.client_id} required disabled={!form.agent_id}
@@ -183,7 +245,7 @@ export default function NewTransaction() {
           )}
 
           <div style={{ marginTop: 16 }}>
-            <button className="primary" type="submit" disabled={create.isPending || !!created}>
+            <button className="primary" type="submit" disabled={create.isPending || !!created || !pctValid}>
               {created ? t("newTxn.booked") : create.isPending ? t("newTxn.booking") : t("newTxn.book")}
             </button>
           </div>
