@@ -56,6 +56,38 @@ def agent_statement(session: Session, agent_id: int,
         else:
             override_total += amount
 
+    # Transaction-level breakdown: one row per (transaction, kind), summing any
+    # trail-period entries for the same transaction.
+    eq = (
+        select(
+            Transaction.ref,
+            Product.name,
+            Product.type,
+            CommissionEntry.kind,
+            Transaction.notional,
+            Transaction.trade_date,
+            func.coalesce(func.sum(CommissionEntry.amount), 0),
+        )
+        .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
+        .join(Product, Transaction.product_id == Product.id)
+        .where(CommissionEntry.agent_id == agent_id)
+        .group_by(Transaction.id, CommissionEntry.kind)
+        .order_by(CommissionEntry.kind, Transaction.ref)
+    )
+    eq = _window(eq, start, end)
+    entries = [
+        {
+            "transaction_ref": ref,
+            "product_name": pname,
+            "product_type": ptype.value,
+            "kind": kind.value,
+            "notional": float(Decimal(notional)),
+            "trade_date": str(tdate),
+            "amount": float(Decimal(amount)),
+        }
+        for ref, pname, ptype, kind, notional, tdate, amount in session.execute(eq)
+    ]
+
     agent = session.get(Agent, agent_id)
     return {
         "agent": {"id": agent.id, "code": agent.code, "name": agent.name,
@@ -63,6 +95,7 @@ def agent_statement(session: Session, agent_id: int,
         "period": {"start": str(start) if start else None,
                    "end": str(end) if end else None},
         "lines": lines,
+        "entries": entries,
         "direct_total": float(direct_total),
         "override_total": float(override_total),
         "grand_total": float(direct_total + override_total),

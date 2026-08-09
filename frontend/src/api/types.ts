@@ -122,10 +122,21 @@ export interface StatementLine {
   amount: number;
 }
 
+export interface StatementEntry {
+  transaction_ref: string;
+  product_name: string;
+  product_type: string;
+  kind: string;
+  notional: number;
+  trade_date: string;
+  amount: number;
+}
+
 export interface AgentStatement {
   agent: { id: number; code: string; name: string; level: number };
   period: { start: string | null; end: string | null };
   lines: StatementLine[];
+  entries: StatementEntry[];
   direct_total: number;
   override_total: number;
   grand_total: number;

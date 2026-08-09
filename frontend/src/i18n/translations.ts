@@ -298,6 +298,8 @@ export const translations: Record<string, Translation> = {
   "reports.thCount": { "zh-Hant": "數量", en: "Count" },
   "reports.thAmount": { "zh-Hant": "金額", en: "Amount" },
   "reports.noCommission": { "zh-Hant": "此期間沒有佣金。", en: "No commission in this window." },
+  "reports.subtotal": { "zh-Hant": "小計", en: "subtotal" },
+  "reports.thRef": { "zh-Hant": "交易編號", en: "Ref" },
   "reports.productMix": { "zh-Hant": "產品組合", en: "Product mix" },
   "reports.productMixSub": { "zh-Hant": "按產品的已交收業績 · AFYP 佔比", en: "Settled production by product · AFYP share" },
   "reports.afypShare": { "zh-Hant": "AFYP 佔比", en: "AFYP share" },

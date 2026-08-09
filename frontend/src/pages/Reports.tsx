@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { api, downloadFile } from "../api/client";
@@ -100,21 +100,51 @@ export default function Reports() {
             </div>
             <table>
               <thead>
-                <tr><th>{t("reports.thKind")}</th><th>{t("reports.thProductType")}</th><th className="num">{t("reports.thCount")}</th><th className="num">{t("reports.thAmount")}</th></tr>
+                <tr>
+                  <th>{t("reports.thKind")}</th><th>{t("reports.thRef")}</th><th>{t("common.product")}</th>
+                  <th className="num">{t("common.notional")}</th><th className="num">{t("reports.thAmount")}</th>
+                </tr>
               </thead>
               <tbody>
-                {statement.data.lines.map((l, i) => (
-                  <tr key={i}>
-                    <td>{kindLabel(l.kind)}</td>
-                    <td>{productTypeLabel(l.product_type)}</td>
-                    <td className="num">{l.count}</td>
-                    <td className="num">{money(l.amount)}</td>
-                  </tr>
-                ))}
-                {statement.data.lines.length === 0 && (
-                  <tr><td colSpan={4} className="muted">{t("reports.noCommission")}</td></tr>
-                )}
+                {(() => {
+                  const entries = statement.data!.entries;
+                  if (entries.length === 0) {
+                    return <tr><td colSpan={5} className="muted">{t("reports.noCommission")}</td></tr>;
+                  }
+                  const order: Record<string, number> = { direct: 0, override: 1 };
+                  const kinds = [...new Set(entries.map((e) => e.kind))]
+                    .sort((a, b) => (order[a] ?? 9) - (order[b] ?? 9));
+                  const out: ReactElement[] = [];
+                  kinds.forEach((kind) => {
+                    const group = entries.filter((e) => e.kind === kind);
+                    group.forEach((e, i) => out.push(
+                      <tr key={`${kind}-${i}`}>
+                        <td>{i === 0 ? kindLabel(kind) : ""}</td>
+                        <td>{e.transaction_ref}</td>
+                        <td>{e.product_name} <span className="muted" style={{ fontSize: 11 }}>({productTypeLabel(e.product_type)})</span></td>
+                        <td className="num">{money(e.notional)}</td>
+                        <td className="num">{money(e.amount)}</td>
+                      </tr>,
+                    ));
+                    const subAmt = group.reduce((s, e) => s + e.amount, 0);
+                    out.push(
+                      <tr key={`${kind}-subtotal`} className="subtotal-row">
+                        <td colSpan={4}>{kindLabel(kind)} {t("reports.subtotal")}</td>
+                        <td className="num">{money(subAmt)}</td>
+                      </tr>,
+                    );
+                  });
+                  return out;
+                })()}
               </tbody>
+              {statement.data.entries.length > 0 && (
+                <tfoot>
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={4}>{t("reports.grandTotal")}</td>
+                    <td className="num">{money(statement.data.grand_total)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </>
         )}

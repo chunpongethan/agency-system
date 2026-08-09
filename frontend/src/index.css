@@ -79,6 +79,9 @@ tbody tr:hover { background: #fafafa; }
 .badge.title { background: #f5f3ff; color: #7c3aed; }
 .badge.unit { background: #ecfeff; color: #0e7490; }
 
+tr.subtotal-row { font-weight: 600; background: var(--accent-soft); }
+tr.subtotal-row td { border-top: 1px solid #bfdbfe; color: #1e3a8a; }
+
 label { display: block; font-size: 13px; margin: 12px 0 4px; color: #374151; font-weight: 500; }
 input, select, textarea {
   width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
