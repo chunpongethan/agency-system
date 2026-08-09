@@ -85,19 +85,31 @@ def _pct(rate_str) -> str:
     return f'{float(rate_str) * 100:.2f}%'
 
 
-def render_statement(statement: dict, lang: str | None = None) -> dict:
+# Fixed demo FX rates (per 1 USD) and symbols, mirroring the web client. Ledger
+# figures are in USD; exports convert to the requested display currency.
+_FX = {"USD": 1.0, "HKD": 7.8, "EUR": 0.92, "GBP": 0.79}
+_SYMBOL = {"USD": "US$", "HKD": "HK$", "EUR": "€", "GBP": "£"}
+
+
+def _money(amount_usd: float, currency: str | None) -> str:
+    cur = currency if currency in _FX else "USD"
+    return f'{_SYMBOL[cur]}{amount_usd * _FX[cur]:,.2f}'
+
+
+def render_statement(statement: dict, lang: str | None = None, currency: str | None = None) -> dict:
     """
     Normalise an agent_statement dict into a header + rows + totals structure
     shared by every output format, with localized labels and enum values. The
     rows are the per-transaction commission breakdown grouped by income kind
     (direct / override) with a subtotal row per kind. Each row carries the trade
     date, client, product (with details), notional, commission rate, override
-    rate, and amount.
+    rate, and amount. Money is shown in the requested display currency.
     """
     header = [
         [i18n.label("agent", lang), f'{statement["agent"]["name"]} ({statement["agent"]["code"]})'],
         [i18n.label("level", lang), f'L{statement["agent"]["level"]}'],
         [i18n.label("period", lang), f'{statement["period"]["start"] or "—"} → {statement["period"]["end"] or "—"}'],
+        [i18n.label("currency", lang), currency if currency in _FX else "USD"],
     ]
 
     # Transaction-level breakdown grouped by kind, preserving a stable kind order.
@@ -127,21 +139,21 @@ def render_statement(statement: dict, lang: str | None = None) -> dict:
                 entry["trade_date"],
                 entry["client_name"],
                 product_cell,
-                f'{entry["notional"]:,.2f}',
+                _money(entry["notional"], currency),
                 _pct(rate),
-                f'{entry["amount"]:,.2f}',
+                _money(entry["amount"], currency),
             ])
             sub_amt += entry["amount"]
         subtotal_rows.add(len(rows))
         rows.append([
             f'{kind_lbl} {i18n.label("subtotal", lang)}',
-            "", "", "", "", "", "", f'{sub_amt:,.2f}',
+            "", "", "", "", "", "", _money(sub_amt, currency),
         ])
 
     totals = [
-        [i18n.label("direct_total", lang), f'{statement["direct_total"]:,.2f}'],
-        [i18n.label("override_total", lang), f'{statement["override_total"]:,.2f}'],
-        [i18n.label("grand_total", lang), f'{statement["grand_total"]:,.2f}'],
+        [i18n.label("direct_total", lang), _money(statement["direct_total"], currency)],
+        [i18n.label("override_total", lang), _money(statement["override_total"], currency)],
+        [i18n.label("grand_total", lang), _money(statement["grand_total"], currency)],
     ]
     return {"header": header, "rows": rows, "totals": totals,
             "subtotal_rows": sorted(subtotal_rows)}
@@ -153,8 +165,8 @@ def render_statement(statement: dict, lang: str | None = None) -> dict:
 _BOM = "﻿"
 
 
-def statement_to_csv(statement: dict, lang: str | None = None) -> str:
-    rendered = render_statement(statement, lang)
+def statement_to_csv(statement: dict, lang: str | None = None, currency: str | None = None) -> str:
+    rendered = render_statement(statement, lang, currency)
     buf = io.StringIO()
     w = csv.writer(buf)
     for k, v in rendered["header"]:
@@ -168,7 +180,7 @@ def statement_to_csv(statement: dict, lang: str | None = None) -> str:
     return _BOM + buf.getvalue()
 
 
-def agency_summary_to_csv(summary: list[dict], lang: str | None = None) -> str:
+def agency_summary_to_csv(summary: list[dict], lang: str | None = None, currency: str | None = None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow([i18n.label("agent_id", lang), i18n.label("code", lang), i18n.label("name", lang),
@@ -177,8 +189,8 @@ def agency_summary_to_csv(summary: list[dict], lang: str | None = None) -> str:
                 i18n.label("total", lang)])
     for r in summary:
         w.writerow([r["agent_id"], r["code"], r["name"], r["level"],
-                    f'{r.get("afyp", 0):,.2f}', f'{r.get("direct", 0):,.2f}',
-                    f'{r.get("override", 0):,.2f}', f'{r["total"]:,.2f}'])
+                    _money(r.get("afyp", 0), currency), _money(r.get("direct", 0), currency),
+                    _money(r.get("override", 0), currency), _money(r["total"], currency)])
     return _BOM + buf.getvalue()
 
 
@@ -215,8 +227,8 @@ def _title_style():
     return style
 
 
-def statement_to_pdf(statement: dict, lang: str | None = None) -> bytes:
-    rendered = render_statement(statement, lang)
+def statement_to_pdf(statement: dict, lang: str | None = None, currency: str | None = None) -> bytes:
+    rendered = render_statement(statement, lang, currency)
     buf = io.BytesIO()
     # Landscape to fit the wider per-transaction breakdown.
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title=i18n.label("statement_doc", lang))
@@ -240,7 +252,7 @@ def statement_to_pdf(statement: dict, lang: str | None = None) -> bytes:
     return buf.getvalue()
 
 
-def agency_summary_to_pdf(summary: list[dict], lang: str | None = None) -> bytes:
+def agency_summary_to_pdf(summary: list[dict], lang: str | None = None, currency: str | None = None) -> bytes:
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title=i18n.label("summary_doc", lang))
     elems = [Paragraph(i18n.label("summary_title", lang), _title_style()), Spacer(1, 6 * mm)]
@@ -249,8 +261,8 @@ def agency_summary_to_pdf(summary: list[dict], lang: str | None = None) -> bytes
              i18n.label("override_income", lang), i18n.label("total", lang)]]
     for r in summary:
         data.append([r["code"], r["name"], f'L{r["level"]}',
-                     f'{r.get("afyp", 0):,.2f}', f'{r.get("direct", 0):,.2f}',
-                     f'{r.get("override", 0):,.2f}', f'{r["total"]:,.2f}'])
+                     _money(r.get("afyp", 0), currency), _money(r.get("direct", 0), currency),
+                     _money(r.get("override", 0), currency), _money(r["total"], currency)])
     elems.append(_table(data, col_widths=[24 * mm, 46 * mm, 16 * mm, 34 * mm, 34 * mm, 34 * mm, 34 * mm]))
     doc.build(elems)
     return buf.getvalue()

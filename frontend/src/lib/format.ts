@@ -1,17 +1,29 @@
-import { getActiveLang, translate } from "../i18n/LanguageContext";
+import { getActiveLang, getActiveCurrency, translate } from "../i18n/LanguageContext";
 
 function numberLocale(): string {
   return getActiveLang() === "zh-Hant" ? "zh-Hant-HK" : "en-US";
 }
 
-export function money(n: number | string, currency = "USD"): string {
+// FX rates relative to 1 USD. Fixed demo rates — the system carries no live FX.
+export const FX_RATES: Record<string, number> = { USD: 1, HKD: 7.8, EUR: 0.92, GBP: 0.79 };
+
+export function convertCurrency(amount: number, from: string, to: string): number {
+  const rf = FX_RATES[from] ?? 1;
+  const rt = FX_RATES[to] ?? 1;
+  return (amount / rf) * rt;
+}
+
+// Format money in the system-wide display currency, converting from the amount's
+// source currency (default USD, the base the ledger is computed in).
+export function money(n: number | string, sourceCurrency = "USD"): string {
   const v = typeof n === "string" ? Number(n) : n;
   if (v == null || !Number.isFinite(v)) return "—";
+  const display = getActiveCurrency();
   return new Intl.NumberFormat(numberLocale(), {
     style: "currency",
-    currency,
+    currency: display,
     minimumFractionDigits: 2,
-  }).format(v);
+  }).format(convertCurrency(v, sourceCurrency, display));
 }
 
 export function pct(rate: number | string): string {

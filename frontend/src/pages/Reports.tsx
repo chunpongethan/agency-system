@@ -12,11 +12,14 @@ import type { AgencySummaryRow, Product } from "../api/types";
 
 export default function Reports() {
   const { me } = useAuth();
-  const { t, lang } = useI18n();
+  const { t, lang, currency } = useI18n();
   const p = currentPeriod();
   const [start, setStart] = useState(p.start);
   const [end, setEnd] = useState(p.end);
   const [agentId, setAgentId] = useState(me!.id);
+  // The agency summary has its own, independent date range.
+  const [sumStart, setSumStart] = useState(p.start);
+  const [sumEnd, setSumEnd] = useState(p.end);
 
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
   const statement = useQuery({
@@ -24,15 +27,16 @@ export default function Reports() {
     queryFn: () => api.agentStatement(agentId, start, end),
   });
   const summary = useQuery({
-    queryKey: ["report-agency", start, end],
-    queryFn: () => api.agencySummary(start, end),
+    queryKey: ["report-agency", sumStart, sumEnd],
+    queryFn: () => api.agencySummary(sumStart, sumEnd),
   });
   const mix = useQuery({
     queryKey: ["report-mix", start, end],
     queryFn: () => api.productMix(start, end),
   });
 
-  const qsWin = `start=${start}&end=${end}&lang=${lang}`;
+  const qsWin = `start=${start}&end=${end}&lang=${lang}&currency=${currency}`;
+  const qsSum = `start=${sumStart}&end=${sumEnd}&lang=${lang}&currency=${currency}`;
 
   const summaryColumns = useMemo<ColumnDef<AgencySummaryRow, any>[]>(() => [
     { header: t("common.agent"), accessorKey: "name" },
@@ -247,14 +251,22 @@ export default function Reports() {
       </div>
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>{t("reports.agencySummary")}</h2>
-          <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 10 }}>
+          <h2 style={{ margin: 0 }}>{t("reports.agencySummary")}</h2>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+            <div className="shrink" style={{ minWidth: 140 }}>
+              <label style={{ margin: "0 0 4px" }}>{t("reports.from")}</label>
+              <input type="date" value={sumStart} onChange={(e) => setSumStart(e.target.value)} />
+            </div>
+            <div className="shrink" style={{ minWidth: 140 }}>
+              <label style={{ margin: "0 0 4px" }}>{t("reports.to")}</label>
+              <input type="date" value={sumEnd} onChange={(e) => setSumEnd(e.target.value)} />
+            </div>
             <button className="ghost"
-              onClick={() => downloadFile(`/reports/agency/export?format=csv&${qsWin}`,
+              onClick={() => downloadFile(`/reports/agency/export?format=csv&${qsSum}`,
                 "agency_summary.csv")}>{t("reports.downloadCsv")}</button>
             <button className="ghost"
-              onClick={() => downloadFile(`/reports/agency/export?format=pdf&${qsWin}`,
+              onClick={() => downloadFile(`/reports/agency/export?format=pdf&${qsSum}`,
                 "agency_summary.pdf")}>{t("reports.downloadPdf")}</button>
           </div>
         </div>

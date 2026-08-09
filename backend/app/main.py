@@ -648,29 +648,30 @@ def _export_response(content, fmt: str, filename: str):
 
 @app.get("/reports/agent/{agent_id}/export")
 def export_agent_statement(agent_id: int, format: str = "csv", lang: str = "zh-Hant",
+                           currency: str = "USD",
                            start: date | None = None, end: date | None = None,
                            db: Session = Depends(get_db),
                            current: Agent = Depends(get_current_agent)):
     scoping.assert_visible(db, current, agent_id)
     statement = reports.agent_statement(db, agent_id, start, end)
     if format == "pdf":
-        return _export_response(exports.statement_to_pdf(statement, lang), "pdf",
+        return _export_response(exports.statement_to_pdf(statement, lang, currency), "pdf",
                                 f"statement_agent_{agent_id}")
-    return _export_response(exports.statement_to_csv(statement, lang), "csv",
+    return _export_response(exports.statement_to_csv(statement, lang, currency), "csv",
                             f"statement_agent_{agent_id}")
 
 
 @app.get("/reports/agency/export")
-def export_agency_summary(format: str = "csv", lang: str = "zh-Hant",
+def export_agency_summary(format: str = "csv", lang: str = "zh-Hant", currency: str = "USD",
                           start: date | None = None, end: date | None = None,
                           db: Session = Depends(get_db),
                           current: Agent = Depends(get_current_agent)):
     ids = scoping.visible_agent_ids(db, current)
     summary = reports.agency_summary(db, start, end, agent_ids=ids)
     if format == "pdf":
-        return _export_response(exports.agency_summary_to_pdf(summary, lang), "pdf",
+        return _export_response(exports.agency_summary_to_pdf(summary, lang, currency), "pdf",
                                 "agency_summary")
-    return _export_response(exports.agency_summary_to_csv(summary, lang), "csv",
+    return _export_response(exports.agency_summary_to_csv(summary, lang, currency), "csv",
                             "agency_summary")
 
 

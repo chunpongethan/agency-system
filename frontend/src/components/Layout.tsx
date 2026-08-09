@@ -4,6 +4,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import { titleLabel } from "../lib/titles";
 import { roleLabel } from "../i18n/labels";
 import LanguageToggle from "./LanguageToggle";
+import CurrencyToggle from "./CurrencyToggle";
 
 export default function Layout() {
   const { me, logout } = useAuth();
@@ -40,6 +41,7 @@ export default function Layout() {
           {me?.title && <><br />{titleLabel(me.title)}</>}
         </div>
         <LanguageToggle className="sidebar-lang" />
+        <CurrencyToggle className="sidebar-lang" />
         <button className="logout" onClick={logout}>{t("nav.logout")}</button>
       </aside>
       <main className="main">
