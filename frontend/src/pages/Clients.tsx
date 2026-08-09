@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { resolveUnit } from "../lib/agency";
 
 export default function Clients() {
   const { me } = useAuth();
@@ -20,6 +21,8 @@ export default function Clients() {
   });
 
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
+  const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
+  const agentsById = new Map((agents.data ?? []).map((a) => [a.id, a]));
 
   const create = useMutation({
     mutationFn: () =>
@@ -109,21 +112,29 @@ export default function Clients() {
         <table>
           <thead>
             <tr>
-              <th>Name</th><th>Ref</th><th>Risk</th><th>Email</th><th>Owner</th>
+              <th>Name</th><th>Ref</th><th>Risk</th><th>Email</th><th>Owner</th><th>Unit</th>
             </tr>
           </thead>
           <tbody>
-            {clients.data?.map((c) => (
-              <tr key={c.id}>
-                <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
-                <td className="muted">{c.ref}</td>
-                <td>{c.risk_profile ?? "—"}</td>
-                <td className="muted">{c.email ?? "—"}</td>
-                <td className="muted">#{c.agent_id}</td>
-              </tr>
-            ))}
+            {clients.data?.map((c) => {
+              const owner = agentsById.get(c.agent_id);
+              const unit = resolveUnit(owner, agentsById);
+              return (
+                <tr key={c.id}>
+                  <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
+                  <td className="muted">{c.ref}</td>
+                  <td>{c.risk_profile ?? "—"}</td>
+                  <td className="muted">{c.email ?? "—"}</td>
+                  <td>
+                    {owner ? owner.name : `#${c.agent_id}`}{" "}
+                    {owner && <span className="muted">({owner.code})</span>}
+                  </td>
+                  <td>{unit ? <span className="badge unit">{unit}</span> : <span className="muted">—</span>}</td>
+                </tr>
+              );
+            })}
             {clients.data?.length === 0 && (
-              <tr><td colSpan={5} className="muted">No clients in scope.</td></tr>
+              <tr><td colSpan={6} className="muted">No clients in scope.</td></tr>
             )}
           </tbody>
         </table>

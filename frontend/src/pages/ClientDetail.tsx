@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { money } from "../lib/format";
+import { productTypeLabel, productDetails } from "../lib/agency";
 import StatusBadge from "../components/StatusBadge";
 
 export default function ClientDetail() {
@@ -23,6 +24,8 @@ export default function ClientDetail() {
     queryKey: ["clientTxns", clientId],
     queryFn: () => api.clientTransactions(clientId),
   });
+  const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
+  const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
   // Admins can view a client but not edit the profile (owner-only).
   const canEditProfile = !isAdmin;
@@ -123,15 +126,25 @@ export default function ClientDetail() {
           <table>
             <thead>
               <tr>
-                <th>Ref</th><th>Date</th><th className="num">Notional</th>
+                <th>Ref</th><th>Date</th><th>Product</th><th className="num">Notional</th>
                 <th>Status</th>{isAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
-              {txns.data?.map((t) => (
+              {txns.data?.map((t) => {
+                const p = productsById.get(t.product_id);
+                const details = productDetails(p);
+                return (
                 <tr key={t.id}>
                   <td>{t.ref}</td>
                   <td className="muted">{t.trade_date}</td>
+                  <td>
+                    <div>{p ? p.name : `#${t.product_id}`}</div>
+                    <div className="muted" style={{ fontSize: 11 }}>
+                      {p && <span className="badge role" style={{ marginRight: 6 }}>{productTypeLabel(p.type)}</span>}
+                      {details}
+                    </div>
+                  </td>
                   <td className="num">{money(t.notional, t.currency)}</td>
                   <td><StatusBadge status={t.status} /></td>
                   {isAdmin && (
@@ -149,9 +162,10 @@ export default function ClientDetail() {
                     </td>
                   )}
                 </tr>
-              ))}
+                );
+              })}
               {txns.data?.length === 0 && (
-                <tr><td colSpan={isAdmin ? 5 : 4} className="muted">No transactions.</td></tr>
+                <tr><td colSpan={isAdmin ? 6 : 5} className="muted">No transactions.</td></tr>
               )}
             </tbody>
           </table>
