@@ -138,11 +138,17 @@ export default function Reports() {
                   const out: ReactElement[] = [];
                   kinds.forEach((kind) => {
                     const group = entries.filter((e) => e.kind === kind);
+                    const roleLabel: Record<string, string> = {
+                      lead: t("reports.roleLead"), sales_dev: t("reports.roleSalesDev"), closing: t("reports.roleClosing"),
+                    };
                     group.forEach((e, i) => {
                       const detail = productDetails({
                         provider: e.provider, type: e.product_type, payment_tenor: e.payment_tenor,
                         age_min: e.age_min, age_max: e.age_max, professional_investor: e.professional_investor,
                       } as unknown as Product);
+                      const rolesStr = (e.roles ?? [])
+                        .map((r) => `${roleLabel[r.role]}: ${r.name ?? `#${r.agent_id}`} ${r.pct}%`)
+                        .join(" · ");
                       return out.push(
                         <tr key={`${kind}-${i}`}>
                           <td>{i === 0 ? kindLabel(kind) : ""}</td>
@@ -152,6 +158,7 @@ export default function Reports() {
                           <td>
                             <div>{e.product_name} <span className="muted" style={{ fontSize: 11 }}>({productTypeLabel(e.product_type)})</span></div>
                             {detail && <div className="muted" style={{ fontSize: 11 }}>{detail}</div>}
+                            {rolesStr && <div className="muted" style={{ fontSize: 11 }}>{rolesStr}</div>}
                           </td>
                           <td className="num">{money(e.notional)}</td>
                           <td className="num">{e.kind === "override" && e.override_rate ? pct(e.override_rate) : pct(e.commission_rate)}</td>

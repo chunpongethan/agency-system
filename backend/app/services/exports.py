@@ -130,7 +130,10 @@ def render_statement(statement: dict, lang: str | None = None, currency: str | N
         sub_amt = 0.0
         for entry in group:
             detail = i18n.product_detail(entry, lang)
+            roles = i18n.roles_summary(entry, lang)
             product_cell = entry["product_name"] + (f' · {detail}' if detail else "")
+            if roles:
+                product_cell += f'\n{roles}'
             # Show only the rate relevant to this row's income kind.
             rate = entry["override_rate"] if entry.get("override_rate") else entry["commission_rate"]
             rows.append([
@@ -241,7 +244,8 @@ def statement_to_pdf(statement: dict, lang: str | None = None, currency: str | N
     rows = [list(r) for r in rendered["rows"]]
     for i, row in enumerate(rows):
         if i > 0 and row[_PRODUCT_COL]:
-            row[_PRODUCT_COL] = Paragraph(str(row[_PRODUCT_COL]), cell_style)
+            text = str(row[_PRODUCT_COL]).replace("\n", "<br/>")
+            row[_PRODUCT_COL] = Paragraph(text, cell_style)
     elems.append(_table(rows,
                         col_widths=[24 * mm, 24 * mm, 26 * mm, 38 * mm, 66 * mm,
                                     32 * mm, 26 * mm, 32 * mm],

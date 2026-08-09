@@ -74,6 +74,12 @@ def agent_statement(session: Session, agent_id: int,
             Product.professional_investor,
             Product.age_min,
             Product.age_max,
+            Transaction.agent_id,
+            Transaction.lead_agent_id,
+            Transaction.sales_dev_agent_id,
+            Transaction.lead_pct,
+            Transaction.sales_dev_pct,
+            Transaction.closing_pct,
             CommissionEntry.kind,
             func.max(CommissionEntry.rate),
             func.max(CommissionEntry.level_gap),
@@ -88,14 +94,34 @@ def agent_statement(session: Session, agent_id: int,
             Transaction.notional, Client.name, Product.name, Product.type, Product.provider,
             Product.base_commission_rate, Product.payment_tenor,
             Product.professional_investor, Product.age_min, Product.age_max,
+            Transaction.agent_id, Transaction.lead_agent_id, Transaction.sales_dev_agent_id,
+            Transaction.lead_pct, Transaction.sales_dev_pct, Transaction.closing_pct,
         )
         .order_by(CommissionEntry.kind, Transaction.ref)
     )
     eq = _window(eq, start, end)
+
+    # Resolve agent names/codes once for the role breakdown.
+    all_agents = {a.id: a for a in session.execute(select(Agent)).scalars()}
+
+    def _role(role: str, aid: int | None, pct) -> dict:
+        a = all_agents.get(aid)
+        return {"role": role, "agent_id": aid,
+                "name": a.name if a else None, "code": a.code if a else None,
+                "pct": float(pct or 0)}
+
     entries = []
     for (ref, tdate, notional, client_name, pname, ptype, provider, base_rate,
-         tenor, pro_inv, age_min, age_max, kind, entry_rate, level_gap, amount) in session.execute(eq):
+         tenor, pro_inv, age_min, age_max, closing_id, lead_id, sales_dev_id,
+         lead_pct, sales_dev_pct, closing_pct,
+         kind, entry_rate, level_gap, amount) in session.execute(eq):
         is_override = kind == CommissionKind.OVERRIDE
+        # lead / sales-dev fall back to the closing agent when unset.
+        roles = [
+            _role("lead", lead_id or closing_id, lead_pct),
+            _role("sales_dev", sales_dev_id or closing_id, sales_dev_pct),
+            _role("closing", closing_id, closing_pct if closing_pct is not None else 100),
+        ]
         entries.append({
             "transaction_ref": ref,
             "trade_date": str(tdate),
@@ -113,6 +139,7 @@ def agent_statement(session: Session, agent_id: int,
             "override_rate": str(entry_rate) if is_override else None,
             "level_gap": int(level_gap) if is_override else None,
             "amount": float(Decimal(amount)),
+            "roles": roles,
         })
 
     agent = session.get(Agent, agent_id)

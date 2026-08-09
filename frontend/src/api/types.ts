@@ -127,6 +127,14 @@ export interface StatementLine {
   amount: number;
 }
 
+export interface StatementRole {
+  role: "lead" | "sales_dev" | "closing";
+  agent_id: number | null;
+  name: string | null;
+  code: string | null;
+  pct: number;
+}
+
 export interface StatementEntry {
   transaction_ref: string;
   trade_date: string;
@@ -144,6 +152,7 @@ export interface StatementEntry {
   override_rate: string | null;
   level_gap: number | null;
   amount: number;
+  roles: StatementRole[];
 }
 
 export interface AgentStatement {

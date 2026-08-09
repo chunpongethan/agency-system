@@ -30,6 +30,9 @@ _LABELS: dict[str, dict[str, str]] = {
         "tenor_fmt": "{n}年供款期",
         "age_fmt": "年齡{min}–{max}",
         "pi_only": "僅限專業投資者",
+        "role_lead": "Lead",
+        "role_sales_dev": "Sales Dev",
+        "role_closing": "Closing",
         "direct_total": "直接佣金合計",
         "override_total": "越級佣金合計",
         "grand_total": "總計",
@@ -66,6 +69,9 @@ _LABELS: dict[str, dict[str, str]] = {
         "tenor_fmt": "{n}-yr tenor",
         "age_fmt": "age {min}–{max}",
         "pi_only": "PI only",
+        "role_lead": "Lead",
+        "role_sales_dev": "Sales Dev",
+        "role_closing": "Closing",
         "direct_total": "Direct total",
         "override_total": "Override total",
         "grand_total": "Grand total",
@@ -108,6 +114,20 @@ def label(key: str, lang: str | None = None) -> str:
 def enum_label(kind: str, value: str, lang: str | None = None) -> str:
     table = _ENUMS.get(kind, {}).get(_norm(lang), {})
     return table.get(value, value)
+
+
+_ROLE_LABEL_KEY = {"lead": "role_lead", "sales_dev": "role_sales_dev", "closing": "role_closing"}
+
+
+def roles_summary(entry: dict, lang: str | None = None) -> str:
+    """One-line 'Lead: Name 20% · Sales Dev: Name 30% · Closing: Name 50%'."""
+    parts = []
+    for r in entry.get("roles", []):
+        who = r.get("name") or (f'#{r.get("agent_id")}' if r.get("agent_id") else "—")
+        pct = r.get("pct", 0)
+        pct_txt = f'{pct:g}%'
+        parts.append(f'{label(_ROLE_LABEL_KEY.get(r["role"], r["role"]), lang)}: {who} {pct_txt}')
+    return " · ".join(parts)
 
 
 def product_detail(entry: dict, lang: str | None = None) -> str:
