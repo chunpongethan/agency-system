@@ -4,7 +4,9 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { money, currentPeriod, yearToDate } from "../lib/format";
+import { productTypeLabel, productDetails } from "../lib/agency";
 import StatusBadge from "../components/StatusBadge";
+import Scorecard from "../components/Scorecard";
 
 type View = "month" | "ytd";
 
@@ -33,6 +35,11 @@ export default function Dashboard() {
     queryFn: () => api.agencySummary(win.start, win.end),
     enabled: isManager,
   });
+  const teamCards = useQuery({
+    queryKey: ["teamScorecards"],
+    queryFn: () => api.teamScorecards(),
+    enabled: isManager,
+  });
   const clients = useQuery({
     queryKey: ["agentClients", agentId],
     queryFn: () => api.agentClients(agentId),
@@ -41,6 +48,8 @@ export default function Dashboard() {
     queryKey: ["agentTxns", agentId],
     queryFn: () => api.agentTransactions(agentId),
   });
+  const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
+  const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
   const teamTotal = (team.data ?? []).reduce((s, r) => s + r.total, 0);
 
@@ -61,57 +70,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {scorecard.data && (() => {
-        const p = scorecard.data.periods;
-        const rows: { label: string; key: "afyp" | "direct" | "override" }[] = [
-          { label: "AFYP", key: "afyp" },
-          { label: "Comm.", key: "direct" },
-          { label: "Override", key: "override" },
-        ];
-        return (
-          <div className="card" style={{ marginTop: 18 }}>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 24, alignItems: "baseline", marginBottom: 14 }}>
-              <div>
-                <span className="muted" style={{ fontSize: 12 }}>Agent</span><br />
-                <strong>{scorecard.data.agent.name}</strong>{" "}
-                <span className="muted">({scorecard.data.agent.code})</span>
-              </div>
-              <div>
-                <span className="muted" style={{ fontSize: 12 }}>Manager</span><br />
-                {scorecard.data.manager
-                  ? <>{scorecard.data.manager.name} <span className="muted">({scorecard.data.manager.code})</span></>
-                  : <span className="muted">—</span>}
-              </div>
-              <div>
-                <span className="muted" style={{ fontSize: 12 }}>District</span><br />
-                {scorecard.data.district
-                  ? <span className="badge unit">{scorecard.data.district}</span>
-                  : <span className="muted">—</span>}
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th></th>
-                  <th className="num">YTD</th>
-                  <th className="num">Last month</th>
-                  <th className="num">Current month</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={r.key}>
-                    <td><strong>{r.label}</strong></td>
-                    <td className="num">{money(p.ytd[r.key])}</td>
-                    <td className="num">{money(p.last_month[r.key])}</td>
-                    <td className="num">{money(p.current_month[r.key])}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      })()}
+      {scorecard.data && (
+        <div style={{ marginTop: 18 }}>
+          <Scorecard data={scorecard.data} />
+        </div>
+      )}
 
       <div className="grid cols-3" style={{ marginTop: 18 }}>
         <div className="stat">
@@ -175,6 +138,19 @@ export default function Dashboard() {
         </div>
       )}
 
+      {isManager && (
+        <div style={{ marginTop: 18 }}>
+          <h2 style={{ fontSize: 15, margin: "0 0 12px" }}>Team member scorecards</h2>
+          {teamCards.isLoading && <div className="spinner">Loading…</div>}
+          {(teamCards.data ?? [])
+            .filter((c) => c.agent.id !== agentId)
+            .map((c) => <Scorecard key={c.agent.id} data={c} compact />)}
+          {teamCards.data && teamCards.data.filter((c) => c.agent.id !== agentId).length === 0 && (
+            <div className="card"><span className="muted">No team members in your line yet.</span></div>
+          )}
+        </div>
+      )}
+
       <div className="grid cols-2" style={{ marginTop: 18 }}>
         <div className="card">
           <h2>My clients ({clients.data?.length ?? 0})</h2>
@@ -201,20 +177,31 @@ export default function Dashboard() {
           <table>
             <thead>
               <tr>
-                <th>Ref</th><th>Date</th><th className="num">Notional</th><th>Status</th>
+                <th>Ref</th><th>Date</th><th>Product</th><th className="num">Notional</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {txns.data?.slice(0, 8).map((t) => (
-                <tr key={t.id}>
-                  <td>{t.ref}</td>
-                  <td className="muted">{t.trade_date}</td>
-                  <td className="num">{money(t.notional, t.currency)}</td>
-                  <td><StatusBadge status={t.status} /></td>
-                </tr>
-              ))}
+              {txns.data?.slice(0, 8).map((t) => {
+                const p = productsById.get(t.product_id);
+                const details = productDetails(p);
+                return (
+                  <tr key={t.id}>
+                    <td>{t.ref}</td>
+                    <td className="muted">{t.trade_date}</td>
+                    <td>
+                      <div>{p ? p.name : `#${t.product_id}`}</div>
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        {p && <span className="badge role" style={{ marginRight: 6 }}>{productTypeLabel(p.type)}</span>}
+                        {details}
+                      </div>
+                    </td>
+                    <td className="num">{money(t.notional, t.currency)}</td>
+                    <td><StatusBadge status={t.status} /></td>
+                  </tr>
+                );
+              })}
               {txns.data?.length === 0 && (
-                <tr><td className="muted">No transactions yet.</td></tr>
+                <tr><td colSpan={5} className="muted">No transactions yet.</td></tr>
               )}
             </tbody>
           </table>

@@ -560,6 +560,14 @@ def report_agent_scorecard(agent_id: int, db: Session = Depends(get_db),
     return reports.agent_scorecard(db, agent_id)
 
 
+@app.get("/reports/team-scorecards")
+def report_team_scorecards(db: Session = Depends(get_db),
+                           current: Agent = Depends(get_current_agent)):
+    """Scorecards for every agent in the caller's visible line (self + subtree)."""
+    ids = scoping.visible_agent_ids(db, current)
+    return reports.team_scorecards(db, ids)
+
+
 @app.post("/reports/recompute")
 def recompute(db: Session = Depends(get_db),
               current: Agent = Depends(require_admin)):

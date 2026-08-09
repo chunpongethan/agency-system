@@ -139,6 +139,7 @@ export const api = {
   teamProduction: () => request<TeamProductionRow[]>("/reports/team-production"),
   agentScorecard: (id: number) =>
     request<AgentScorecard>(`/reports/agent/${id}/scorecard`),
+  teamScorecards: () => request<AgentScorecard[]>("/reports/team-scorecards"),
   recompute: () => request<{ entries: number }>("/reports/recompute", { method: "POST" }),
 
   // Periods

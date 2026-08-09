@@ -204,6 +204,14 @@ def agent_scorecard(session: Session, agent_id: int) -> dict:
     }
 
 
+def team_scorecards(session: Session, agent_ids: set[int]) -> list[dict]:
+    """A scorecard per agent (identity, manager, district, 3-period AFYP/comm/
+    override), ordered by YTD AFYP descending."""
+    cards = [agent_scorecard(session, aid) for aid in agent_ids]
+    cards.sort(key=lambda c: c["periods"]["ytd"]["afyp"], reverse=True)
+    return cards
+
+
 def team_production(session: Session, agent_ids: set[int]) -> list[dict]:
     """Per-agent AFYP + commission for YTD / last month / current month."""
     windows = three_period_windows()
