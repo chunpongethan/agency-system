@@ -109,10 +109,14 @@ export default function Dashboard() {
             </span>
           </div>
           {team.isLoading && <div className="spinner">{t("common.loading")}</div>}
+          <div style={{ overflowX: "auto" }}>
           <table>
             <thead>
               <tr>
                 <th>{t("dashboard.thRank")}</th><th>{t("common.agent")}</th><th>{t("common.code")}</th><th>{t("common.level")}</th>
+                <th className="num">{t("common.afyp")}</th>
+                <th className="num">{t("common.commission")}</th>
+                <th className="num">{t("common.override")}</th>
                 <th className="num">{t("dashboard.thProduction")}</th><th className="num">{t("dashboard.thShare")}</th>
               </tr>
             </thead>
@@ -123,6 +127,9 @@ export default function Dashboard() {
                   <td>{r.name}{r.agent_id === agentId ? t("dashboard.you") : ""}</td>
                   <td className="muted">{r.code}</td>
                   <td>L{r.level}</td>
+                  <td className="num">{money(r.afyp)}</td>
+                  <td className="num">{money(r.direct)}</td>
+                  <td className="num">{money(r.override)}</td>
                   <td className="num">{money(r.total)}</td>
                   <td className="num muted">
                     {teamTotal > 0 ? `${((r.total / teamTotal) * 100).toFixed(1)}%` : "—"}
@@ -130,10 +137,11 @@ export default function Dashboard() {
                 </tr>
               ))}
               {team.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
+                <tr><td colSpan={9} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
               )}
             </tbody>
           </table>
+          </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             {t("dashboard.teamNote1")}<Link to="/hierarchy">{t("nav.hierarchy")}</Link>{t("dashboard.teamNote2")}
           </p>
