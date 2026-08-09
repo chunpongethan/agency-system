@@ -55,6 +55,9 @@ export default function Dashboard() {
   const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
   const teamTotal = (team.data ?? []).reduce((s, r) => s + r.total, 0);
+  const teamAfyp = (team.data ?? []).reduce((s, r) => s + r.afyp, 0);
+  const teamDirect = (team.data ?? []).reduce((s, r) => s + r.direct, 0);
+  const teamOverride = (team.data ?? []).reduce((s, r) => s + r.override, 0);
 
   return (
     <div>
@@ -140,6 +143,18 @@ export default function Dashboard() {
                 <tr><td colSpan={9} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
               )}
             </tbody>
+            {team.data && team.data.length > 0 && (
+              <tfoot>
+                <tr style={{ fontWeight: 700 }}>
+                  <td colSpan={4}>{t("hierarchy.teamTotal")}</td>
+                  <td className="num">{money(teamAfyp)}</td>
+                  <td className="num">{money(teamDirect)}</td>
+                  <td className="num">{money(teamOverride)}</td>
+                  <td className="num">{money(teamTotal)}</td>
+                  <td className="num muted">100%</td>
+                </tr>
+              </tfoot>
+            )}
           </table>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
