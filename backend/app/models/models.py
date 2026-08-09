@@ -94,6 +94,8 @@ class Agent(Base):
     level: Mapped[int] = mapped_column(Integer)
     # Business rank/position, assigned by an admin (nullable for legacy rows).
     title: Mapped[Title | None] = mapped_column(Enum(Title), nullable=True)
+    # Unit/team code — a manager heads a unit identified by this code.
+    unit_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
     upline_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     joined_at: Mapped[date] = mapped_column(Date, default=date.today)
@@ -135,6 +137,8 @@ class Product(Base):
     provider: Mapped[str | None] = mapped_column(String(120), nullable=True)
     # Base commission the closing agent earns, as a rate on the notional/premium.
     base_commission_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), default=Decimal("0"))
+    # AFYP (Annualised First-Year Premium) conversion: AFYP = notional × this rate.
+    afyp_conversion: Mapped[Decimal] = mapped_column(Numeric(6, 4), default=Decimal("1"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # --- Trail schedule (decision 2) ---

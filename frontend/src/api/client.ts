@@ -4,6 +4,7 @@
 import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
+  TeamProductionRow,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -77,7 +78,7 @@ export const api = {
   downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
   createAgent: (payload: Partial<Agent> & { password?: string }) =>
     request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
-  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "role" | "is_active">>) =>
+  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "role" | "is_active">>) =>
     request<Agent>(`/agents/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
 
   // Clients
@@ -135,6 +136,7 @@ export const api = {
     request<AgentStatement>(`/reports/agent/${id}${qs({ start, end })}`),
   agencySummary: (start?: string, end?: string) =>
     request<AgencySummaryRow[]>(`/reports/agency${qs({ start, end })}`),
+  teamProduction: () => request<TeamProductionRow[]>("/reports/team-production"),
   recompute: () => request<{ entries: number }>("/reports/recompute", { method: "POST" }),
 
   // Periods

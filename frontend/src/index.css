@@ -75,6 +75,7 @@ tbody tr:hover { background: #fafafa; }
 .badge.cancelled { background: #fef2f2; color: var(--bad); }
 .badge.role { background: var(--accent-soft); color: var(--accent); }
 .badge.title { background: #f5f3ff; color: #7c3aed; }
+.badge.unit { background: #ecfeff; color: #0e7490; }
 
 label { display: block; font-size: 13px; margin: 12px 0 4px; color: #374151; font-weight: 500; }
 input, select, textarea {
@@ -159,3 +160,5 @@ button.ghost:hover { background: #f9fafb; }
 .node .lvl { font-size: 11px; color: var(--muted); flex-shrink: 0; }
 .node .prod { font-weight: 700; font-variant-numeric: tabular-nums; }
 .node .node-meta { font-size: 11px; }
+.node-metric { font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; margin-left: 4px; }
+.node-metric .metric-label { font-size: 10px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .03em; margin-right: 3px; }

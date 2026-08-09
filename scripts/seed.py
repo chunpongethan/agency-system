@@ -40,13 +40,16 @@ db.add(admin); db.flush()
 # visibility; titles are the assigned business rank. The A-line runs 5 deep to
 # exercise the gap-4 override and unlimited depth. The top is a MANAGER, not admin.
 md = Agent(code="A001", name="Grace Chan", email="grace@agency.hk", level=AgentLevel.L1,
-           role=Role.MANAGER, title=Title.PRINCIPAL_PARTNER, password_hash=hash_password(DEMO_PASSWORD))
+           role=Role.MANAGER, title=Title.PRINCIPAL_PARTNER, unit_code="HQ",
+           password_hash=hash_password(DEMO_PASSWORD))
 db.add(md); db.flush()
 sm = Agent(code="A002", name="Leo Wong", email="leo@agency.hk", level=AgentLevel.L2, upline_id=md.id,
-           role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, password_hash=hash_password(DEMO_PASSWORD))
+           role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, unit_code="U-LEO",
+           password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm); db.flush()
 mgr = Agent(code="A003", name="Priya Shah", email="priya@agency.hk", level=AgentLevel.L3, upline_id=sm.id,
-            role=Role.MANAGER, title=Title.DISTRICT_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+            role=Role.MANAGER, title=Title.DISTRICT_MANAGER, unit_code="U-PRIYA",
+            password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr); db.flush()
 agent = Agent(code="A004", name="Tom Ng", email="tom@agency.hk", level=AgentLevel.L4, upline_id=mgr.id,
               role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
@@ -58,10 +61,12 @@ db.add(sub); db.flush()
 
 # A second line under the same L1 to exercise scoping isolation.
 sm2 = Agent(code="A005", name="Nadia Rahman", email="nadia@agency.hk", level=AgentLevel.L2, upline_id=md.id,
-            role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, password_hash=hash_password(DEMO_PASSWORD))
+            role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, unit_code="U-NADIA",
+            password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm2); db.flush()
 mgr2 = Agent(code="A006", name="Ken Ito", email="ken@agency.hk", level=AgentLevel.L3, upline_id=sm2.id,
-             role=Role.MANAGER, title=Title.DISTRICT_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
+             role=Role.MANAGER, title=Title.DISTRICT_MANAGER, unit_code="U-KEN",
+             password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr2); db.flush()
 agent2 = Agent(code="A007", name="Sara Lim", email="sara@agency.hk", level=AgentLevel.L4, upline_id=mgr2.id,
                role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
@@ -70,18 +75,23 @@ db.add(agent2); db.flush()
 # Products
 prods = {
     # Base (upfront) rate = Yr1 commission (0.05) for insurance products.
+    # afyp_conversion: AFYP = notional × this rate.
     "insurance": Product(code="INS-WL", name="Whole Life Plan", type=ProductType.INSURANCE,
                          provider="Sun Life", base_commission_rate=Decimal("0.0500"),
+                         afyp_conversion=Decimal("1.0000"),
                          payment_tenor=10, professional_investor=False, age_min=0, age_max=70,
                          year_commissions=["0.05", "0.03", "0.02", "0.02", "0.01",
                                            "0.01", "0.01", "0.005", "0.005", "0.005"]),
     "fund": Product(code="FND-GEQ", name="Global Equity Fund", type=ProductType.FUND,
-                    provider="BlackRock", base_commission_rate=Decimal("0.0100")),
+                    provider="BlackRock", base_commission_rate=Decimal("0.0100"),
+                    afyp_conversion=Decimal("0.1000")),
     "eam": Product(code="EAM-DPM", name="Discretionary EAM Account", type=ProductType.EAM_ACCOUNT,
-                   provider="Julius Baer", base_commission_rate=Decimal("0.0075")),
+                   provider="Julius Baer", base_commission_rate=Decimal("0.0075"),
+                   afyp_conversion=Decimal("0.1000")),
     # A trail product: pays 0.25% of notional per quarter for 4 quarters.
     "trail": Product(code="FND-TRL", name="Managed Income Fund (Trail)", type=ProductType.FUND,
                      provider="PIMCO", base_commission_rate=Decimal("0.0025"),
+                     afyp_conversion=Decimal("0.1000"),
                      commission_schedule=CommissionSchedule.TRAIL,
                      trail_frequency=TrailFrequency.QUARTERLY, trail_periods=4),
 }

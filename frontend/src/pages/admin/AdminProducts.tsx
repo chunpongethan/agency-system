@@ -20,6 +20,7 @@ interface PForm {
   type: string;
   provider: string;
   base_commission_rate: string;
+  afyp_conversion: string;
   commission_schedule: string;
   trail_frequency: string;
   trail_periods: string;
@@ -33,7 +34,7 @@ const emptyIns = (): InsDetails => ({
 
 const emptyForm = (): PForm => ({
   code: "", name: "", type: "insurance", provider: "",
-  base_commission_rate: "0.05", commission_schedule: "upfront",
+  base_commission_rate: "0.05", afyp_conversion: "1", commission_schedule: "upfront",
   trail_frequency: "monthly", trail_periods: "12", ins: emptyIns(),
 });
 
@@ -42,6 +43,7 @@ function formFromProduct(p: Product): PForm {
   return {
     code: p.code, name: p.name, type: p.type, provider: p.provider ?? "",
     base_commission_rate: p.base_commission_rate,
+    afyp_conversion: p.afyp_conversion,
     commission_schedule: p.commission_schedule,
     trail_frequency: p.trail_frequency ?? "monthly",
     trail_periods: p.trail_periods != null ? String(p.trail_periods) : "12",
@@ -61,6 +63,7 @@ function buildPayload(f: PForm, forCreate: boolean): Record<string, unknown> {
     name: f.name,
     provider: f.provider || undefined,
     commission_schedule: f.commission_schedule,
+    afyp_conversion: f.afyp_conversion,
     // For insurance the base rate is the Yr1 commission; the backend enforces this too.
     base_commission_rate: isIns ? (f.ins.yearComm[0]?.trim() || "0") : f.base_commission_rate,
   };
@@ -118,6 +121,9 @@ function ProductFields({ value, onChange, isEdit }:
             <input value={value.base_commission_rate}
               onChange={(e) => onChange({ ...value, base_commission_rate: e.target.value })} /></div>
         )}
+        <div><label>AFYP conversion (e.g. 1 = 100%)</label>
+          <input value={value.afyp_conversion}
+            onChange={(e) => onChange({ ...value, afyp_conversion: e.target.value })} /></div>
         <div><label>Schedule</label>
           <select value={value.commission_schedule}
             onChange={(e) => onChange({ ...value, commission_schedule: e.target.value })}>
@@ -245,7 +251,7 @@ export default function AdminProducts() {
           <thead>
             <tr>
               <th>Code</th><th>Name</th><th>Type</th><th className="num">Base rate</th>
-              <th>Schedule</th><th>Insurance details</th><th></th>
+              <th className="num">AFYP conv.</th><th>Schedule</th><th>Insurance details</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -253,6 +259,7 @@ export default function AdminProducts() {
               <tr key={p.id}>
                 <td>{p.code}</td><td>{p.name}</td><td>{p.type}</td>
                 <td className="num">{pct(p.base_commission_rate)}</td>
+                <td className="num">{pct(p.afyp_conversion)}</td>
                 <td>{p.commission_schedule}</td>
                 <td className="muted" style={{ fontSize: 12 }}>
                   {p.type === "insurance"

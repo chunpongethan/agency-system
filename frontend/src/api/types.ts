@@ -16,6 +16,7 @@ export interface Me {
   level: number;
   role: Role;
   title: Title | null;
+  unit_code: string | null;
   upline_id: number | null;
 }
 
@@ -28,7 +29,20 @@ export interface Agent {
   upline_id: number | null;
   role: Role;
   title: Title | null;
+  unit_code: string | null;
   is_active: boolean;
+}
+
+export interface PeriodProduction {
+  afyp: number;
+  commission: number;
+}
+
+export interface TeamProductionRow {
+  agent_id: number;
+  ytd: PeriodProduction;
+  last_month: PeriodProduction;
+  current_month: PeriodProduction;
 }
 
 export interface Client {
@@ -50,6 +64,7 @@ export interface Product {
   type: string;
   provider: string | null;
   base_commission_rate: string;
+  afyp_conversion: string;
   commission_schedule: string;
   trail_frequency: string | null;
   trail_periods: number | null;

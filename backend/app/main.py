@@ -559,6 +559,14 @@ def recompute(db: Session = Depends(get_db),
     return {"entries": commission_engine.recompute_all(db)}
 
 
+@app.get("/reports/team-production")
+def report_team_production(db: Session = Depends(get_db),
+                           current: Agent = Depends(get_current_agent)):
+    """Per-agent AFYP + commission for YTD / last month / current month, scoped."""
+    ids = scoping.visible_agent_ids(db, current)
+    return reports.team_production(db, ids)
+
+
 @app.post("/accruals/run")
 def run_accruals(as_of: date | None = None, db: Session = Depends(get_db),
                  current: Agent = Depends(require_admin)):

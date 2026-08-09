@@ -26,6 +26,7 @@ class MeOut(BaseModel):
     level: int
     role: str
     title: str | None = None
+    unit_code: str | None = None
     upline_id: int | None = None
 
 
@@ -38,6 +39,7 @@ class AgentIn(BaseModel):
     upline_id: int | None = None
     role: str = "agent"
     title: str | None = None
+    unit_code: str | None = None
     password: str | None = None
 
 
@@ -45,6 +47,7 @@ class AgentUpdate(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
     title: str | None = None
+    unit_code: str | None = None
     role: str | None = None
     is_active: bool | None = None
 
@@ -59,6 +62,7 @@ class AgentOut(BaseModel):
     upline_id: int | None = None
     role: str
     title: str | None = None
+    unit_code: str | None = None
     is_active: bool
 
 
@@ -94,6 +98,7 @@ class ProductIn(BaseModel):
     type: str
     provider: str | None = None
     base_commission_rate: Decimal
+    afyp_conversion: Decimal | None = None
     commission_schedule: str = "upfront"
     trail_frequency: str | None = None
     trail_periods: int | None = None
@@ -109,6 +114,7 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     provider: str | None = None
     base_commission_rate: Decimal | None = None
+    afyp_conversion: Decimal | None = None
     commission_schedule: str | None = None
     trail_frequency: str | None = None
     trail_periods: int | None = None
@@ -128,6 +134,7 @@ class ProductOut(BaseModel):
     type: str
     provider: str | None = None
     base_commission_rate: Decimal
+    afyp_conversion: Decimal
     commission_schedule: str
     trail_frequency: str | None = None
     trail_periods: int | None = None
