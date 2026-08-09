@@ -33,16 +33,52 @@ def _period_entries(session: Session, year: int, month: int) -> list[tuple[Commi
     return [(e, t) for (e, t) in rows if _entry_period(e, t) == (year, month)]
 
 
-def _summarise(entries: list[CommissionEntry]) -> tuple[list[dict], Decimal]:
+def _summarise(session: Session, entries: list[CommissionEntry]) -> tuple[list[dict], Decimal]:
     per_agent: dict[int, Decimal] = {}
     for e in entries:
         per_agent[e.agent_id] = per_agent.get(e.agent_id, Decimal("0")) + e.amount
     total = sum(per_agent.values(), Decimal("0"))
-    payable = [
-        {"agent_id": aid, "total": amt}
-        for aid, amt in sorted(per_agent.items())
-    ]
+
+    by_id: dict[int, Agent] = {}
+    if per_agent:
+        rows = session.execute(select(Agent)).scalars().all()
+        by_id = {a.id: a for a in rows}
+
+    def resolve_unit(a: Agent | None) -> str | None:
+        # An agent's unit is its own (if a manager with a code) otherwise the
+        # nearest upline manager's unit code.
+        seen: set[int] = set()
+        while a is not None and a.id not in seen:
+            if a.unit_code:
+                return a.unit_code
+            seen.add(a.id)
+            a = by_id.get(a.upline_id) if a.upline_id else None
+        return None
+
+    payable = []
+    for aid, amt in sorted(per_agent.items()):
+        a = by_id.get(aid)
+        payable.append({
+            "agent_id": aid,
+            "agent_name": a.name if a else None,
+            "agent_code": a.code if a else None,
+            "unit_code": resolve_unit(a),
+            "total": amt,
+        })
     return payable, total
+
+
+def _payable_out(payable: list[dict]) -> list[dict]:
+    return [
+        {
+            "agent_id": p["agent_id"],
+            "agent_name": p["agent_name"],
+            "agent_code": p["agent_code"],
+            "unit_code": p["unit_code"],
+            "total": float(p["total"]),
+        }
+        for p in payable
+    ]
 
 
 def run_payout(session: Session, year: int, month: int) -> dict:
@@ -66,7 +102,7 @@ def run_payout(session: Session, year: int, month: int) -> dict:
 
     # Summary covers everything ever paid for this period (stable across reruns).
     paid_entries = [e for (e, _t) in all_in_period if e.payout_id is not None]
-    payable, total = _summarise(paid_entries)
+    payable, total = _summarise(session, paid_entries)
     if payout is not None:
         payout.total_amount = total
         session.commit()
@@ -77,7 +113,7 @@ def run_payout(session: Session, year: int, month: int) -> dict:
         "period": f"{year}-{month:02d}",
         "payout_id": payout.id if payout else None,
         "new_entries_paid": new_count,
-        "payable": [{"agent_id": p["agent_id"], "total": float(p["total"])} for p in payable],
+        "payable": _payable_out(payable),
         "total": float(total),
     }
 
@@ -86,13 +122,13 @@ def payout_summary(session: Session, year: int, month: int) -> dict:
     """Read-only view of a period's payout without mutating anything."""
     all_in_period = _period_entries(session, year, month)
     paid_entries = [e for (e, _t) in all_in_period if e.payout_id is not None]
-    payable, total = _summarise(paid_entries)
+    payable, total = _summarise(session, paid_entries)
     payout = session.execute(
         select(Payout).where(Payout.year == year, Payout.month == month)
     ).scalars().first()
     return {
         "period": f"{year}-{month:02d}",
         "payout_id": payout.id if payout else None,
-        "payable": [{"agent_id": p["agent_id"], "total": float(p["total"])} for p in payable],
+        "payable": _payable_out(payable),
         "total": float(total),
     }

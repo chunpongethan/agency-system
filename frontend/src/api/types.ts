@@ -140,7 +140,13 @@ export interface PayoutResult {
   period: string;
   payout_id: number | null;
   new_entries_paid: number;
-  payable: { agent_id: number; total: number }[];
+  payable: {
+    agent_id: number;
+    agent_name: string | null;
+    agent_code: string | null;
+    unit_code: string | null;
+    total: number;
+  }[];
   total: number;
 }
 

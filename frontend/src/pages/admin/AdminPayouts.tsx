@@ -68,11 +68,20 @@ export default function AdminPayouts() {
                 total {money(payout.total)}
               </div>
               <table>
-                <thead><tr><th>Agent</th><th className="num">Payable</th></tr></thead>
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Code</th>
+                    <th>Unit</th>
+                    <th className="num">Payable</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {payout.payable.map((p) => (
                     <tr key={p.agent_id}>
-                      <td>#{p.agent_id}</td>
+                      <td>{p.agent_name ?? `#${p.agent_id}`}</td>
+                      <td className="muted">{p.agent_code ?? "—"}</td>
+                      <td>{p.unit_code ? <span className="badge unit">{p.unit_code}</span> : <span className="muted">—</span>}</td>
                       <td className="num">{money(p.total)}</td>
                     </tr>
                   ))}
