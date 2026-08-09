@@ -1,12 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "../../api/client";
+import { api, errorText } from "../../api/client";
+import { useI18n } from "../../i18n/LanguageContext";
 import { pct } from "../../lib/format";
+import { productTypeLabel, PRODUCT_TYPES } from "../../i18n/labels";
 import type { OverrideRule } from "../../api/types";
 
-const PRODUCT_TYPES = ["insurance", "fund", "eam_account", "other"];
-
 export default function AdminRules() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const rules = useQuery({ queryKey: ["overrideRules"], queryFn: () => api.overrideRules() });
 
@@ -26,7 +27,7 @@ export default function AdminRules() {
         valid_to: rule.valid_to || undefined,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["overrideRules"] }); setRuleErr(null); },
-    onError: (e) => setRuleErr(e instanceof ApiError ? e.message : "Failed"),
+    onError: (e) => setRuleErr(errorText(e, t) || t("admin.rules.failed")),
   });
 
   // --- Edit ---
@@ -41,7 +42,7 @@ export default function AdminRules() {
         valid_to: editForm.valid_to || null,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["overrideRules"] }); setEditId(null); setEditErr(null); },
-    onError: (e) => setEditErr(e instanceof ApiError ? e.message : "Failed"),
+    onError: (e) => setEditErr(errorText(e, t) || t("admin.rules.failed")),
   });
 
   // --- Delete ---
@@ -49,7 +50,7 @@ export default function AdminRules() {
   const removeRule = useMutation({
     mutationFn: (id: number) => api.deleteOverrideRule(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["overrideRules"] }); },
-    onError: (e) => setRowMsg(e instanceof ApiError ? e.message : "Delete failed"),
+    onError: (e) => setRowMsg(errorText(e, t) || t("admin.rules.deleteFailed")),
   });
 
   function startEdit(r: OverrideRule) {
@@ -62,7 +63,7 @@ export default function AdminRules() {
     setEditErr(null);
   }
   function confirmDelete(r: OverrideRule) {
-    if (window.confirm(`Delete the ${r.product_type} gap-${r.level_gap} rule (${pct(r.override_rate)})?`)) {
+    if (window.confirm(t("admin.rules.confirmDelete", { type: productTypeLabel(r.product_type), gap: r.level_gap, rate: pct(r.override_rate) }))) {
       removeRule.mutate(r.id);
     }
   }
@@ -71,32 +72,30 @@ export default function AdminRules() {
 
   return (
     <div>
-      <h1 className="page-title">Override rules</h1>
-      <p className="page-sub">
-        An upline earns this percentage of the closing agent's commission, by level gap (1st–4th upline).
-      </p>
+      <h1 className="page-title">{t("admin.rules.title")}</h1>
+      <p className="page-sub">{t("admin.rules.subtitle")}</p>
 
       <div className="card">
-        <h2>Current rules</h2>
+        <h2>{t("admin.rules.current")}</h2>
         {rowMsg && <div className="error">{rowMsg}</div>}
         <table>
           <thead>
             <tr>
-              <th>Product type</th><th>Gap</th><th className="num">Rate (of commission)</th>
-              <th>Valid from</th><th>Valid to</th><th></th>
+              <th>{t("admin.rules.thProductType")}</th><th>{t("admin.rules.thGap")}</th><th className="num">{t("admin.rules.thRate")}</th>
+              <th>{t("admin.rules.thValidFrom")}</th><th>{t("admin.rules.thValidTo")}</th><th></th>
             </tr>
           </thead>
           <tbody>
             {rules.data?.map((r) => (
               <tr key={r.id}>
-                <td>{r.product_type}</td><td>{r.level_gap}</td>
+                <td>{productTypeLabel(r.product_type)}</td><td>{r.level_gap}</td>
                 <td className="num">{pct(r.override_rate)}</td>
                 <td className="muted">{r.valid_from}</td>
                 <td className="muted">{r.valid_to ?? "—"}</td>
                 <td className="num" style={{ whiteSpace: "nowrap" }}>
-                  <button className="ghost" onClick={() => startEdit(r)}>Edit</button>{" "}
+                  <button className="ghost" onClick={() => startEdit(r)}>{t("common.edit")}</button>{" "}
                   <button className="ghost" style={{ color: "var(--bad)" }}
-                    onClick={() => confirmDelete(r)}>Delete</button>
+                    onClick={() => confirmDelete(r)}>{t("common.delete")}</button>
                 </td>
               </tr>
             ))}
@@ -106,51 +105,51 @@ export default function AdminRules() {
 
       {editId != null && editingRule && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateRule.mutate(); }}>
-          <h2>Edit rule — {editingRule.product_type} · gap {editingRule.level_gap}</h2>
+          <h2>{t("admin.rules.editTitle", { type: productTypeLabel(editingRule.product_type), gap: editingRule.level_gap })}</h2>
           {editErr && <div className="error">{editErr}</div>}
           <div className="row">
-            <div><label>Rate (e.g. 0.25 = 25%)</label>
+            <div><label>{t("admin.rules.rateHint")}</label>
               <input value={editForm.override_rate}
                 onChange={(e) => setEditForm({ ...editForm, override_rate: e.target.value })} /></div>
-            <div><label>Valid from</label>
+            <div><label>{t("admin.rules.validFrom")}</label>
               <input type="date" value={editForm.valid_from}
                 onChange={(e) => setEditForm({ ...editForm, valid_from: e.target.value })} /></div>
-            <div><label>Valid to (blank = open)</label>
+            <div><label>{t("admin.rules.validToBlank")}</label>
               <input type="date" value={editForm.valid_to}
                 onChange={(e) => setEditForm({ ...editForm, valid_to: e.target.value })} /></div>
           </div>
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
             <button className="primary" type="submit" disabled={updateRule.isPending}>
-              {updateRule.isPending ? "Saving…" : "Save changes"}
+              {updateRule.isPending ? t("common.saving") : t("admin.agents.saveChanges")}
             </button>
-            <button className="ghost" type="button" onClick={() => setEditId(null)}>Cancel</button>
+            <button className="ghost" type="button" onClick={() => setEditId(null)}>{t("common.cancel")}</button>
           </div>
         </form>
       )}
 
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createRule.mutate(); }}>
-        <h2>Add rule</h2>
+        <h2>{t("admin.rules.add")}</h2>
         {ruleErr && <div className="error">{ruleErr}</div>}
         <div className="row">
-          <div><label>Product type</label>
+          <div><label>{t("admin.rules.thProductType")}</label>
             <select value={rule.product_type} onChange={(e) => setRule({ ...rule, product_type: e.target.value })}>
-              {PRODUCT_TYPES.map((t) => <option key={t}>{t}</option>)}
+              {PRODUCT_TYPES.map((pt) => <option key={pt} value={pt}>{productTypeLabel(pt)}</option>)}
             </select></div>
-          <div><label>Level gap</label>
+          <div><label>{t("admin.rules.levelGap")}</label>
             <select value={rule.level_gap} onChange={(e) => setRule({ ...rule, level_gap: e.target.value })}>
               <option>1</option><option>2</option><option>3</option><option>4</option>
             </select></div>
-          <div><label>Rate (e.g. 0.25 = 25%)</label>
+          <div><label>{t("admin.rules.rateHint")}</label>
             <input value={rule.override_rate} onChange={(e) => setRule({ ...rule, override_rate: e.target.value })} /></div>
         </div>
         <div className="row">
-          <div><label>Valid from</label>
+          <div><label>{t("admin.rules.validFrom")}</label>
             <input type="date" value={rule.valid_from} onChange={(e) => setRule({ ...rule, valid_from: e.target.value })} /></div>
-          <div><label>Valid to</label>
+          <div><label>{t("admin.rules.validTo")}</label>
             <input type="date" value={rule.valid_to} onChange={(e) => setRule({ ...rule, valid_to: e.target.value })} /></div>
         </div>
         <div style={{ marginTop: 12 }}>
-          <button className="primary" type="submit" disabled={createRule.isPending}>Add rule</button>
+          <button className="primary" type="submit" disabled={createRule.isPending}>{t("admin.rules.add")}</button>
         </div>
       </form>
     </div>

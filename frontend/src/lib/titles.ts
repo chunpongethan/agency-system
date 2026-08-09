@@ -1,12 +1,13 @@
 import type { Title } from "../api/types";
+import { titleLabel as i18nTitleLabel } from "../i18n/labels";
 
-export const TITLES: { value: Title; label: string }[] = [
-  { value: "business_manager", label: "Business Manager" },
-  { value: "district_manager", label: "District Manager" },
-  { value: "district_director", label: "District Director" },
-  { value: "principal_partner", label: "Principal Partner" },
+// Canonical title values (stable submit values); display labels come from i18n.
+export const TITLE_VALUES: Title[] = [
+  "business_manager",
+  "district_manager",
+  "district_director",
+  "principal_partner",
 ];
 
-export function titleLabel(t: Title | null | undefined): string {
-  return TITLES.find((x) => x.value === t)?.label ?? "—";
-}
+// Re-export the localized label helper so existing imports keep working.
+export const titleLabel = i18nTitleLabel;

@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/LanguageContext";
+import { errorText } from "../api/client";
+import LanguageToggle from "../components/LanguageToggle";
 
 export default function Login() {
   const { login, me } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [username, setUsername] = useState("A004");
   const [password, setPassword] = useState("demo1234");
@@ -24,7 +28,7 @@ export default function Login() {
       const profile = await login(username, password);
       navigate(homeFor(profile.role), { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(errorText(err, t));
     } finally {
       setBusy(false);
     }
@@ -33,17 +37,20 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={onSubmit}>
-        <h1>Agency Management</h1>
-        <p className="muted" style={{ fontSize: 13 }}>Sign in to continue</p>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+          <LanguageToggle />
+        </div>
+        <h1>{t("login.brand")}</h1>
+        <p className="muted" style={{ fontSize: 13 }}>{t("login.subtitle")}</p>
         {error && <div className="error">{error}</div>}
-        <label htmlFor="u">Agent code or email</label>
+        <label htmlFor="u">{t("login.username")}</label>
         <input
           id="u"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoFocus
         />
-        <label htmlFor="p">Password</label>
+        <label htmlFor="p">{t("login.password")}</label>
         <input
           id="p"
           type="password"
@@ -52,13 +59,10 @@ export default function Login() {
         />
         <div style={{ marginTop: 18 }}>
           <button className="primary" type="submit" disabled={busy} style={{ width: "100%" }}>
-            {busy ? "Signing in…" : "Sign in"}
+            {busy ? t("login.signingIn") : t("login.signIn")}
           </button>
         </div>
-        <p className="hint">
-          Demo: <code>A000</code> (admin), <code>A001</code> (manager),
-          <code> A004</code> (agent) — password <code>demo1234</code>.
-        </p>
+        <p className="hint">{t("login.hint")}</p>
       </form>
     </div>
   );

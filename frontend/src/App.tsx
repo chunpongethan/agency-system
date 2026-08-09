@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
+import { useI18n } from "./i18n/LanguageContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -22,7 +23,8 @@ function homeFor(role: string | undefined): string {
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { me, loading } = useAuth();
-  if (loading) return <div className="spinner" style={{ padding: 40 }}>Loading…</div>;
+  const { t } = useI18n();
+  if (loading) return <div className="spinner" style={{ padding: 40 }}>{t("common.loading")}</div>;
   if (!me) return <Navigate to="/login" replace />;
   return children;
 }

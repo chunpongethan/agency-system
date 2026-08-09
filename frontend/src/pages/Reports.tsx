@@ -3,13 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { api, downloadFile } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/LanguageContext";
 import { money, currentPeriod } from "../lib/format";
-import { productTypeLabel } from "../lib/agency";
+import { productTypeLabel, kindLabel } from "../i18n/labels";
 import DataTable from "../components/DataTable";
 import type { AgencySummaryRow } from "../api/types";
 
 export default function Reports() {
   const { me } = useAuth();
+  const { t, lang } = useI18n();
   const p = currentPeriod();
   const [start, setStart] = useState(p.start);
   const [end, setEnd] = useState(p.end);
@@ -29,27 +31,27 @@ export default function Reports() {
     queryFn: () => api.productMix(start, end),
   });
 
-  const qsWin = `start=${start}&end=${end}`;
+  const qsWin = `start=${start}&end=${end}&lang=${lang}`;
 
   const summaryColumns = useMemo<ColumnDef<AgencySummaryRow, any>[]>(() => [
-    { header: "Agent", accessorKey: "name" },
-    { header: "Code", accessorKey: "code" },
-    { header: "Level", accessorFn: (r) => `L${r.level}`, id: "level" },
+    { header: t("common.agent"), accessorKey: "name" },
+    { header: t("common.code"), accessorKey: "code" },
+    { header: t("common.level"), accessorFn: (r) => `L${r.level}`, id: "level" },
     {
-      header: "Total", accessorKey: "total", meta: { num: true },
+      header: t("reports.total"), accessorKey: "total", meta: { num: true },
       cell: (ctx) => money(ctx.getValue() as number),
     },
-  ], []);
+  ], [t]);
 
   return (
     <div>
-      <h1 className="page-title">Reports</h1>
-      <p className="page-sub">Agent statements and the agency summary</p>
+      <h1 className="page-title">{t("reports.title")}</h1>
+      <p className="page-sub">{t("reports.subtitle")}</p>
 
       <div className="card">
         <div className="row">
           <div>
-            <label>Agent</label>
+            <label>{t("common.agent")}</label>
             <select value={agentId} onChange={(e) => setAgentId(Number(e.target.value))}>
               {agents.data?.map((a) => (
                 <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
@@ -57,11 +59,11 @@ export default function Reports() {
             </select>
           </div>
           <div>
-            <label>From</label>
+            <label>{t("reports.from")}</label>
             <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
           </div>
           <div>
-            <label>To</label>
+            <label>{t("reports.to")}</label>
             <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
           </div>
         </div>
@@ -69,48 +71,48 @@ export default function Reports() {
 
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>Agent statement</h2>
+          <h2>{t("reports.agentStatement")}</h2>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="ghost"
               onClick={() => downloadFile(`/reports/agent/${agentId}/export?format=csv&${qsWin}`,
-                `statement_${agentId}.csv`)}>Download CSV</button>
+                `statement_${agentId}.csv`)}>{t("reports.downloadCsv")}</button>
             <button className="ghost"
               onClick={() => downloadFile(`/reports/agent/${agentId}/export?format=pdf&${qsWin}`,
-                `statement_${agentId}.pdf`)}>Download PDF</button>
+                `statement_${agentId}.pdf`)}>{t("reports.downloadPdf")}</button>
           </div>
         </div>
-        {statement.isLoading && <div className="spinner">Loading…</div>}
+        {statement.isLoading && <div className="spinner">{t("common.loading")}</div>}
         {statement.data && (
           <>
             <div className="grid cols-3" style={{ marginBottom: 14 }}>
               <div className="stat">
-                <div className="label">Direct</div>
+                <div className="label">{t("reports.direct")}</div>
                 <div className="value good">{money(statement.data.direct_total)}</div>
               </div>
               <div className="stat">
-                <div className="label">Override</div>
+                <div className="label">{t("common.override")}</div>
                 <div className="value good">{money(statement.data.override_total)}</div>
               </div>
               <div className="stat">
-                <div className="label">Grand total</div>
+                <div className="label">{t("reports.grandTotal")}</div>
                 <div className="value">{money(statement.data.grand_total)}</div>
               </div>
             </div>
             <table>
               <thead>
-                <tr><th>Kind</th><th>Product type</th><th className="num">Count</th><th className="num">Amount</th></tr>
+                <tr><th>{t("reports.thKind")}</th><th>{t("reports.thProductType")}</th><th className="num">{t("reports.thCount")}</th><th className="num">{t("reports.thAmount")}</th></tr>
               </thead>
               <tbody>
                 {statement.data.lines.map((l, i) => (
                   <tr key={i}>
-                    <td>{l.kind}</td>
-                    <td>{l.product_type}</td>
+                    <td>{kindLabel(l.kind)}</td>
+                    <td>{productTypeLabel(l.product_type)}</td>
                     <td className="num">{l.count}</td>
                     <td className="num">{money(l.amount)}</td>
                   </tr>
                 ))}
                 {statement.data.lines.length === 0 && (
-                  <tr><td colSpan={4} className="muted">No commission in this window.</td></tr>
+                  <tr><td colSpan={4} className="muted">{t("reports.noCommission")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -120,23 +122,23 @@ export default function Reports() {
 
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <h2>Product mix</h2>
+          <h2>{t("reports.productMix")}</h2>
           <span className="muted" style={{ fontSize: 13 }}>
-            Settled production by product · AFYP share
+            {t("reports.productMixSub")}
           </span>
         </div>
-        {mix.isLoading && <div className="spinner">Loading…</div>}
+        {mix.isLoading && <div className="spinner">{t("common.loading")}</div>}
         {mix.data && (
           <div style={{ overflowX: "auto" }}>
             <table>
               <thead>
                 <tr>
-                  <th>Product</th><th>Type</th>
+                  <th>{t("common.product")}</th><th>{t("common.type")}</th>
                   <th className="num">#</th>
-                  <th className="num">Notional</th>
-                  <th className="num">AFYP</th>
-                  <th className="num">Commission</th>
-                  <th style={{ width: 160 }}>AFYP share</th>
+                  <th className="num">{t("common.notional")}</th>
+                  <th className="num">{t("common.afyp")}</th>
+                  <th className="num">{t("common.commission")}</th>
+                  <th style={{ width: 160 }}>{t("reports.afypShare")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,13 +166,13 @@ export default function Reports() {
                   );
                 })}
                 {mix.data.rows.length === 0 && (
-                  <tr><td colSpan={7} className="muted">No settled production in this window.</td></tr>
+                  <tr><td colSpan={7} className="muted">{t("reports.noSettled")}</td></tr>
                 )}
               </tbody>
               {mix.data.rows.length > 0 && (
                 <tfoot>
                   <tr style={{ fontWeight: 700 }}>
-                    <td>Total</td><td></td>
+                    <td>{t("reports.total")}</td><td></td>
                     <td className="num">{mix.data.totals.count}</td>
                     <td className="num">{money(mix.data.totals.notional)}</td>
                     <td className="num">{money(mix.data.totals.afyp)}</td>
@@ -186,21 +188,21 @@ export default function Reports() {
 
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>Agency summary</h2>
+          <h2>{t("reports.agencySummary")}</h2>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="ghost"
               onClick={() => downloadFile(`/reports/agency/export?format=csv&${qsWin}`,
-                "agency_summary.csv")}>Download CSV</button>
+                "agency_summary.csv")}>{t("reports.downloadCsv")}</button>
             <button className="ghost"
               onClick={() => downloadFile(`/reports/agency/export?format=pdf&${qsWin}`,
-                "agency_summary.pdf")}>Download PDF</button>
+                "agency_summary.pdf")}>{t("reports.downloadPdf")}</button>
           </div>
         </div>
-        {summary.isLoading && <div className="spinner">Loading…</div>}
+        {summary.isLoading && <div className="spinner">{t("common.loading")}</div>}
         <DataTable
           data={summary.data ?? []}
           columns={summaryColumns}
-          empty="No data in this window."
+          empty={t("reports.noData")}
         />
       </div>
     </div>

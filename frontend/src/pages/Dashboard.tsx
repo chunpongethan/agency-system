@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/LanguageContext";
 import { money, currentPeriod, yearToDate } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
+import { riskLabel } from "../i18n/labels";
 import StatusBadge from "../components/StatusBadge";
 import Scorecard from "../components/Scorecard";
 
@@ -12,6 +14,7 @@ type View = "month" | "ytd";
 
 export default function Dashboard() {
   const { me } = useAuth();
+  const { t } = useI18n();
   const agentId = me!.id;
   const isManager = me!.role === "manager";
 
@@ -57,15 +60,15 @@ export default function Dashboard() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
         <div>
-          <h1 className="page-title">Dashboard</h1>
+          <h1 className="page-title">{t("dashboard.title")}</h1>
           <p className="page-sub">{me!.name} · {win.label}</p>
         </div>
         <div className="seg">
           <button className={view === "month" ? "active" : ""} onClick={() => setView("month")}>
-            Current month
+            {t("dashboard.segMonth")}
           </button>
           <button className={view === "ytd" ? "active" : ""} onClick={() => setView("ytd")}>
-            Year to date
+            {t("dashboard.segYtd")}
           </button>
         </div>
       </div>
@@ -78,19 +81,19 @@ export default function Dashboard() {
 
       <div className="grid cols-3" style={{ marginTop: 18 }}>
         <div className="stat">
-          <div className="label">Direct commission</div>
+          <div className="label">{t("dashboard.directCommission")}</div>
           <div className="value good">
             {statement.data ? money(statement.data.direct_total) : "—"}
           </div>
         </div>
         <div className="stat">
-          <div className="label">Override commission</div>
+          <div className="label">{t("dashboard.overrideCommission")}</div>
           <div className="value good">
             {statement.data ? money(statement.data.override_total) : "—"}
           </div>
         </div>
         <div className="stat">
-          <div className="label">Total earned · {win.label}</div>
+          <div className="label">{t("dashboard.totalEarned", { label: win.label })}</div>
           <div className="value">
             {statement.data ? money(statement.data.grand_total) : "—"}
           </div>
@@ -100,24 +103,24 @@ export default function Dashboard() {
       {isManager && (
         <div className="card" style={{ marginTop: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <h2>Team performance</h2>
+            <h2>{t("dashboard.teamPerformance")}</h2>
             <span className="muted" style={{ fontSize: 13 }}>
-              {win.label} · {(team.data?.length ?? 0)} in line · total {money(teamTotal)}
+              {t("dashboard.teamMeta", { label: win.label, count: team.data?.length ?? 0, total: money(teamTotal) })}
             </span>
           </div>
-          {team.isLoading && <div className="spinner">Loading…</div>}
+          {team.isLoading && <div className="spinner">{t("common.loading")}</div>}
           <table>
             <thead>
               <tr>
-                <th>#</th><th>Agent</th><th>Code</th><th>Level</th>
-                <th className="num">Production</th><th className="num">Share</th>
+                <th>{t("dashboard.thRank")}</th><th>{t("common.agent")}</th><th>{t("common.code")}</th><th>{t("common.level")}</th>
+                <th className="num">{t("dashboard.thProduction")}</th><th className="num">{t("dashboard.thShare")}</th>
               </tr>
             </thead>
             <tbody>
               {team.data?.map((r, i) => (
                 <tr key={r.agent_id}>
                   <td className="muted">{i + 1}</td>
-                  <td>{r.name}{r.agent_id === agentId ? " (you)" : ""}</td>
+                  <td>{r.name}{r.agent_id === agentId ? t("dashboard.you") : ""}</td>
                   <td className="muted">{r.code}</td>
                   <td>L{r.level}</td>
                   <td className="num">{money(r.total)}</td>
@@ -127,57 +130,56 @@ export default function Dashboard() {
                 </tr>
               ))}
               {team.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">No team production in this window.</td></tr>
+                <tr><td colSpan={6} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
               )}
             </tbody>
           </table>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-            Production is commission earned by each agent in your line (direct + overrides).
-            See the <Link to="/hierarchy">Hierarchy</Link> for the rolled-up org tree.
+            {t("dashboard.teamNote1")}<Link to="/hierarchy">{t("nav.hierarchy")}</Link>{t("dashboard.teamNote2")}
           </p>
         </div>
       )}
 
       {isManager && (
         <div style={{ marginTop: 18 }}>
-          <h2 style={{ fontSize: 15, margin: "0 0 12px" }}>Team member scorecards</h2>
-          {teamCards.isLoading && <div className="spinner">Loading…</div>}
+          <h2 style={{ fontSize: 15, margin: "0 0 12px" }}>{t("dashboard.teamScorecards")}</h2>
+          {teamCards.isLoading && <div className="spinner">{t("common.loading")}</div>}
           {(teamCards.data ?? [])
             .filter((c) => c.agent.id !== agentId)
             .map((c) => <Scorecard key={c.agent.id} data={c} compact />)}
           {teamCards.data && teamCards.data.filter((c) => c.agent.id !== agentId).length === 0 && (
-            <div className="card"><span className="muted">No team members in your line yet.</span></div>
+            <div className="card"><span className="muted">{t("dashboard.noTeamMembers")}</span></div>
           )}
         </div>
       )}
 
       <div className="grid cols-2" style={{ marginTop: 18 }}>
         <div className="card">
-          <h2>My clients ({clients.data?.length ?? 0})</h2>
-          {clients.isLoading && <div className="spinner">Loading…</div>}
+          <h2>{t("dashboard.myClients", { count: clients.data?.length ?? 0 })}</h2>
+          {clients.isLoading && <div className="spinner">{t("common.loading")}</div>}
           <table>
             <tbody>
               {clients.data?.map((c) => (
                 <tr key={c.id}>
                   <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
                   <td className="muted">{c.ref}</td>
-                  <td className="muted">{c.risk_profile ?? "—"}</td>
+                  <td className="muted">{riskLabel(c.risk_profile)}</td>
                 </tr>
               ))}
               {clients.data?.length === 0 && (
-                <tr><td className="muted">No clients yet.</td></tr>
+                <tr><td className="muted">{t("dashboard.noClients")}</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
         <div className="card">
-          <h2>Recent transactions</h2>
-          {txns.isLoading && <div className="spinner">Loading…</div>}
+          <h2>{t("dashboard.recentTxns")}</h2>
+          {txns.isLoading && <div className="spinner">{t("common.loading")}</div>}
           <table>
             <thead>
               <tr>
-                <th>Ref</th><th>Date</th><th>Product</th><th className="num">Notional</th><th>Status</th>
+                <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th><th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -201,7 +203,7 @@ export default function Dashboard() {
                 );
               })}
               {txns.data?.length === 0 && (
-                <tr><td colSpan={5} className="muted">No transactions yet.</td></tr>
+                <tr><td colSpan={5} className="muted">{t("dashboard.noTxns")}</td></tr>
               )}
             </tbody>
           </table>

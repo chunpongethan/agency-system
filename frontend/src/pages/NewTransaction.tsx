@@ -1,13 +1,16 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { api, ApiError } from "../api/client";
+import { api, errorText } from "../api/client";
+import { useI18n } from "../i18n/LanguageContext";
 import { money, pct } from "../lib/format";
+import { kindLabel, scheduleLabel, frequencyLabel } from "../i18n/labels";
 import StatusBadge from "../components/StatusBadge";
 import type { Transaction } from "../api/types";
 
 export default function NewTransaction() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<Transaction | null>(null);
@@ -65,7 +68,7 @@ export default function NewTransaction() {
       setError(null);
       qc.invalidateQueries({ queryKey: ["nextRef"] });
     },
-    onError: (e) => setError(e instanceof ApiError ? e.message : "Failed to create transaction"),
+    onError: (e) => setError(errorText(e, t) || t("newTxn.createFailed")),
   });
 
   const settle = useMutation({
@@ -80,54 +83,54 @@ export default function NewTransaction() {
 
   return (
     <div>
-      <h1 className="page-title">New transaction</h1>
-      <p className="page-sub">Book a sale on behalf of an agent, and preview the commission before settling</p>
+      <h1 className="page-title">{t("newTxn.title")}</h1>
+      <p className="page-sub">{t("newTxn.subtitle")}</p>
 
       <div className="grid cols-2">
         <form className="card" onSubmit={onSubmit}>
-          <h2>Details</h2>
+          <h2>{t("newTxn.details")}</h2>
           {error && <div className="error">{error}</div>}
 
-          <label>Transaction code (auto-generated)</label>
+          <label>{t("newTxn.txnCode")}</label>
           <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
 
-          <label>Closing agent</label>
+          <label>{t("newTxn.closingAgent")}</label>
           <select value={form.agent_id} required
             onChange={(e) => setForm({ ...form, agent_id: e.target.value, client_id: "" })}>
-            <option value="">Select an agent…</option>
+            <option value="">{t("newTxn.selectAgent")}</option>
             {closerOptions.map((a) => (
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
 
-          <label>Client {form.agent_id && clientOptions.length === 0 ? "(this agent has no clients)" : ""}</label>
+          <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
           <select value={form.client_id} required disabled={!form.agent_id}
             onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-            <option value="">{form.agent_id ? "Select a client…" : "Pick an agent first"}</option>
+            <option value="">{form.agent_id ? t("newTxn.selectClient") : t("newTxn.pickAgentFirst")}</option>
             {clientOptions.map((c) => (
               <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>
             ))}
           </select>
 
-          <label>Product</label>
+          <label>{t("common.product")}</label>
           <select value={form.product_id} required
             onChange={(e) => setForm({ ...form, product_id: e.target.value })}>
-            <option value="">Select a product…</option>
+            <option value="">{t("newTxn.selectProduct")}</option>
             {products.data?.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.name} — {pct(p.base_commission_rate)} {p.commission_schedule}
+                {p.name} — {pct(p.base_commission_rate)} {scheduleLabel(p.commission_schedule)}
               </option>
             ))}
           </select>
 
           <div className="row">
             <div style={{ flex: 3 }}>
-              <label>Notional</label>
+              <label>{t("common.notional")}</label>
               <input type="number" value={form.notional} min="0" step="1000"
                 onChange={(e) => setForm({ ...form, notional: e.target.value })} />
             </div>
             <div style={{ flex: 1 }}>
-              <label>Currency</label>
+              <label>{t("newTxn.currency")}</label>
               <select value={form.currency}
                 onChange={(e) => setForm({ ...form, currency: e.target.value })}>
                 <option>USD</option><option>HKD</option><option>EUR</option><option>GBP</option>
@@ -138,38 +141,38 @@ export default function NewTransaction() {
           {isInsurance && selectedProduct && (
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <h2 style={{ fontSize: 14 }}>Insurance product details</h2>
-                <span className="muted" style={{ fontSize: 11 }}>maintained by admin · read-only</span>
+                <h2 style={{ fontSize: 14 }}>{t("newTxn.insuranceDetails")}</h2>
+                <span className="muted" style={{ fontSize: 11 }}>{t("newTxn.adminReadonly")}</span>
               </div>
               <div className="grid cols-3" style={{ gap: 10 }}>
                 <div className="stat">
-                  <div className="label">Payment tenor</div>
+                  <div className="label">{t("newTxn.paymentTenor")}</div>
                   <div className="value" style={{ fontSize: 18 }}>
-                    {selectedProduct.payment_tenor != null ? `${selectedProduct.payment_tenor} yrs` : "—"}
+                    {selectedProduct.payment_tenor != null ? t("newTxn.years", { n: selectedProduct.payment_tenor }) : "—"}
                   </div>
                 </div>
                 <div className="stat">
-                  <div className="label">Age range</div>
+                  <div className="label">{t("newTxn.ageRange")}</div>
                   <div className="value" style={{ fontSize: 18 }}>
                     {selectedProduct.age_min != null || selectedProduct.age_max != null
                       ? `${selectedProduct.age_min ?? 0}–${selectedProduct.age_max ?? "?"}` : "—"}
                   </div>
                 </div>
                 <div className="stat">
-                  <div className="label">Professional investor</div>
+                  <div className="label">{t("newTxn.professionalInvestor")}</div>
                   <div className="value" style={{ fontSize: 18 }}>
                     {selectedProduct.professional_investor == null
-                      ? "—" : selectedProduct.professional_investor ? "Yes" : "No"}
+                      ? "—" : selectedProduct.professional_investor ? t("newTxn.yes") : t("newTxn.no")}
                   </div>
                 </div>
               </div>
               {selectedProduct.year_commissions && selectedProduct.year_commissions.length > 0 && (
                 <>
-                  <label style={{ marginTop: 10 }}>Commission schedule — Yr1 to Yr10</label>
+                  <label style={{ marginTop: 10 }}>{t("newTxn.commSchedule")}</label>
                   <div className="year-grid">
                     {selectedProduct.year_commissions.map((v, i) => (
                       <div key={i} className="year-cell">
-                        <span className="yr-label">Yr{i + 1}</span>
+                        <span className="yr-label">{t("newTxn.yr", { n: i + 1 })}</span>
                         <div style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 600 }}>{pct(v)}</div>
                       </div>
                     ))}
@@ -181,21 +184,21 @@ export default function NewTransaction() {
 
           <div style={{ marginTop: 16 }}>
             <button className="primary" type="submit" disabled={create.isPending || !!created}>
-              {created ? "Booked" : create.isPending ? "Booking…" : "Book transaction"}
+              {created ? t("newTxn.booked") : create.isPending ? t("newTxn.booking") : t("newTxn.book")}
             </button>
           </div>
 
           {created && (
             <div className="success" style={{ marginTop: 14 }}>
-              Booked {created.ref} <StatusBadge status={created.status} />
+              {t("newTxn.bookedMsg", { ref: created.ref })} <StatusBadge status={created.status} />
               <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
                 {created.status === "pending" && (
                   <button className="ghost" type="button" onClick={() => settle.mutate(created.id)}>
-                    {settle.isPending ? "Settling…" : "Settle now"}
+                    {settle.isPending ? t("newTxn.settling") : t("newTxn.settleNow")}
                   </button>
                 )}
                 <button className="ghost" type="button" onClick={() => navigate(`/clients/${created.client_id}`)}>
-                  View client
+                  {t("newTxn.viewClient")}
                 </button>
               </div>
             </div>
@@ -203,27 +206,26 @@ export default function NewTransaction() {
         </form>
 
         <div className="card">
-          <h2>Live commission preview</h2>
+          <h2>{t("newTxn.previewTitle")}</h2>
           <p className="muted" style={{ fontSize: 13, marginTop: -6 }}>
-            What settling this sale would pay (period 0). Matches the settled ledger.
-            Override rates are a % of the agent's commission (25/20/4/1% for the 1st–4th upline).
+            {t("newTxn.previewNote")}
           </p>
-          {(!form.product_id || !form.agent_id) && <div className="spinner">Pick an agent and product to preview…</div>}
-          {preview.isFetching && <div className="spinner">Calculating…</div>}
+          {(!form.product_id || !form.agent_id) && <div className="spinner">{t("newTxn.previewPrompt")}</div>}
+          {preview.isFetching && <div className="spinner">{t("newTxn.calculating")}</div>}
           {preview.data && (
             <>
               <table>
                 <thead>
                   <tr>
-                    <th>Beneficiary</th><th>Kind</th><th>Gap</th>
-                    <th className="num">Rate</th><th className="num">Amount</th>
+                    <th>{t("newTxn.thBeneficiary")}</th><th>{t("newTxn.thKind")}</th><th>{t("newTxn.thGap")}</th>
+                    <th className="num">{t("newTxn.thRate")}</th><th className="num">{t("newTxn.thAmount")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {preview.data.lines.map((l, i) => (
                     <tr key={i}>
                       <td>{agentName(l.agent_id)}</td>
-                      <td>{l.kind}</td>
+                      <td>{kindLabel(l.kind)}</td>
                       <td>{l.level_gap}</td>
                       <td className="num">{pct(l.rate)}</td>
                       <td className="num">{money(l.amount, form.currency)}</td>
@@ -232,15 +234,14 @@ export default function NewTransaction() {
                 </tbody>
                 <tfoot>
                   <tr>
-                    <td colSpan={4} style={{ fontWeight: 700 }}>Total paid out</td>
+                    <td colSpan={4} style={{ fontWeight: 700 }}>{t("newTxn.totalPaid")}</td>
                     <td className="num" style={{ fontWeight: 700 }}>{money(preview.data.total, form.currency)}</td>
                   </tr>
                 </tfoot>
               </table>
               {selectedProduct?.commission_schedule === "trail" && (
                 <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-                  Trail product: this repeats each {selectedProduct.trail_frequency} for{" "}
-                  {selectedProduct.trail_periods} periods via accrual runs.
+                  {t("newTxn.trailNote", { frequency: frequencyLabel(selectedProduct.trail_frequency), periods: selectedProduct.trail_periods ?? 0 })}
                 </p>
               )}
             </>

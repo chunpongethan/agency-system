@@ -1,6 +1,12 @@
+import { getActiveLang, translate } from "../i18n/LanguageContext";
+
+function numberLocale(): string {
+  return getActiveLang() === "zh-Hant" ? "zh-Hant-HK" : "en-US";
+}
+
 export function money(n: number | string, currency = "USD"): string {
   const v = typeof n === "string" ? Number(n) : n;
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(numberLocale(), {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -28,5 +34,9 @@ export function currentPeriod(): { start: string; end: string; ym: string } {
 // Year-to-date: Jan 1 of the current year through today.
 export function yearToDate(): { start: string; end: string; label: string } {
   const now = new Date();
-  return { start: iso(new Date(now.getFullYear(), 0, 1)), end: iso(now), label: `${now.getFullYear()} YTD` };
+  return {
+    start: iso(new Date(now.getFullYear(), 0, 1)),
+    end: iso(now),
+    label: `${now.getFullYear()} ${translate("common.ytd")}`,
+  };
 }

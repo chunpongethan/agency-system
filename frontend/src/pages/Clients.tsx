@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { api, ApiError } from "../api/client";
+import { api, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/LanguageContext";
 import { resolveUnit } from "../lib/agency";
+import { riskLabel, RISK_PROFILES } from "../i18n/labels";
 
 export default function Clients() {
   const { me } = useAuth();
+  const { t } = useI18n();
   const isAdmin = me!.role === "admin";
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
@@ -39,7 +42,7 @@ export default function Clients() {
       setForm({ ...form, ref: "", name: "", email: "", phone: "" });
       setError(null);
     },
-    onError: (e) => setError(e instanceof ApiError ? e.message : "Failed to create client"),
+    onError: (e) => setError(errorText(e, t) || t("clients.createFailed")),
   });
 
   function onSubmit(e: FormEvent) {
@@ -51,65 +54,62 @@ export default function Clients() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 className="page-title">Clients</h1>
-          <p className="page-sub">{isAdmin ? "All clients (read-only)" : "Your clients"}</p>
+          <h1 className="page-title">{t("clients.title")}</h1>
+          <p className="page-sub">{isAdmin ? t("clients.subAdmin") : t("clients.subOwn")}</p>
         </div>
         {!isAdmin && (
           <button className="primary" onClick={() => setShowForm((s) => !s)}>
-            {showForm ? "Cancel" : "+ New client"}
+            {showForm ? t("common.cancel") : t("clients.new")}
           </button>
         )}
       </div>
 
       {showForm && (
         <form className="card" onSubmit={onSubmit}>
-          <h2>New client</h2>
+          <h2>{t("clients.newTitle")}</h2>
           {error && <div className="error">{error}</div>}
           <div className="row">
             <div>
-              <label>Reference</label>
+              <label>{t("clients.reference")}</label>
               <input value={form.ref} required
                 onChange={(e) => setForm({ ...form, ref: e.target.value })} />
             </div>
             <div>
-              <label>Name</label>
+              <label>{t("common.name")}</label>
               <input value={form.name} required
                 onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
           </div>
           <div className="row">
             <div>
-              <label>Email</label>
+              <label>{t("common.email")}</label>
               <input value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label>Phone</label>
+              <label>{t("common.phone")}</label>
               <input value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
             <div>
-              <label>Risk profile</label>
+              <label>{t("clients.riskProfile")}</label>
               <select value={form.risk_profile}
                 onChange={(e) => setForm({ ...form, risk_profile: e.target.value })}>
-                <option>Conservative</option>
-                <option>Balanced</option>
-                <option>Growth</option>
-                <option>Aggressive</option>
+                {RISK_PROFILES.map((r) => <option key={r} value={r}>{riskLabel(r)}</option>)}
               </select>
             </div>
           </div>
           <div style={{ marginTop: 14 }}>
             <button className="primary" type="submit" disabled={create.isPending}>
-              {create.isPending ? "Saving…" : "Create client"}
+              {create.isPending ? t("common.saving") : t("clients.create")}
             </button>
           </div>
         </form>
       )}
 
       <div className="card">
-        {clients.isLoading && <div className="spinner">Loading…</div>}
-        {clients.error && <div className="error">Failed to load clients.</div>}
+        {clients.isLoading && <div className="spinner">{t("common.loading")}</div>}
+        {clients.error && <div className="error">{t("clients.loadFailed")}</div>}
         {(() => {
           const rows = (clients.data ?? []).map((c) => {
             const owner = agentsById.get(c.agent_id);
@@ -128,7 +128,7 @@ export default function Clients() {
               <div style={{ marginBottom: 14, maxWidth: 340 }}>
                 <input
                   type="search"
-                  placeholder="Search name, ref, email, owner, unit…"
+                  placeholder={t("clients.searchPlaceholder")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -136,7 +136,7 @@ export default function Clients() {
               <table>
                 <thead>
                   <tr>
-                    <th>Name</th><th>Ref</th><th>Risk</th><th>Email</th><th>Owner</th><th>Unit</th>
+                    <th>{t("common.name")}</th><th>{t("common.ref")}</th><th>{t("clients.thRisk")}</th><th>{t("common.email")}</th><th>{t("common.owner")}</th><th>{t("common.unit")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -144,7 +144,7 @@ export default function Clients() {
                     <tr key={c.id}>
                       <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
                       <td className="muted">{c.ref}</td>
-                      <td>{c.risk_profile ?? "—"}</td>
+                      <td>{riskLabel(c.risk_profile)}</td>
                       <td className="muted">{c.email ?? "—"}</td>
                       <td>
                         {owner ? owner.name : `#${c.agent_id}`}{" "}
@@ -156,7 +156,7 @@ export default function Clients() {
                   {filtered.length === 0 && (
                     <tr>
                       <td colSpan={6} className="muted">
-                        {rows.length === 0 ? "No clients in scope." : "No clients match your search."}
+                        {rows.length === 0 ? t("clients.noneInScope") : t("clients.noneMatch")}
                       </td>
                     </tr>
                   )}

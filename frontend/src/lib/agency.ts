@@ -1,4 +1,6 @@
 import type { Agent, Product } from "../api/types";
+import { translate } from "../i18n/LanguageContext";
+import { productTypeLabel as i18nProductTypeLabel } from "../i18n/labels";
 
 // An agent's unit is its own unit code (managers) or, for an individual agent,
 // the nearest upline manager's unit code. Mirrors the backend payout logic.
@@ -16,17 +18,8 @@ export function resolveUnit(
   return null;
 }
 
-export const PRODUCT_TYPE_LABELS: Record<string, string> = {
-  insurance: "Insurance",
-  fund: "Fund",
-  eam_account: "EAM Account",
-  other: "Other",
-};
-
-export function productTypeLabel(type: string | undefined): string {
-  if (!type) return "—";
-  return PRODUCT_TYPE_LABELS[type] ?? type.charAt(0).toUpperCase() + type.slice(1);
-}
+// Re-export the localized product-type label so existing imports keep working.
+export const productTypeLabel = i18nProductTypeLabel;
 
 // A short, human-readable summary of a product's key details for a table cell.
 // Insurance products carry the extra admin-maintained fields.
@@ -35,9 +28,10 @@ export function productDetails(p: Product | undefined): string {
   const parts: string[] = [];
   if (p.provider) parts.push(p.provider);
   if (p.type === "insurance") {
-    if (p.payment_tenor != null) parts.push(`${p.payment_tenor}-yr tenor`);
-    if (p.age_min != null && p.age_max != null) parts.push(`age ${p.age_min}–${p.age_max}`);
-    if (p.professional_investor) parts.push("PI only");
+    if (p.payment_tenor != null) parts.push(translate("product.tenor", { n: p.payment_tenor }));
+    if (p.age_min != null && p.age_max != null)
+      parts.push(translate("product.ageRange", { min: p.age_min, max: p.age_max }));
+    if (p.professional_investor) parts.push(translate("product.piOnly"));
   }
   return parts.join(" · ");
 }

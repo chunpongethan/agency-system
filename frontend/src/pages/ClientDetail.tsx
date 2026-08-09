@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "../api/client";
+import { api, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { useI18n } from "../i18n/LanguageContext";
 import { money } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
 import StatusBadge from "../components/StatusBadge";
@@ -12,6 +13,7 @@ export default function ClientDetail() {
   const clientId = Number(id);
   const qc = useQueryClient();
   const { me } = useAuth();
+  const { t } = useI18n();
   const isAdmin = me?.role === "admin";
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +58,10 @@ export default function ClientDetail() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["client", clientId] });
-      setMsg("Saved."); setError(null);
+      setMsg(t("clientDetail.saved")); setError(null);
       setTimeout(() => setMsg(null), 2500);
     },
-    onError: (e) => setError(e instanceof ApiError ? e.message : "Save failed"),
+    onError: (e) => setError(errorText(e, t) || t("clientDetail.saveFailed")),
   });
 
   const settle = useMutation({
@@ -73,91 +75,91 @@ export default function ClientDetail() {
   const remove = useMutation({
     mutationFn: (txnId: number) => api.deleteTransaction(txnId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clientTxns", clientId] }),
-    onError: (e) => setError(e instanceof ApiError ? e.message : "Delete failed"),
+    onError: (e) => setError(errorText(e, t) || t("clientDetail.deleteFailed")),
   });
 
-  if (client.isLoading) return <div className="spinner">Loading…</div>;
-  if (client.error) return <div className="error">Could not load client (out of scope?).</div>;
+  if (client.isLoading) return <div className="spinner">{t("common.loading")}</div>;
+  if (client.error) return <div className="error">{t("clientDetail.loadFailed")}</div>;
 
   return (
     <div>
-      <p className="page-sub"><Link to="/clients">← Clients</Link></p>
+      <p className="page-sub"><Link to="/clients">{t("clientDetail.back")}</Link></p>
       <h1 className="page-title">{client.data!.name}</h1>
       <p className="page-sub">{client.data!.ref}</p>
 
       <div>
         <form className="card" onSubmit={(e) => { e.preventDefault(); if (canEditProfile) save.mutate(); }}>
-          <h2>Profile {isAdmin && <span className="muted" style={{ fontSize: 12 }}>(read-only — owner edits)</span>}</h2>
+          <h2>{t("clientDetail.profile")} {isAdmin && <span className="muted" style={{ fontSize: 12 }}>{t("clientDetail.readonlyHint")}</span>}</h2>
           {msg && <div className="success">{msg}</div>}
           {error && <div className="error">{error}</div>}
-          <label>Name</label>
+          <label>{t("common.name")}</label>
           <input value={form.name} disabled={!canEditProfile}
             onChange={(e) => setForm({ ...form, name: e.target.value })} />
           <div className="row">
             <div>
-              <label>Email</label>
+              <label>{t("common.email")}</label>
               <input value={form.email} disabled={!canEditProfile}
                 onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div>
-              <label>Phone</label>
+              <label>{t("common.phone")}</label>
               <input value={form.phone} disabled={!canEditProfile}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
           </div>
-          <label>Risk profile</label>
+          <label>{t("clients.riskProfile")}</label>
           <input value={form.risk_profile} disabled={!canEditProfile}
             onChange={(e) => setForm({ ...form, risk_profile: e.target.value })} />
-          <label>Notes</label>
+          <label>{t("clientDetail.notes")}</label>
           <textarea rows={3} value={form.notes} disabled={!canEditProfile}
             onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           {canEditProfile && (
             <div style={{ marginTop: 14 }}>
               <button className="primary" type="submit" disabled={save.isPending}>
-                {save.isPending ? "Saving…" : "Save profile"}
+                {save.isPending ? t("common.saving") : t("clientDetail.saveProfile")}
               </button>
             </div>
           )}
         </form>
 
         <div className="card">
-          <h2>Transaction history</h2>
-          {txns.isLoading && <div className="spinner">Loading…</div>}
+          <h2>{t("clientDetail.txnHistory")}</h2>
+          {txns.isLoading && <div className="spinner">{t("common.loading")}</div>}
           <table>
             <thead>
               <tr>
-                <th>Ref</th><th>Date</th><th>Product</th><th className="num">Notional</th>
-                <th>Status</th>{isAdmin && <th></th>}
+                <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th>
+                <th>{t("common.status")}</th>{isAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
-              {txns.data?.map((t) => {
-                const p = productsById.get(t.product_id);
+              {txns.data?.map((tx) => {
+                const p = productsById.get(tx.product_id);
                 const details = productDetails(p);
                 return (
-                <tr key={t.id}>
-                  <td>{t.ref}</td>
-                  <td className="muted">{t.trade_date}</td>
+                <tr key={tx.id}>
+                  <td>{tx.ref}</td>
+                  <td className="muted">{tx.trade_date}</td>
                   <td>
-                    <div>{p ? p.name : `#${t.product_id}`}</div>
+                    <div>{p ? p.name : `#${tx.product_id}`}</div>
                     <div className="muted" style={{ fontSize: 11 }}>
                       {p && <span className="badge role" style={{ marginRight: 6 }}>{productTypeLabel(p.type)}</span>}
                       {details}
                     </div>
                   </td>
-                  <td className="num">{money(t.notional, t.currency)}</td>
-                  <td><StatusBadge status={t.status} /></td>
+                  <td className="num">{money(tx.notional, tx.currency)}</td>
+                  <td><StatusBadge status={tx.status} /></td>
                   {isAdmin && (
                     <td className="num" style={{ whiteSpace: "nowrap" }}>
-                      {t.status === "pending" && (
-                        <button className="ghost" onClick={() => settle.mutate(t.id)}>Settle</button>
+                      {tx.status === "pending" && (
+                        <button className="ghost" onClick={() => settle.mutate(tx.id)}>{t("clientDetail.settle")}</button>
                       )}{" "}
-                      {t.status === "settled" && (
-                        <button className="ghost" onClick={() => cancel.mutate(t.id)}>Cancel</button>
+                      {tx.status === "settled" && (
+                        <button className="ghost" onClick={() => cancel.mutate(tx.id)}>{t("common.cancel")}</button>
                       )}{" "}
                       <button className="ghost" style={{ color: "var(--bad)" }}
-                        onClick={() => { if (window.confirm(`Delete transaction ${t.ref}?`)) remove.mutate(t.id); }}>
-                        Delete
+                        onClick={() => { if (window.confirm(t("clientDetail.confirmDelete", { ref: tx.ref }))) remove.mutate(tx.id); }}>
+                        {t("common.delete")}
                       </button>
                     </td>
                   )}
@@ -165,17 +167,17 @@ export default function ClientDetail() {
                 );
               })}
               {txns.data?.length === 0 && (
-                <tr><td colSpan={isAdmin ? 6 : 5} className="muted">No transactions.</td></tr>
+                <tr><td colSpan={isAdmin ? 6 : 5} className="muted">{t("clientDetail.noTxns")}</td></tr>
               )}
             </tbody>
           </table>
           {isAdmin ? (
             <p style={{ marginTop: 12 }}>
-              <Link to="/transactions/new">+ Book a new transaction</Link>
+              <Link to="/transactions/new">{t("clientDetail.bookNew")}</Link>
             </p>
           ) : (
             <p className="muted" style={{ marginTop: 12, fontSize: 12 }}>
-              Transactions are booked and managed by an admin.
+              {t("clientDetail.adminBooksNote")}
             </p>
           )}
         </div>

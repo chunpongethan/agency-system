@@ -6,6 +6,7 @@ import type {
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix,
 } from "./types";
+import { translate } from "../i18n/LanguageContext";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const TOKEN_KEY = "agency_token";
@@ -22,10 +23,28 @@ export function clearToken(): void {
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  code: string | null;
+  constructor(status: number, message: string, code: string | null = null) {
     super(message);
     this.status = status;
+    this.code = code;
   }
+}
+
+// Localize an API error: prefer the stable X-Error-Code, then a generic
+// per-status message, then the raw backend detail. `t` is useI18n().t.
+export function errorText(err: unknown, t: (k: string, p?: Record<string, string | number>) => string): string {
+  if (err instanceof ApiError) {
+    if (err.code) {
+      const key = `error.${err.code}`;
+      const label = t(key);
+      if (label !== key) return label;
+    }
+    const byStatus = t(`error.status.${err.status}`);
+    if (byStatus !== `error.status.${err.status}`) return byStatus;
+    return err.message || t("error.generic");
+  }
+  return err instanceof Error ? err.message : t("error.generic");
 }
 
 async function request<T>(
@@ -54,7 +73,7 @@ async function request<T>(
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(res.status, String(detail));
+    throw new ApiError(res.status, String(detail), res.headers.get("X-Error-Code"));
   }
   if (res.status === 204) return undefined as T;
   const ct = res.headers.get("Content-Type") || "";
@@ -172,7 +191,7 @@ export async function downloadFile(path: string, filename: string): Promise<void
   const res = await fetch(`${BASE}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) throw new ApiError(res.status, `download failed (${res.status})`);
+  if (!res.ok) throw new ApiError(res.status, translate("error.downloadFailed", { status: res.status }));
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

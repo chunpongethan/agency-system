@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
+import { useI18n } from "../i18n/LanguageContext";
 import { money } from "../lib/format";
 import { titleLabel } from "../lib/titles";
+import { roleLabel } from "../i18n/labels";
 import type { Agent, TeamProductionRow, PeriodProduction } from "../api/types";
 
 const ZERO: PeriodProduction = { afyp: 0, commission: 0 };
@@ -49,6 +51,7 @@ function NodeRow({
   node: TreeNode; collapsed: Set<number>; toggle: (id: number) => void;
   selectedId: number | null; onSelect: (id: number) => void;
 }) {
+  const { t } = useI18n();
   const hasChildren = node.children.length > 0;
   const isCollapsed = collapsed.has(node.id);
   const isManager = node.role === "manager";
@@ -64,14 +67,14 @@ function NodeRow({
           <span className="lvl">L{node.level}</span>
           <strong>{node.name}</strong>
           <span className="muted">({node.code})</span>
-          <span className="badge role">{node.role}</span>
+          <span className="badge role">{roleLabel(node.role)}</span>
           {node.title && <span className="badge title">{titleLabel(node.title)}</span>}
           {isManager && node.unit_code && <span className="badge unit">{node.unit_code}</span>}
           <span className="node-metric">
-            <span className="metric-label">team AFYP</span> {money(node.teamAfyp)}
+            <span className="metric-label">{t("hierarchy.teamAfyp")}</span> {money(node.teamAfyp)}
           </span>
           <span className="node-metric">
-            <span className="metric-label">team comm.</span> {money(node.teamComm)}
+            <span className="metric-label">{t("hierarchy.teamComm")}</span> {money(node.teamComm)}
           </span>
         </button>
       </div>
@@ -88,6 +91,7 @@ function NodeRow({
 }
 
 function TeamPanel({ node, onClose }: { node: TreeNode; onClose: () => void }) {
+  const { t } = useI18n();
   const members = flatten(node);
   const totals = members.reduce(
     (t, m) => ({
@@ -101,27 +105,27 @@ function TeamPanel({ node, onClose }: { node: TreeNode; onClose: () => void }) {
     <div className="card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h2>
-          {node.role === "manager" ? "Team production" : "Production"} — {node.name}
+          {node.role === "manager" ? t("hierarchy.teamProduction") : t("hierarchy.production")} — {node.name}
           {node.unit_code ? ` · ${node.unit_code}` : ""}
         </h2>
         <button className="ghost" onClick={onClose} style={{ padding: "2px 8px" }}>✕</button>
       </div>
       <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>
-        {members.length} member{members.length === 1 ? "" : "s"} (including the manager) · AFYP and commission per period.
+        {t("hierarchy.membersNote", { count: members.length })}
       </p>
       <div style={{ overflowX: "auto" }}>
         <table>
           <thead>
             <tr>
-              <th rowSpan={2}>Member</th>
-              <th colSpan={2} style={{ textAlign: "center" }}>YTD</th>
-              <th colSpan={2} style={{ textAlign: "center" }}>Last month</th>
-              <th colSpan={2} style={{ textAlign: "center" }}>Current month</th>
+              <th rowSpan={2}>{t("hierarchy.member")}</th>
+              <th colSpan={2} style={{ textAlign: "center" }}>{t("common.ytd")}</th>
+              <th colSpan={2} style={{ textAlign: "center" }}>{t("common.lastMonth")}</th>
+              <th colSpan={2} style={{ textAlign: "center" }}>{t("common.currentMonth")}</th>
             </tr>
             <tr>
-              <th className="num">AFYP</th><th className="num">Comm.</th>
-              <th className="num">AFYP</th><th className="num">Comm.</th>
-              <th className="num">AFYP</th><th className="num">Comm.</th>
+              <th className="num">{t("common.afyp")}</th><th className="num">{t("scorecard.comm")}</th>
+              <th className="num">{t("common.afyp")}</th><th className="num">{t("scorecard.comm")}</th>
+              <th className="num">{t("common.afyp")}</th><th className="num">{t("scorecard.comm")}</th>
             </tr>
           </thead>
           <tbody>
@@ -130,7 +134,7 @@ function TeamPanel({ node, onClose }: { node: TreeNode; onClose: () => void }) {
                 <td>
                   <span className="lvl">L{m.level}</span> {m.name}{" "}
                   <span className="muted">({m.code})</span>
-                  {m.role === "manager" && <span className="badge role" style={{ marginLeft: 6 }}>mgr</span>}
+                  {m.role === "manager" && <span className="badge role" style={{ marginLeft: 6 }}>{t("hierarchy.mgr")}</span>}
                 </td>
                 <td className="num">{money(m.own.ytd.afyp)}</td>
                 <td className="num">{money(m.own.ytd.commission)}</td>
@@ -143,7 +147,7 @@ function TeamPanel({ node, onClose }: { node: TreeNode; onClose: () => void }) {
           </tbody>
           <tfoot>
             <tr style={{ fontWeight: 700 }}>
-              <td>Team total</td>
+              <td>{t("hierarchy.teamTotal")}</td>
               <td className="num">{money(totals.ya)}</td><td className="num">{money(totals.yc)}</td>
               <td className="num">{money(totals.la)}</td><td className="num">{money(totals.lc)}</td>
               <td className="num">{money(totals.ca)}</td><td className="num">{money(totals.cc)}</td>
@@ -156,12 +160,13 @@ function TeamPanel({ node, onClose }: { node: TreeNode; onClose: () => void }) {
 }
 
 export default function Hierarchy() {
+  const { t } = useI18n();
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
   const production = useQuery({ queryKey: ["teamProduction"], queryFn: () => api.teamProduction() });
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  if (agents.isLoading || production.isLoading) return <div className="spinner">Loading…</div>;
+  if (agents.isLoading || production.isLoading) return <div className="spinner">{t("common.loading")}</div>;
 
   const prodMap = new Map<number, TeamProductionRow>(
     (production.data ?? []).map((r) => [r.agent_id, r]),
@@ -190,15 +195,12 @@ export default function Hierarchy() {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
-          <h1 className="page-title">Hierarchy</h1>
-          <p className="page-sub">
-            Team AFYP and commission per unit (YTD). Click a node to see each member's production
-            for YTD / last month / current month.
-          </p>
+          <h1 className="page-title">{t("hierarchy.title")}</h1>
+          <p className="page-sub">{t("hierarchy.subtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="ghost" onClick={() => setCollapsed(new Set())}>Expand all</button>
-          <button className="ghost" onClick={collapseAll}>Collapse all</button>
+          <button className="ghost" onClick={() => setCollapsed(new Set())}>{t("hierarchy.expandAll")}</button>
+          <button className="ghost" onClick={collapseAll}>{t("hierarchy.collapseAll")}</button>
         </div>
       </div>
 

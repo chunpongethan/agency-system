@@ -42,6 +42,8 @@ a:hover { text-decoration: underline; }
   border: none; border-radius: 6px; cursor: pointer; font-size: 13px;
 }
 .sidebar button.logout:hover { background: #4b5563; }
+.sidebar-lang { margin: 10px 20px 2px; display: flex; }
+.sidebar-lang button { flex: 1; }
 
 .main { flex: 1; padding: 26px 34px; overflow-x: auto; }
 .page-title { font-size: 22px; font-weight: 700; margin: 0 0 4px; }

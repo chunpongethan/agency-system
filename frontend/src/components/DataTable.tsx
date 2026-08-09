@@ -7,6 +7,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useState } from "react";
+import { useI18n } from "../i18n/LanguageContext";
 
 interface Props<T> {
   data: T[];
@@ -16,6 +17,7 @@ interface Props<T> {
 
 // A small sortable grid built on TanStack Table, used for ledger/summary grids.
 export default function DataTable<T>({ data, columns, empty }: Props<T>) {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
     data,
@@ -61,7 +63,7 @@ export default function DataTable<T>({ data, columns, empty }: Props<T>) {
         {data.length === 0 && (
           <tr>
             <td colSpan={columns.length} className="muted">
-              {empty ?? "No rows."}
+              {empty ?? t("common.noRows")}
             </td>
           </tr>
         )}

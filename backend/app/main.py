@@ -15,6 +15,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import jwt
 from sqlalchemy import create_engine, select, or_, func, delete
 from sqlalchemy.orm import Session, sessionmaker
@@ -39,6 +40,8 @@ Base.metadata.create_all(engine)
 app = FastAPI(title="Agency Management System", version="1.0.0")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    # Expose the machine-readable error code so the browser client can localize.
+    expose_headers=["X-Error-Code"],
 )
 
 bearer_scheme = HTTPBearer(auto_error=True)
@@ -53,24 +56,61 @@ def get_db():
 
 
 # --- Exception mapping -------------------------------------------------------
+# Stable, machine-readable error codes returned via the X-Error-Code response
+# header so the browser client can localize messages. The `detail` body text is
+# left unchanged (English) to preserve the existing API/test contract.
+_DETAIL_TO_CODE = {
+    "invalid or expired token": "invalid_token",
+    "unknown or inactive principal": "unknown_principal",
+    "admin role required": "admin_required",
+    "invalid credentials": "invalid_credentials",
+    "account disabled": "account_disabled",
+    "agent not found": "agent_not_found",
+    "email already in use": "email_in_use",
+    "admins do not own clients": "forbidden",
+    "you may only create clients you own": "forbidden",
+    "you may only list your own clients": "forbidden",
+    "client not found": "client_not_found",
+    "product not found": "product_not_found",
+    "product or agent not found": "not_found",
+    "cannot delete a product with transactions; deactivate it instead": "product_has_transactions",
+    "override rule not found": "rule_not_found",
+    "transaction not found": "transaction_not_found",
+    "cannot delete a transaction with paid commission; cancel it instead": "transaction_has_paid",
+}
+
+
+@app.exception_handler(StarletteHTTPException)
+def _http_exception_handler(request, exc: StarletteHTTPException):
+    headers = dict(exc.headers or {})
+    code = _DETAIL_TO_CODE.get(str(exc.detail))
+    if code:
+        headers["X-Error-Code"] = code
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=headers)
+
+
 @app.exception_handler(PermissionError)
 def _permission_handler(request, exc: PermissionError):
-    return JSONResponse(status_code=403, content={"detail": str(exc)})
+    return JSONResponse(status_code=403, content={"detail": str(exc)},
+                        headers={"X-Error-Code": "forbidden"})
 
 
 @app.exception_handler(agent_service.ValidationError)
 def _validation_handler(request, exc: agent_service.ValidationError):
-    return JSONResponse(status_code=422, content={"detail": str(exc)})
+    return JSONResponse(status_code=422, content={"detail": str(exc)},
+                        headers={"X-Error-Code": "validation"})
 
 
 @app.exception_handler(periods.PeriodLockedError)
 def _period_locked_handler(request, exc: periods.PeriodLockedError):
-    return JSONResponse(status_code=409, content={"detail": str(exc)})
+    return JSONResponse(status_code=409, content={"detail": str(exc)},
+                        headers={"X-Error-Code": "period_locked"})
 
 
 @app.exception_handler(ValueError)
 def _value_error_handler(request, exc: ValueError):
-    return JSONResponse(status_code=400, content={"detail": str(exc)})
+    return JSONResponse(status_code=400, content={"detail": str(exc)},
+                        headers={"X-Error-Code": "bad_request"})
 
 
 # --- Auth --------------------------------------------------------------------
@@ -602,35 +642,35 @@ def _export_response(content, fmt: str, filename: str):
     if fmt == "pdf":
         return Response(content, media_type="application/pdf",
                         headers={"Content-Disposition": f'attachment; filename="{filename}.pdf"'})
-    return Response(content, media_type="text/csv",
+    return Response(content, media_type="text/csv; charset=utf-8",
                     headers={"Content-Disposition": f'attachment; filename="{filename}.csv"'})
 
 
 @app.get("/reports/agent/{agent_id}/export")
-def export_agent_statement(agent_id: int, format: str = "csv",
+def export_agent_statement(agent_id: int, format: str = "csv", lang: str = "zh-Hant",
                            start: date | None = None, end: date | None = None,
                            db: Session = Depends(get_db),
                            current: Agent = Depends(get_current_agent)):
     scoping.assert_visible(db, current, agent_id)
     statement = reports.agent_statement(db, agent_id, start, end)
     if format == "pdf":
-        return _export_response(exports.statement_to_pdf(statement), "pdf",
+        return _export_response(exports.statement_to_pdf(statement, lang), "pdf",
                                 f"statement_agent_{agent_id}")
-    return _export_response(exports.statement_to_csv(statement), "csv",
+    return _export_response(exports.statement_to_csv(statement, lang), "csv",
                             f"statement_agent_{agent_id}")
 
 
 @app.get("/reports/agency/export")
-def export_agency_summary(format: str = "csv",
+def export_agency_summary(format: str = "csv", lang: str = "zh-Hant",
                           start: date | None = None, end: date | None = None,
                           db: Session = Depends(get_db),
                           current: Agent = Depends(get_current_agent)):
     ids = scoping.visible_agent_ids(db, current)
     summary = reports.agency_summary(db, start, end, agent_ids=ids)
     if format == "pdf":
-        return _export_response(exports.agency_summary_to_pdf(summary), "pdf",
+        return _export_response(exports.agency_summary_to_pdf(summary, lang), "pdf",
                                 "agency_summary")
-    return _export_response(exports.agency_summary_to_csv(summary), "csv",
+    return _export_response(exports.agency_summary_to_csv(summary, lang), "csv",
                             "agency_summary")
 
 

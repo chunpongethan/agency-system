@@ -3,6 +3,11 @@ Exports: CSV and PDF for agent statements and the agency summary.
 
 `render_statement()` produces the neutral row structure that feeds both the API
 JSON, the CSV writer, and the PDF renderer, so all three stay in lockstep.
+
+Localization: every function accepts a `lang` ("zh-Hant" default, or "en"). Labels
+and enum values come from services.i18n. PDFs register a CJK font so Traditional
+Chinese names render; CSVs are written with a UTF-8 BOM so Excel on Windows shows
+Chinese correctly.
 """
 from __future__ import annotations
 
@@ -13,40 +18,62 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer,
 )
 
+from app.services import i18n
 
-def render_statement(statement: dict) -> dict:
+# Built-in Adobe CJK font — no external file needed. Registered once, lazily.
+_CJK_FONT = "STSong-Light"
+_cjk_registered = False
+
+
+def _ensure_cjk_font() -> str:
+    global _cjk_registered
+    if not _cjk_registered:
+        pdfmetrics.registerFont(UnicodeCIDFont(_CJK_FONT))
+        _cjk_registered = True
+    return _CJK_FONT
+
+
+def render_statement(statement: dict, lang: str | None = None) -> dict:
     """
     Normalise an agent_statement dict into a header + rows + totals structure
-    shared by every output format.
+    shared by every output format, with localized labels and enum values.
     """
     header = [
-        ["Agent", f'{statement["agent"]["name"]} ({statement["agent"]["code"]})'],
-        ["Level", f'L{statement["agent"]["level"]}'],
-        ["Period", f'{statement["period"]["start"] or "—"} → {statement["period"]["end"] or "—"}'],
+        [i18n.label("agent", lang), f'{statement["agent"]["name"]} ({statement["agent"]["code"]})'],
+        [i18n.label("level", lang), f'L{statement["agent"]["level"]}'],
+        [i18n.label("period", lang), f'{statement["period"]["start"] or "—"} → {statement["period"]["end"] or "—"}'],
     ]
-    rows = [["Kind", "Product type", "Count", "Amount"]]
+    rows = [[i18n.label("kind", lang), i18n.label("product_type", lang),
+             i18n.label("count", lang), i18n.label("amount", lang)]]
     for line in statement["lines"]:
         rows.append([
-            line["kind"], line["product_type"], str(line["count"]),
+            i18n.enum_label("kind", line["kind"], lang),
+            i18n.enum_label("product_type", line["product_type"], lang),
+            str(line["count"]),
             f'{line["amount"]:,.2f}',
         ])
     totals = [
-        ["Direct total", f'{statement["direct_total"]:,.2f}'],
-        ["Override total", f'{statement["override_total"]:,.2f}'],
-        ["Grand total", f'{statement["grand_total"]:,.2f}'],
+        [i18n.label("direct_total", lang), f'{statement["direct_total"]:,.2f}'],
+        [i18n.label("override_total", lang), f'{statement["override_total"]:,.2f}'],
+        [i18n.label("grand_total", lang), f'{statement["grand_total"]:,.2f}'],
     ]
     return {"header": header, "rows": rows, "totals": totals}
 
 
 # --------------------------------------------------------------------------- #
-# CSV
+# CSV  (UTF-8 BOM so Excel on Windows renders CJK correctly)
 # --------------------------------------------------------------------------- #
-def statement_to_csv(statement: dict) -> str:
-    rendered = render_statement(statement)
+_BOM = "﻿"
+
+
+def statement_to_csv(statement: dict, lang: str | None = None) -> str:
+    rendered = render_statement(statement, lang)
     buf = io.StringIO()
     w = csv.writer(buf)
     for k, v in rendered["header"]:
@@ -57,27 +84,29 @@ def statement_to_csv(statement: dict) -> str:
     w.writerow([])
     for k, v in rendered["totals"]:
         w.writerow([k, v])
-    return buf.getvalue()
+    return _BOM + buf.getvalue()
 
 
-def agency_summary_to_csv(summary: list[dict]) -> str:
+def agency_summary_to_csv(summary: list[dict], lang: str | None = None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["agent_id", "code", "name", "level", "total"])
+    w.writerow([i18n.label("agent_id", lang), i18n.label("code", lang),
+                i18n.label("name", lang), i18n.label("level", lang), i18n.label("total", lang)])
     for r in summary:
         w.writerow([r["agent_id"], r["code"], r["name"], r["level"], f'{r["total"]:,.2f}'])
-    return buf.getvalue()
+    return _BOM + buf.getvalue()
 
 
 # --------------------------------------------------------------------------- #
 # PDF
 # --------------------------------------------------------------------------- #
 def _table(data, col_widths=None):
+    font = _ensure_cjk_font()
     t = Table(data, colWidths=col_widths)
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f2937")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), font),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#d1d5db")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f3f4f6")]),
@@ -87,12 +116,19 @@ def _table(data, col_widths=None):
     return t
 
 
-def statement_to_pdf(statement: dict) -> bytes:
-    rendered = render_statement(statement)
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title="Agent Statement")
+def _title_style():
+    """A Title style that uses the CJK font so Chinese titles render."""
     styles = getSampleStyleSheet()
-    elems = [Paragraph("Agent Commission Statement", styles["Title"]), Spacer(1, 6 * mm)]
+    style = styles["Title"]
+    style.fontName = _ensure_cjk_font()
+    return style
+
+
+def statement_to_pdf(statement: dict, lang: str | None = None) -> bytes:
+    rendered = render_statement(statement, lang)
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, title=i18n.label("statement_doc", lang))
+    elems = [Paragraph(i18n.label("statement_title", lang), _title_style()), Spacer(1, 6 * mm)]
     elems.append(_table(rendered["header"], col_widths=[40 * mm, 120 * mm]))
     elems.append(Spacer(1, 6 * mm))
     elems.append(_table(rendered["rows"], col_widths=[35 * mm, 45 * mm, 35 * mm, 45 * mm]))
@@ -102,12 +138,12 @@ def statement_to_pdf(statement: dict) -> bytes:
     return buf.getvalue()
 
 
-def agency_summary_to_pdf(summary: list[dict]) -> bytes:
+def agency_summary_to_pdf(summary: list[dict], lang: str | None = None) -> bytes:
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title="Agency Summary")
-    styles = getSampleStyleSheet()
-    elems = [Paragraph("Agency Commission Summary", styles["Title"]), Spacer(1, 6 * mm)]
-    data = [["Agent ID", "Code", "Name", "Level", "Total"]]
+    doc = SimpleDocTemplate(buf, pagesize=A4, title=i18n.label("summary_doc", lang))
+    elems = [Paragraph(i18n.label("summary_title", lang), _title_style()), Spacer(1, 6 * mm)]
+    data = [[i18n.label("agent_id", lang), i18n.label("code", lang), i18n.label("name", lang),
+             i18n.label("level", lang), i18n.label("total", lang)]]
     for r in summary:
         data.append([str(r["agent_id"]), r["code"], r["name"],
                      f'L{r["level"]}', f'{r["total"]:,.2f}'])

@@ -130,12 +130,16 @@ def test_payout_reversal_becomes_next_adjustment(db):
 def test_csv_exports_generate(db):
     _settle(db, "T1", date(2024, 3, 10))
     statement = reports.agent_statement(db, db._a["l4"].id)
-    csv_text = exports.statement_to_csv(statement)
+    csv_text = exports.statement_to_csv(statement, lang="en")
     assert "Grand total" in csv_text and "5,000.00" in csv_text
 
     summary = reports.agency_summary(db)
-    summary_csv = exports.agency_summary_to_csv(summary)
-    assert "agent_id" in summary_csv
+    summary_csv = exports.agency_summary_to_csv(summary, lang="en")
+    assert "Agent ID" in summary_csv
+
+    # Default language is Traditional Chinese with a UTF-8 BOM for Excel.
+    zh_csv = exports.statement_to_csv(statement)
+    assert zh_csv.startswith("﻿") and "總計" in zh_csv
 
 
 def test_pdf_exports_generate(db):

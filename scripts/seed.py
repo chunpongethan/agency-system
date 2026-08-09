@@ -32,43 +32,43 @@ db.commit()
 
 # Admin is NOT part of the selling hierarchy: no upline, no clients, earns no
 # overrides. It only administers products, agents, rules, and transactions.
-admin = Agent(code="A000", name="Admin User", email="admin@agency.hk", level=1,
+admin = Agent(code="A000", name="系統管理員", email="admin@agency.hk", level=1,
               role=Role.ADMIN, password_hash=hash_password(DEMO_PASSWORD))
 db.add(admin); db.flush()
 
 # Selling hierarchy by tree depth (level 1 = top). Roles drive production
 # visibility; titles are the assigned business rank. The A-line runs 5 deep to
 # exercise the gap-4 override and unlimited depth. The top is a MANAGER, not admin.
-md = Agent(code="A001", name="Grace Chan", email="grace@agency.hk", level=AgentLevel.L1,
+md = Agent(code="A001", name="陳嘉欣", email="grace@agency.hk", level=AgentLevel.L1,
            role=Role.MANAGER, title=Title.PRINCIPAL_PARTNER, unit_code="HQ",
            password_hash=hash_password(DEMO_PASSWORD))
 db.add(md); db.flush()
-sm = Agent(code="A002", name="Leo Wong", email="leo@agency.hk", level=AgentLevel.L2, upline_id=md.id,
+sm = Agent(code="A002", name="黃樂天", email="leo@agency.hk", level=AgentLevel.L2, upline_id=md.id,
            role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, unit_code="U-LEO",
            password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm); db.flush()
-mgr = Agent(code="A003", name="Priya Shah", email="priya@agency.hk", level=AgentLevel.L3, upline_id=sm.id,
+mgr = Agent(code="A003", name="施雅麗", email="priya@agency.hk", level=AgentLevel.L3, upline_id=sm.id,
             role=Role.MANAGER, title=Title.DISTRICT_MANAGER, unit_code="U-PRIYA",
             password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr); db.flush()
-agent = Agent(code="A004", name="Tom Ng", email="tom@agency.hk", level=AgentLevel.L4, upline_id=mgr.id,
+agent = Agent(code="A004", name="吳浩民", email="tom@agency.hk", level=AgentLevel.L4, upline_id=mgr.id,
               role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(agent); db.flush()
 # A 5th level under Tom — sales here pay overrides up gaps 1..4 (Priya, Leo... wait Tom too).
-sub = Agent(code="A008", name="Ivy Tan", email="ivy@agency.hk", level=5, upline_id=agent.id,
+sub = Agent(code="A008", name="譚艾薇", email="ivy@agency.hk", level=5, upline_id=agent.id,
             role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(sub); db.flush()
 
 # A second line under the same L1 to exercise scoping isolation.
-sm2 = Agent(code="A005", name="Nadia Rahman", email="nadia@agency.hk", level=AgentLevel.L2, upline_id=md.id,
+sm2 = Agent(code="A005", name="劉家寶", email="nadia@agency.hk", level=AgentLevel.L2, upline_id=md.id,
             role=Role.MANAGER, title=Title.DISTRICT_DIRECTOR, unit_code="U-NADIA",
             password_hash=hash_password(DEMO_PASSWORD))
 db.add(sm2); db.flush()
-mgr2 = Agent(code="A006", name="Ken Ito", email="ken@agency.hk", level=AgentLevel.L3, upline_id=sm2.id,
+mgr2 = Agent(code="A006", name="伊藤健", email="ken@agency.hk", level=AgentLevel.L3, upline_id=sm2.id,
              role=Role.MANAGER, title=Title.DISTRICT_MANAGER, unit_code="U-KEN",
              password_hash=hash_password(DEMO_PASSWORD))
 db.add(mgr2); db.flush()
-agent2 = Agent(code="A007", name="Sara Lim", email="sara@agency.hk", level=AgentLevel.L4, upline_id=mgr2.id,
+agent2 = Agent(code="A007", name="林曉琳", email="sara@agency.hk", level=AgentLevel.L4, upline_id=mgr2.id,
                role=Role.AGENT, title=Title.BUSINESS_MANAGER, password_hash=hash_password(DEMO_PASSWORD))
 db.add(agent2); db.flush()
 
@@ -76,21 +76,21 @@ db.add(agent2); db.flush()
 prods = {
     # Base (upfront) rate = Yr1 commission (0.05) for insurance products.
     # afyp_conversion: AFYP = notional × this rate.
-    "insurance": Product(code="INS-WL", name="Whole Life Plan", type=ProductType.INSURANCE,
-                         provider="Sun Life", base_commission_rate=Decimal("0.0500"),
+    "insurance": Product(code="INS-WL", name="終身壽險計劃", type=ProductType.INSURANCE,
+                         provider="永明金融", base_commission_rate=Decimal("0.0500"),
                          afyp_conversion=Decimal("1.0000"),
                          payment_tenor=10, professional_investor=False, age_min=0, age_max=70,
                          year_commissions=["0.05", "0.03", "0.02", "0.02", "0.01",
                                            "0.01", "0.01", "0.005", "0.005", "0.005"]),
-    "fund": Product(code="FND-GEQ", name="Global Equity Fund", type=ProductType.FUND,
-                    provider="BlackRock", base_commission_rate=Decimal("0.0100"),
+    "fund": Product(code="FND-GEQ", name="環球股票基金", type=ProductType.FUND,
+                    provider="貝萊德", base_commission_rate=Decimal("0.0100"),
                     afyp_conversion=Decimal("0.1000")),
-    "eam": Product(code="EAM-DPM", name="Discretionary EAM Account", type=ProductType.EAM_ACCOUNT,
-                   provider="Julius Baer", base_commission_rate=Decimal("0.0075"),
+    "eam": Product(code="EAM-DPM", name="全權委託資產管理帳戶", type=ProductType.EAM_ACCOUNT,
+                   provider="寶盛", base_commission_rate=Decimal("0.0075"),
                    afyp_conversion=Decimal("0.1000")),
     # A trail product: pays 0.25% of notional per quarter for 4 quarters.
-    "trail": Product(code="FND-TRL", name="Managed Income Fund (Trail)", type=ProductType.FUND,
-                     provider="PIMCO", base_commission_rate=Decimal("0.0025"),
+    "trail": Product(code="FND-TRL", name="管理收益基金（分期）", type=ProductType.FUND,
+                     provider="品浩", base_commission_rate=Decimal("0.0025"),
                      afyp_conversion=Decimal("0.1000"),
                      commission_schedule=CommissionSchedule.TRAIL,
                      trail_frequency=TrailFrequency.QUARTERLY, trail_periods=4),
@@ -109,10 +109,12 @@ for ptype in ProductType:
 db.flush()
 
 # Clients (owned by the frontline agents)
-c1 = Client(ref="C001", name="Wellington Family Trust", agent_id=agent.id, risk_profile="Balanced")
-c2 = Client(ref="C002", name="K. Tanaka", agent_id=agent.id, risk_profile="Growth")
-c3 = Client(ref="C003", name="Orchid Holdings", agent_id=agent2.id, risk_profile="Conservative")
-c4 = Client(ref="C004", name="Lotus Ventures", agent_id=sub.id, risk_profile="Growth")
+# Risk profiles stay as canonical English values so the UI can localize them
+# both ways; client names are Chinese demo data (shown as entered).
+c1 = Client(ref="C001", name="威靈頓家族信託", agent_id=agent.id, risk_profile="Balanced")
+c2 = Client(ref="C002", name="田中先生", agent_id=agent.id, risk_profile="Growth")
+c3 = Client(ref="C003", name="蘭花控股", agent_id=agent2.id, risk_profile="Conservative")
+c4 = Client(ref="C004", name="蓮花創投", agent_id=sub.id, risk_profile="Growth")
 db.add_all([c1, c2, c3, c4]); db.flush()
 
 # Transactions

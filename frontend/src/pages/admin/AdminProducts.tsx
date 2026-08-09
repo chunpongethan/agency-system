@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "../../api/client";
+import { api, errorText } from "../../api/client";
+import { useI18n } from "../../i18n/LanguageContext";
 import { pct } from "../../lib/format";
+import { productTypeLabel, scheduleLabel, frequencyLabel, PRODUCT_TYPES, SCHEDULES, FREQUENCIES } from "../../i18n/labels";
 import type { Product } from "../../api/types";
-
-const PRODUCT_TYPES = ["insurance", "fund", "eam_account", "other"];
 
 interface InsDetails {
   payment_tenor: string;
@@ -93,83 +93,83 @@ function ageRange(p: Product): string {
 // Shared field set for create + edit. code/type are read-only when editing.
 function ProductFields({ value, onChange, isEdit }:
   { value: PForm; onChange: (f: PForm) => void; isEdit: boolean }) {
+  const { t } = useI18n();
   const isIns = value.type === "insurance";
   const setIns = (ins: InsDetails) => onChange({ ...value, ins });
   return (
     <>
       <div className="row">
-        <div><label>Code</label>
+        <div><label>{t("common.code")}</label>
           <input value={value.code} required readOnly={isEdit} disabled={isEdit}
             onChange={(e) => onChange({ ...value, code: e.target.value })} /></div>
-        <div><label>Name</label>
+        <div><label>{t("common.name")}</label>
           <input value={value.name} required onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
-        <div><label>Provider</label>
+        <div><label>{t("admin.products.provider")}</label>
           <input value={value.provider} onChange={(e) => onChange({ ...value, provider: e.target.value })} /></div>
       </div>
       <div className="row">
-        <div><label>Type</label>
+        <div><label>{t("common.type")}</label>
           <select value={value.type} disabled={isEdit}
             onChange={(e) => onChange({ ...value, type: e.target.value })}>
-            {PRODUCT_TYPES.map((t) => <option key={t}>{t}</option>)}
+            {PRODUCT_TYPES.map((pt) => <option key={pt} value={pt}>{productTypeLabel(pt)}</option>)}
           </select></div>
         {isIns ? (
-          <div><label>Base rate</label>
-            <input value={value.ins.yearComm[0]?.trim() ? pct(value.ins.yearComm[0]) : "= Yr1 commission"}
+          <div><label>{t("admin.products.thBaseRate")}</label>
+            <input value={value.ins.yearComm[0]?.trim() ? pct(value.ins.yearComm[0]) : t("admin.products.baseRateEqYr1")}
               readOnly disabled /></div>
         ) : (
-          <div><label>Base rate (of notional)</label>
+          <div><label>{t("admin.products.baseRateNotional")}</label>
             <input value={value.base_commission_rate}
               onChange={(e) => onChange({ ...value, base_commission_rate: e.target.value })} /></div>
         )}
-        <div><label>AFYP conversion (e.g. 1 = 100%)</label>
+        <div><label>{t("admin.products.afypConversion")}</label>
           <input value={value.afyp_conversion}
             onChange={(e) => onChange({ ...value, afyp_conversion: e.target.value })} /></div>
-        <div><label>Schedule</label>
+        <div><label>{t("admin.products.schedule")}</label>
           <select value={value.commission_schedule}
             onChange={(e) => onChange({ ...value, commission_schedule: e.target.value })}>
-            <option value="upfront">upfront</option>
-            <option value="trail">trail</option>
+            {SCHEDULES.map((s) => <option key={s} value={s}>{scheduleLabel(s)}</option>)}
           </select></div>
       </div>
       {value.commission_schedule === "trail" && (
         <div className="row">
-          <div><label>Frequency</label>
+          <div><label>{t("admin.products.frequency")}</label>
             <select value={value.trail_frequency}
               onChange={(e) => onChange({ ...value, trail_frequency: e.target.value })}>
-              <option>monthly</option><option>quarterly</option><option>annual</option>
+              {FREQUENCIES.map((f) => <option key={f} value={f}>{frequencyLabel(f)}</option>)}
             </select></div>
-          <div><label>Periods</label>
+          <div><label>{t("admin.products.periods")}</label>
             <input type="number" value={value.trail_periods}
               onChange={(e) => onChange({ ...value, trail_periods: e.target.value })} /></div>
         </div>
       )}
       {isIns && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
-          <h2 style={{ fontSize: 14 }}>Insurance details</h2>
+          <h2 style={{ fontSize: 14 }}>{t("admin.products.insDetails")}</h2>
           <p className="muted" style={{ fontSize: 12, marginTop: -6 }}>
-            The base (upfront) rate is set to the Yr1 commission below.
+            {t("admin.products.insBaseNote")}
           </p>
           <div className="row">
-            <div><label>Payment tenor (years)</label>
+            <div><label>{t("admin.products.paymentTenor")}</label>
               <input type="number" min="1" value={value.ins.payment_tenor}
                 onChange={(e) => setIns({ ...value.ins, payment_tenor: e.target.value })} /></div>
-            <div><label>Professional investor</label>
+            <div><label>{t("newTxn.professionalInvestor")}</label>
               <select value={value.ins.professional_investor}
                 onChange={(e) => setIns({ ...value.ins, professional_investor: e.target.value })}>
-                <option value="no">No</option><option value="yes">Yes</option>
+                <option value="no">{t("newTxn.no")}</option><option value="yes">{t("newTxn.yes")}</option>
               </select></div>
-            <div><label>Age range — min</label>
+            <div><label>{t("admin.products.ageMin")}</label>
               <input type="number" min="0" max="120" value={value.ins.age_min}
                 onChange={(e) => setIns({ ...value.ins, age_min: e.target.value })} /></div>
-            <div><label>Age range — max</label>
+            <div><label>{t("admin.products.ageMax")}</label>
               <input type="number" min="0" max="120" value={value.ins.age_max}
                 onChange={(e) => setIns({ ...value.ins, age_max: e.target.value })} /></div>
           </div>
-          <label style={{ marginTop: 10 }}>Commission schedule — Yr1 to Yr10 (%)</label>
+          <label style={{ marginTop: 10 }}>{t("admin.products.commScheduleYr")}</label>
           <div className="year-grid">
             {value.ins.yearComm.map((v, i) => (
               <div key={i} className="year-cell">
-                <span className="yr-label">Yr{i + 1}{i === 0 ? " · base" : ""}</span>
+                <span className="yr-label">{i === 0 ? t("admin.products.yrBase", { n: 1 }) : t("admin.products.yr", { n: i + 1 })}</span>
                 <input type="number" step="0.01" min="0" placeholder="0" value={v}
                   onChange={(e) => {
                     const next = [...value.ins.yearComm];
@@ -186,6 +186,7 @@ function ProductFields({ value, onChange, isEdit }:
 }
 
 export default function AdminProducts() {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
 
@@ -198,7 +199,7 @@ export default function AdminProducts() {
       setForm(emptyForm());
       setCreateErr(null);
     },
-    onError: (e) => setCreateErr(e instanceof ApiError ? e.message : "Failed"),
+    onError: (e) => setCreateErr(errorText(e, t) || t("admin.products.failed")),
   });
 
   const [editId, setEditId] = useState<number | null>(null);
@@ -211,18 +212,19 @@ export default function AdminProducts() {
       setEditId(null);
       setEditErr(null);
     },
-    onError: (e) => setEditErr(e instanceof ApiError ? e.message : "Failed"),
+    onError: (e) => setEditErr(errorText(e, t) || t("admin.products.failed")),
   });
 
   const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const [actionOk, setActionOk] = useState(false);
   const removeProduct = useMutation({
     mutationFn: (id: number) => api.deleteProduct(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
-      setActionMsg("Product deleted.");
+      setActionMsg(t("admin.products.deleted")); setActionOk(true);
       setTimeout(() => setActionMsg(null), 3000);
     },
-    onError: (e) => { setActionMsg(e instanceof ApiError ? e.message : "Delete failed"); },
+    onError: (e) => { setActionMsg(errorText(e, t) || t("admin.products.deleteFailed")); setActionOk(false); },
   });
 
   function startEdit(p: Product) {
@@ -231,45 +233,42 @@ export default function AdminProducts() {
     setEditErr(null);
   }
   function confirmDelete(p: Product) {
-    if (window.confirm(`Delete product ${p.name} (${p.code})? This cannot be undone.`)) {
+    if (window.confirm(t("admin.products.confirmDelete", { name: p.name, code: p.code }))) {
       removeProduct.mutate(p.id);
     }
   }
 
   return (
     <div>
-      <h1 className="page-title">Products</h1>
-      <p className="page-sub">
-        Create, edit and delete products. Insurance products carry extra details (tenor, age range,
-        professional-investor flag, Yr1–Yr10 schedule); their base rate equals the Yr1 commission.
-      </p>
+      <h1 className="page-title">{t("admin.products.title")}</h1>
+      <p className="page-sub">{t("admin.products.subtitle")}</p>
 
       <div className="card">
-        <h2>Catalogue</h2>
-        {actionMsg && <div className={actionMsg.includes("deleted") ? "success" : "error"}>{actionMsg}</div>}
+        <h2>{t("admin.products.catalogue")}</h2>
+        {actionMsg && <div className={actionOk ? "success" : "error"}>{actionMsg}</div>}
         <table>
           <thead>
             <tr>
-              <th>Code</th><th>Name</th><th>Type</th><th className="num">Base rate</th>
-              <th className="num">AFYP conv.</th><th>Schedule</th><th>Insurance details</th><th></th>
+              <th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("common.type")}</th><th className="num">{t("admin.products.thBaseRate")}</th>
+              <th className="num">{t("admin.products.thAfypConv")}</th><th>{t("admin.products.thSchedule")}</th><th>{t("admin.products.thInsuranceDetails")}</th><th></th>
             </tr>
           </thead>
           <tbody>
             {products.data?.map((p) => (
               <tr key={p.id}>
-                <td>{p.code}</td><td>{p.name}</td><td>{p.type}</td>
+                <td>{p.code}</td><td>{p.name}</td><td>{productTypeLabel(p.type)}</td>
                 <td className="num">{pct(p.base_commission_rate)}</td>
                 <td className="num">{pct(p.afyp_conversion)}</td>
-                <td>{p.commission_schedule}</td>
+                <td>{scheduleLabel(p.commission_schedule)}</td>
                 <td className="muted" style={{ fontSize: 12 }}>
                   {p.type === "insurance"
-                    ? `tenor ${p.payment_tenor ?? "—"}y · age ${ageRange(p)} · PI ${p.professional_investor ? "Y" : "N"}`
+                    ? t("admin.products.insSummary", { tenor: p.payment_tenor ?? "—", age: ageRange(p), pi: p.professional_investor ? "Y" : "N" })
                     : "—"}
                 </td>
                 <td className="num" style={{ whiteSpace: "nowrap" }}>
-                  <button className="ghost" onClick={() => startEdit(p)}>Edit</button>{" "}
+                  <button className="ghost" onClick={() => startEdit(p)}>{t("common.edit")}</button>{" "}
                   <button className="ghost" onClick={() => confirmDelete(p)}
-                    style={{ color: "var(--bad)" }}>Delete</button>
+                    style={{ color: "var(--bad)" }}>{t("common.delete")}</button>
                 </td>
               </tr>
             ))}
@@ -279,24 +278,24 @@ export default function AdminProducts() {
 
       {editId != null && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateProduct.mutate(); }}>
-          <h2>Edit product — {editForm.name} ({editForm.code})</h2>
+          <h2>{t("admin.products.editTitle", { name: editForm.name, code: editForm.code })}</h2>
           {editErr && <div className="error">{editErr}</div>}
           <ProductFields value={editForm} onChange={setEditForm} isEdit />
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
             <button className="primary" type="submit" disabled={updateProduct.isPending}>
-              {updateProduct.isPending ? "Saving…" : "Save changes"}
+              {updateProduct.isPending ? t("common.saving") : t("admin.agents.saveChanges")}
             </button>
-            <button className="ghost" type="button" onClick={() => setEditId(null)}>Cancel</button>
+            <button className="ghost" type="button" onClick={() => setEditId(null)}>{t("common.cancel")}</button>
           </div>
         </form>
       )}
 
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createProduct.mutate(); }}>
-        <h2>Add product</h2>
+        <h2>{t("admin.products.add")}</h2>
         {createErr && <div className="error">{createErr}</div>}
         <ProductFields value={form} onChange={setForm} isEdit={false} />
         <div style={{ marginTop: 12 }}>
-          <button className="primary" type="submit" disabled={createProduct.isPending}>Add product</button>
+          <button className="primary" type="submit" disabled={createProduct.isPending}>{t("admin.products.add")}</button>
         </div>
       </form>
     </div>
