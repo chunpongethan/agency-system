@@ -167,6 +167,22 @@ export interface PayoutResult {
   total: number;
 }
 
+export interface ProductMixRow {
+  product_id: number;
+  code: string;
+  name: string;
+  type: string;
+  count: number;
+  notional: number;
+  afyp: number;
+  commission: number;
+}
+
+export interface ProductMix {
+  rows: ProductMixRow[];
+  totals: { count: number; notional: number; afyp: number; commission: number };
+}
+
 export interface PeriodInfo {
   period: string;
   is_locked: boolean;

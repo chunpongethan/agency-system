@@ -19,10 +19,8 @@ export function resolveUnit(
 export const PRODUCT_TYPE_LABELS: Record<string, string> = {
   insurance: "Insurance",
   fund: "Fund",
-  mpf: "MPF",
-  bond: "Bond",
-  equity: "Equity",
-  structured: "Structured",
+  eam_account: "EAM Account",
+  other: "Other",
 };
 
 export function productTypeLabel(type: string | undefined): string {

@@ -4,7 +4,7 @@
 import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
-  TeamProductionRow, AgentScorecard,
+  TeamProductionRow, AgentScorecard, ProductMix,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -136,6 +136,8 @@ export const api = {
     request<AgentStatement>(`/reports/agent/${id}${qs({ start, end })}`),
   agencySummary: (start?: string, end?: string) =>
     request<AgencySummaryRow[]>(`/reports/agency${qs({ start, end })}`),
+  productMix: (start?: string, end?: string) =>
+    request<ProductMix>(`/reports/product-mix${qs({ start, end })}`),
   teamProduction: () => request<TeamProductionRow[]>("/reports/team-production"),
   agentScorecard: (id: number) =>
     request<AgentScorecard>(`/reports/agent/${id}/scorecard`),

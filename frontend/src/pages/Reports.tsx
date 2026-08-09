@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { api, downloadFile } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { money, currentPeriod } from "../lib/format";
+import { productTypeLabel } from "../lib/agency";
 import DataTable from "../components/DataTable";
 import type { AgencySummaryRow } from "../api/types";
 
@@ -22,6 +23,10 @@ export default function Reports() {
   const summary = useQuery({
     queryKey: ["report-agency", start, end],
     queryFn: () => api.agencySummary(start, end),
+  });
+  const mix = useQuery({
+    queryKey: ["report-mix", start, end],
+    queryFn: () => api.productMix(start, end),
   });
 
   const qsWin = `start=${start}&end=${end}`;
@@ -110,6 +115,72 @@ export default function Reports() {
               </tbody>
             </table>
           </>
+        )}
+      </div>
+
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <h2>Product mix</h2>
+          <span className="muted" style={{ fontSize: 13 }}>
+            Settled production by product · AFYP share
+          </span>
+        </div>
+        {mix.isLoading && <div className="spinner">Loading…</div>}
+        {mix.data && (
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th><th>Type</th>
+                  <th className="num">#</th>
+                  <th className="num">Notional</th>
+                  <th className="num">AFYP</th>
+                  <th className="num">Commission</th>
+                  <th style={{ width: 160 }}>AFYP share</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mix.data.rows.map((r) => {
+                  const share = mix.data!.totals.afyp > 0 ? (r.afyp / mix.data!.totals.afyp) * 100 : 0;
+                  return (
+                    <tr key={r.product_id}>
+                      <td>{r.name} <span className="muted">({r.code})</span></td>
+                      <td><span className="badge role">{productTypeLabel(r.type)}</span></td>
+                      <td className="num">{r.count}</td>
+                      <td className="num">{money(r.notional)}</td>
+                      <td className="num">{money(r.afyp)}</td>
+                      <td className="num">{money(r.commission)}</td>
+                      <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ flex: 1, height: 8, background: "var(--line)", borderRadius: 999 }}>
+                            <div style={{ width: `${share}%`, height: "100%", background: "var(--accent)", borderRadius: 999 }} />
+                          </div>
+                          <span className="muted" style={{ fontSize: 12, minWidth: 42, textAlign: "right" }}>
+                            {share.toFixed(1)}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {mix.data.rows.length === 0 && (
+                  <tr><td colSpan={7} className="muted">No settled production in this window.</td></tr>
+                )}
+              </tbody>
+              {mix.data.rows.length > 0 && (
+                <tfoot>
+                  <tr style={{ fontWeight: 700 }}>
+                    <td>Total</td><td></td>
+                    <td className="num">{mix.data.totals.count}</td>
+                    <td className="num">{money(mix.data.totals.notional)}</td>
+                    <td className="num">{money(mix.data.totals.afyp)}</td>
+                    <td className="num">{money(mix.data.totals.commission)}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
         )}
       </div>
 

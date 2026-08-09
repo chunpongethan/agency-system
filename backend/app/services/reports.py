@@ -92,6 +92,58 @@ def agency_summary(session: Session,
     ]
 
 
+def product_mix(session: Session,
+                start: date | None = None, end: date | None = None,
+                agent_ids: set[int] | None = None) -> dict:
+    """Settled production broken down by product: transaction count, notional,
+    AFYP, and commission earned in scope. Sorted by AFYP descending."""
+    # Notional / AFYP / count come from the settled transactions themselves.
+    tq = (
+        select(
+            Product.id, Product.code, Product.name, Product.type,
+            func.count(Transaction.id),
+            func.coalesce(func.sum(Transaction.notional), 0),
+            func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0),
+        )
+        .join(Transaction, Transaction.product_id == Product.id)
+        .where(Transaction.status == TxnStatus.SETTLED)
+        .group_by(Product.id)
+    )
+    if agent_ids is not None:
+        tq = tq.where(Transaction.agent_id.in_(agent_ids))
+    tq = _window(tq, start, end)
+
+    # Commission earned in scope, attributed to each product via its transaction.
+    cq = (
+        select(Product.id, func.coalesce(func.sum(CommissionEntry.amount), 0))
+        .join(Transaction, Transaction.product_id == Product.id)
+        .join(CommissionEntry, CommissionEntry.transaction_id == Transaction.id)
+        .group_by(Product.id)
+    )
+    if agent_ids is not None:
+        cq = cq.where(CommissionEntry.agent_id.in_(agent_ids))
+    cq = _window(cq, start, end)
+    comm_by_product = {pid: Decimal(amt) for pid, amt in session.execute(cq)}
+
+    rows = []
+    for pid, code, name, ptype, count, notional, afyp in session.execute(tq):
+        rows.append({
+            "product_id": pid, "code": code, "name": name, "type": ptype.value,
+            "count": count,
+            "notional": float(Decimal(notional)),
+            "afyp": float(Decimal(afyp)),
+            "commission": float(comm_by_product.get(pid, Decimal("0"))),
+        })
+    rows.sort(key=lambda r: r["afyp"], reverse=True)
+    totals = {
+        "count": sum(r["count"] for r in rows),
+        "notional": sum(r["notional"] for r in rows),
+        "afyp": sum(r["afyp"] for r in rows),
+        "commission": sum(r["commission"] for r in rows),
+    }
+    return {"rows": rows, "totals": totals}
+
+
 # --------------------------------------------------------------------------- #
 # AFYP + commission production (per agent), for team views
 # --------------------------------------------------------------------------- #

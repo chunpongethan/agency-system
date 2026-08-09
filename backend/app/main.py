@@ -553,6 +553,14 @@ def report_agency(start: date | None = None, end: date | None = None,
     return reports.agency_summary(db, start, end, agent_ids=ids)
 
 
+@app.get("/reports/product-mix")
+def report_product_mix(start: date | None = None, end: date | None = None,
+                       db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    ids = scoping.visible_agent_ids(db, current)
+    return reports.product_mix(db, start, end, agent_ids=ids)
+
+
 @app.get("/reports/agent/{agent_id}/scorecard")
 def report_agent_scorecard(agent_id: int, db: Session = Depends(get_db),
                            current: Agent = Depends(get_current_agent)):
