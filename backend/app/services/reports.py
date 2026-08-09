@@ -14,7 +14,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    Agent, Transaction, Product, CommissionEntry, CommissionKind, TxnStatus, Role,
+    Agent, Client, Transaction, Product, CommissionEntry, CommissionKind, TxnStatus, Role,
 )
 
 
@@ -57,36 +57,63 @@ def agent_statement(session: Session, agent_id: int,
             override_total += amount
 
     # Transaction-level breakdown: one row per (transaction, kind), summing any
-    # trail-period entries for the same transaction.
+    # trail-period entries for the same transaction. Carries the client, product
+    # details, trade date, and both the base commission rate and (for override
+    # rows) the override rate.
     eq = (
         select(
             Transaction.ref,
+            Transaction.trade_date,
+            Transaction.notional,
+            Client.name,
             Product.name,
             Product.type,
+            Product.provider,
+            Product.base_commission_rate,
+            Product.payment_tenor,
+            Product.professional_investor,
+            Product.age_min,
+            Product.age_max,
             CommissionEntry.kind,
-            Transaction.notional,
-            Transaction.trade_date,
+            func.max(CommissionEntry.rate),
+            func.max(CommissionEntry.level_gap),
             func.coalesce(func.sum(CommissionEntry.amount), 0),
         )
         .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
         .join(Product, Transaction.product_id == Product.id)
+        .join(Client, Transaction.client_id == Client.id)
         .where(CommissionEntry.agent_id == agent_id)
-        .group_by(Transaction.id, CommissionEntry.kind)
+        .group_by(
+            Transaction.id, CommissionEntry.kind, Transaction.ref, Transaction.trade_date,
+            Transaction.notional, Client.name, Product.name, Product.type, Product.provider,
+            Product.base_commission_rate, Product.payment_tenor,
+            Product.professional_investor, Product.age_min, Product.age_max,
+        )
         .order_by(CommissionEntry.kind, Transaction.ref)
     )
     eq = _window(eq, start, end)
-    entries = [
-        {
+    entries = []
+    for (ref, tdate, notional, client_name, pname, ptype, provider, base_rate,
+         tenor, pro_inv, age_min, age_max, kind, entry_rate, level_gap, amount) in session.execute(eq):
+        is_override = kind == CommissionKind.OVERRIDE
+        entries.append({
             "transaction_ref": ref,
+            "trade_date": str(tdate),
+            "client_name": client_name,
             "product_name": pname,
             "product_type": ptype.value,
+            "provider": provider,
+            "payment_tenor": tenor,
+            "professional_investor": pro_inv,
+            "age_min": age_min,
+            "age_max": age_max,
             "kind": kind.value,
             "notional": float(Decimal(notional)),
-            "trade_date": str(tdate),
+            "commission_rate": str(base_rate),
+            "override_rate": str(entry_rate) if is_override else None,
+            "level_gap": int(level_gap) if is_override else None,
             "amount": float(Decimal(amount)),
-        }
-        for ref, pname, ptype, kind, notional, tdate, amount in session.execute(eq)
-    ]
+        })
 
     agent = session.get(Agent, agent_id)
     return {

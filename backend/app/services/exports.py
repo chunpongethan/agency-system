@@ -15,8 +15,8 @@ import csv
 import io
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
@@ -42,13 +42,22 @@ def _ensure_cjk_font() -> str:
 # Stable display order for income kinds; unknown kinds sort last.
 _KIND_ORDER = {"direct": 0, "override": 1}
 
+# Column index of the product cell (wrapped as a Paragraph in the PDF).
+_PRODUCT_COL = 4
+
+
+def _pct(rate_str) -> str:
+    return f'{float(rate_str) * 100:.2f}%'
+
 
 def render_statement(statement: dict, lang: str | None = None) -> dict:
     """
     Normalise an agent_statement dict into a header + rows + totals structure
     shared by every output format, with localized labels and enum values. The
-    line rows are grouped by income kind (direct / override) with a subtotal row
-    per kind, so every format shows the breakdown of each kind of income.
+    rows are the per-transaction commission breakdown grouped by income kind
+    (direct / override) with a subtotal row per kind. Each row carries the trade
+    date, client, product (with details), notional, commission rate, override
+    rate, and amount.
     """
     header = [
         [i18n.label("agent", lang), f'{statement["agent"]["name"]} ({statement["agent"]["code"]})'],
@@ -62,26 +71,36 @@ def render_statement(statement: dict, lang: str | None = None) -> dict:
         by_kind.setdefault(entry["kind"], []).append(entry)
     kinds = sorted(by_kind, key=lambda k: _KIND_ORDER.get(k, 99))
 
-    rows = [[i18n.label("kind", lang), i18n.label("ref", lang), i18n.label("product", lang),
-             i18n.label("notional", lang), i18n.label("amount", lang)]]
+    rows = [[
+        i18n.label("kind", lang), i18n.label("ref", lang), i18n.label("date", lang),
+        i18n.label("client", lang), i18n.label("product", lang), i18n.label("notional", lang),
+        i18n.label("rate", lang), i18n.label("amount", lang),
+    ]]
     subtotal_rows: set[int] = set()   # indices (into rows) that are subtotals
     for kind in kinds:
         group = by_kind[kind]
         kind_lbl = i18n.enum_label("kind", kind, lang)
         sub_amt = 0.0
         for entry in group:
+            detail = i18n.product_detail(entry, lang)
+            product_cell = entry["product_name"] + (f' · {detail}' if detail else "")
+            # Show only the rate relevant to this row's income kind.
+            rate = entry["override_rate"] if entry.get("override_rate") else entry["commission_rate"]
             rows.append([
                 kind_lbl,
                 entry["transaction_ref"],
-                entry["product_name"],
+                entry["trade_date"],
+                entry["client_name"],
+                product_cell,
                 f'{entry["notional"]:,.2f}',
+                _pct(rate),
                 f'{entry["amount"]:,.2f}',
             ])
             sub_amt += entry["amount"]
         subtotal_rows.add(len(rows))
         rows.append([
             f'{kind_lbl} {i18n.label("subtotal", lang)}',
-            "", "", "", f'{sub_amt:,.2f}',
+            "", "", "", "", "", "", f'{sub_amt:,.2f}',
         ])
 
     totals = [
@@ -160,14 +179,24 @@ def _title_style():
 def statement_to_pdf(statement: dict, lang: str | None = None) -> bytes:
     rendered = render_statement(statement, lang)
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title=i18n.label("statement_doc", lang))
-    elems = [Paragraph(i18n.label("statement_title", lang), _title_style()), Spacer(1, 6 * mm)]
+    # Landscape to fit the wider per-transaction breakdown.
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title=i18n.label("statement_doc", lang))
+    elems = [Paragraph(i18n.label("statement_title", lang), _title_style()), Spacer(1, 5 * mm)]
     elems.append(_table(rendered["header"], col_widths=[40 * mm, 120 * mm]))
-    elems.append(Spacer(1, 6 * mm))
-    elems.append(_table(rendered["rows"], col_widths=[26 * mm, 26 * mm, 54 * mm, 32 * mm, 32 * mm],
+    elems.append(Spacer(1, 5 * mm))
+
+    # Wrap the product cell in a Paragraph so long name+detail strings wrap.
+    cell_style = ParagraphStyle("cell", fontName=_ensure_cjk_font(), fontSize=8, leading=10)
+    rows = [list(r) for r in rendered["rows"]]
+    for i, row in enumerate(rows):
+        if i > 0 and row[_PRODUCT_COL]:
+            row[_PRODUCT_COL] = Paragraph(str(row[_PRODUCT_COL]), cell_style)
+    elems.append(_table(rows,
+                        col_widths=[24 * mm, 24 * mm, 26 * mm, 38 * mm, 66 * mm,
+                                    32 * mm, 26 * mm, 32 * mm],
                         highlight_rows=rendered.get("subtotal_rows")))
-    elems.append(Spacer(1, 6 * mm))
-    elems.append(_table(rendered["totals"], col_widths=[80 * mm, 80 * mm]))
+    elems.append(Spacer(1, 5 * mm))
+    elems.append(_table(rendered["totals"], col_widths=[60 * mm, 60 * mm]))
     doc.build(elems)
     return buf.getvalue()
 

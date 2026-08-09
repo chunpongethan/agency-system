@@ -21,6 +21,14 @@ _LABELS: dict[str, dict[str, str]] = {
         "ref": "交易編號",
         "product": "產品",
         "notional": "名義金額",
+        "date": "交易日期",
+        "client": "客戶",
+        "commission_rate": "佣金率",
+        "override_rate": "越級佣金率",
+        "rate": "比率",
+        "tenor_fmt": "{n}年供款期",
+        "age_fmt": "年齡{min}–{max}",
+        "pi_only": "僅限專業投資者",
         "direct_total": "直接佣金合計",
         "override_total": "越級佣金合計",
         "grand_total": "總計",
@@ -45,6 +53,14 @@ _LABELS: dict[str, dict[str, str]] = {
         "ref": "Ref",
         "product": "Product",
         "notional": "Notional",
+        "date": "Date",
+        "client": "Client",
+        "commission_rate": "Comm. rate",
+        "override_rate": "Override rate",
+        "rate": "Rate",
+        "tenor_fmt": "{n}-yr tenor",
+        "age_fmt": "age {min}–{max}",
+        "pi_only": "PI only",
         "direct_total": "Direct total",
         "override_total": "Override total",
         "grand_total": "Grand total",
@@ -84,3 +100,18 @@ def label(key: str, lang: str | None = None) -> str:
 def enum_label(kind: str, value: str, lang: str | None = None) -> str:
     table = _ENUMS.get(kind, {}).get(_norm(lang), {})
     return table.get(value, value)
+
+
+def product_detail(entry: dict, lang: str | None = None) -> str:
+    """Compose a short product-detail string (provider + insurance specifics)."""
+    parts: list[str] = []
+    if entry.get("provider"):
+        parts.append(entry["provider"])
+    if entry.get("product_type") == "insurance":
+        if entry.get("payment_tenor") is not None:
+            parts.append(label("tenor_fmt", lang).format(n=entry["payment_tenor"]))
+        if entry.get("age_min") is not None and entry.get("age_max") is not None:
+            parts.append(label("age_fmt", lang).format(min=entry["age_min"], max=entry["age_max"]))
+        if entry.get("professional_investor"):
+            parts.append(label("pi_only", lang))
+    return " · ".join(parts)

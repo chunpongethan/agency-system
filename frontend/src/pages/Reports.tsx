@@ -4,10 +4,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { api, downloadFile } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
-import { money, currentPeriod } from "../lib/format";
+import { money, pct, currentPeriod } from "../lib/format";
+import { productDetails } from "../lib/agency";
 import { productTypeLabel, kindLabel } from "../i18n/labels";
 import DataTable from "../components/DataTable";
-import type { AgencySummaryRow } from "../api/types";
+import type { AgencySummaryRow, Product } from "../api/types";
 
 export default function Reports() {
   const { me } = useAuth();
@@ -98,18 +99,22 @@ export default function Reports() {
                 <div className="value">{money(statement.data.grand_total)}</div>
               </div>
             </div>
+            <div style={{ overflowX: "auto" }}>
             <table>
               <thead>
                 <tr>
-                  <th>{t("reports.thKind")}</th><th>{t("reports.thRef")}</th><th>{t("common.product")}</th>
-                  <th className="num">{t("common.notional")}</th><th className="num">{t("reports.thAmount")}</th>
+                  <th>{t("reports.thKind")}</th><th>{t("reports.thRef")}</th><th>{t("reports.thDate")}</th>
+                  <th>{t("reports.thClient")}</th><th>{t("common.product")}</th>
+                  <th className="num">{t("common.notional")}</th>
+                  <th className="num">{t("reports.thRate")}</th>
+                  <th className="num">{t("reports.thAmount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {(() => {
                   const entries = statement.data!.entries;
                   if (entries.length === 0) {
-                    return <tr><td colSpan={5} className="muted">{t("reports.noCommission")}</td></tr>;
+                    return <tr><td colSpan={8} className="muted">{t("reports.noCommission")}</td></tr>;
                   }
                   const order: Record<string, number> = { direct: 0, override: 1 };
                   const kinds = [...new Set(entries.map((e) => e.kind))]
@@ -117,19 +122,31 @@ export default function Reports() {
                   const out: ReactElement[] = [];
                   kinds.forEach((kind) => {
                     const group = entries.filter((e) => e.kind === kind);
-                    group.forEach((e, i) => out.push(
-                      <tr key={`${kind}-${i}`}>
-                        <td>{i === 0 ? kindLabel(kind) : ""}</td>
-                        <td>{e.transaction_ref}</td>
-                        <td>{e.product_name} <span className="muted" style={{ fontSize: 11 }}>({productTypeLabel(e.product_type)})</span></td>
-                        <td className="num">{money(e.notional)}</td>
-                        <td className="num">{money(e.amount)}</td>
-                      </tr>,
-                    ));
+                    group.forEach((e, i) => {
+                      const detail = productDetails({
+                        provider: e.provider, type: e.product_type, payment_tenor: e.payment_tenor,
+                        age_min: e.age_min, age_max: e.age_max, professional_investor: e.professional_investor,
+                      } as unknown as Product);
+                      return out.push(
+                        <tr key={`${kind}-${i}`}>
+                          <td>{i === 0 ? kindLabel(kind) : ""}</td>
+                          <td>{e.transaction_ref}</td>
+                          <td className="muted">{e.trade_date}</td>
+                          <td>{e.client_name}</td>
+                          <td>
+                            <div>{e.product_name} <span className="muted" style={{ fontSize: 11 }}>({productTypeLabel(e.product_type)})</span></div>
+                            {detail && <div className="muted" style={{ fontSize: 11 }}>{detail}</div>}
+                          </td>
+                          <td className="num">{money(e.notional)}</td>
+                          <td className="num">{e.kind === "override" && e.override_rate ? pct(e.override_rate) : pct(e.commission_rate)}</td>
+                          <td className="num">{money(e.amount)}</td>
+                        </tr>,
+                      );
+                    });
                     const subAmt = group.reduce((s, e) => s + e.amount, 0);
                     out.push(
                       <tr key={`${kind}-subtotal`} className="subtotal-row">
-                        <td colSpan={4}>{kindLabel(kind)} {t("reports.subtotal")}</td>
+                        <td colSpan={7}>{kindLabel(kind)} {t("reports.subtotal")}</td>
                         <td className="num">{money(subAmt)}</td>
                       </tr>,
                     );
@@ -140,12 +157,13 @@ export default function Reports() {
               {statement.data.entries.length > 0 && (
                 <tfoot>
                   <tr style={{ fontWeight: 700 }}>
-                    <td colSpan={4}>{t("reports.grandTotal")}</td>
+                    <td colSpan={7}>{t("reports.grandTotal")}</td>
                     <td className="num">{money(statement.data.grand_total)}</td>
                   </tr>
                 </tfoot>
               )}
             </table>
+            </div>
           </>
         )}
       </div>

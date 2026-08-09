@@ -124,11 +124,20 @@ export interface StatementLine {
 
 export interface StatementEntry {
   transaction_ref: string;
+  trade_date: string;
+  client_name: string;
   product_name: string;
   product_type: string;
+  provider: string | null;
+  payment_tenor: number | null;
+  professional_investor: boolean | null;
+  age_min: number | null;
+  age_max: number | null;
   kind: string;
   notional: number;
-  trade_date: string;
+  commission_rate: string;
+  override_rate: string | null;
+  level_gap: number | null;
   amount: number;
 }
 
