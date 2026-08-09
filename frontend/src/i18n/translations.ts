@@ -311,6 +311,8 @@ export const translations: Record<string, Translation> = {
   "reports.noSettled": { "zh-Hant": "此期間沒有已交收業績。", en: "No settled production in this window." },
   "reports.total": { "zh-Hant": "合計", en: "Total" },
   "reports.agencySummary": { "zh-Hant": "代理處總覽", en: "Agency summary" },
+  "reports.commissionIncome": { "zh-Hant": "佣金收入", en: "Commission" },
+  "reports.overrideIncome": { "zh-Hant": "越級佣金收入", en: "Override" },
   "reports.noData": { "zh-Hant": "此期間沒有資料。", en: "No data in this window." },
 
   // --- Admin: agents ---------------------------------------------------------

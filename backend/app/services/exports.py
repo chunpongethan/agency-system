@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import csv
 import io
+import os
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
@@ -20,23 +21,57 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer,
 )
 
 from app.services import i18n
 
-# Built-in Adobe CJK font — no external file needed. Registered once, lazily.
-_CJK_FONT = "STSong-Light"
-_cjk_registered = False
+# We embed a real TrueType CJK font (subset) so Traditional Chinese renders in
+# ANY PDF viewer. The non-embedded Adobe CID font "STSong-Light" only renders
+# where the viewer ships Asian fonts, so it is a last resort. Candidates are
+# tried in order; the first that exists and loads wins. A CJK_FONT_PATH env var
+# (optionally "path:index" for a .ttc) overrides the search — set it in Docker
+# to a bundled TrueType font such as Noto Sans CJK TC.
+_CJK_FONT = "AgencyCJK"
+_CJK_FALLBACK = "STSong-Light"
+_FONT_CANDIDATES: list[tuple[str, int]] = [
+    (r"C:\Windows\Fonts\msjh.ttc", 0),     # Microsoft JhengHei (Traditional)
+    (r"C:\Windows\Fonts\mingliu.ttc", 0),  # MingLiU (Traditional)
+    (r"C:\Windows\Fonts\kaiu.ttf", 0),     # DFKai-SB
+    (r"C:\Windows\Fonts\msyh.ttc", 0),     # Microsoft YaHei
+    ("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc", 0),
+    ("/usr/share/fonts/truetype/arphic/uming.ttc", 0),
+]
+_registered_font: str | None = None
 
 
 def _ensure_cjk_font() -> str:
-    global _cjk_registered
-    if not _cjk_registered:
-        pdfmetrics.registerFont(UnicodeCIDFont(_CJK_FONT))
-        _cjk_registered = True
-    return _CJK_FONT
+    """Register (once) and return an embeddable CJK font name."""
+    global _registered_font
+    if _registered_font:
+        return _registered_font
+
+    candidates = list(_FONT_CANDIDATES)
+    env = os.getenv("CJK_FONT_PATH")
+    if env:
+        path, _, idx = env.partition(":")
+        candidates.insert(0, (path, int(idx) if idx else 0))
+
+    for path, idx in candidates:
+        if os.path.exists(path):
+            try:
+                pdfmetrics.registerFont(TTFont(_CJK_FONT, path, subfontIndex=idx))
+                _registered_font = _CJK_FONT
+                return _registered_font
+            except Exception:
+                continue
+
+    # Last resort: non-embedded Adobe CID font (viewer must supply Asian glyphs).
+    pdfmetrics.registerFont(UnicodeCIDFont(_CJK_FALLBACK))
+    _registered_font = _CJK_FALLBACK
+    return _registered_font
 
 
 # Stable display order for income kinds; unknown kinds sort last.
@@ -136,10 +171,14 @@ def statement_to_csv(statement: dict, lang: str | None = None) -> str:
 def agency_summary_to_csv(summary: list[dict], lang: str | None = None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow([i18n.label("agent_id", lang), i18n.label("code", lang),
-                i18n.label("name", lang), i18n.label("level", lang), i18n.label("total", lang)])
+    w.writerow([i18n.label("agent_id", lang), i18n.label("code", lang), i18n.label("name", lang),
+                i18n.label("level", lang), i18n.label("afyp", lang),
+                i18n.label("commission_income", lang), i18n.label("override_income", lang),
+                i18n.label("total", lang)])
     for r in summary:
-        w.writerow([r["agent_id"], r["code"], r["name"], r["level"], f'{r["total"]:,.2f}'])
+        w.writerow([r["agent_id"], r["code"], r["name"], r["level"],
+                    f'{r.get("afyp", 0):,.2f}', f'{r.get("direct", 0):,.2f}',
+                    f'{r.get("override", 0):,.2f}', f'{r["total"]:,.2f}'])
     return _BOM + buf.getvalue()
 
 
@@ -203,13 +242,15 @@ def statement_to_pdf(statement: dict, lang: str | None = None) -> bytes:
 
 def agency_summary_to_pdf(summary: list[dict], lang: str | None = None) -> bytes:
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, title=i18n.label("summary_doc", lang))
+    doc = SimpleDocTemplate(buf, pagesize=landscape(A4), title=i18n.label("summary_doc", lang))
     elems = [Paragraph(i18n.label("summary_title", lang), _title_style()), Spacer(1, 6 * mm)]
-    data = [[i18n.label("agent_id", lang), i18n.label("code", lang), i18n.label("name", lang),
-             i18n.label("level", lang), i18n.label("total", lang)]]
+    data = [[i18n.label("code", lang), i18n.label("name", lang), i18n.label("level", lang),
+             i18n.label("afyp", lang), i18n.label("commission_income", lang),
+             i18n.label("override_income", lang), i18n.label("total", lang)]]
     for r in summary:
-        data.append([str(r["agent_id"]), r["code"], r["name"],
-                     f'L{r["level"]}', f'{r["total"]:,.2f}'])
-    elems.append(_table(data, col_widths=[25 * mm, 30 * mm, 60 * mm, 20 * mm, 40 * mm]))
+        data.append([r["code"], r["name"], f'L{r["level"]}',
+                     f'{r.get("afyp", 0):,.2f}', f'{r.get("direct", 0):,.2f}',
+                     f'{r.get("override", 0):,.2f}', f'{r["total"]:,.2f}'])
+    elems.append(_table(data, col_widths=[24 * mm, 46 * mm, 16 * mm, 34 * mm, 34 * mm, 34 * mm, 34 * mm]))
     doc.build(elems)
     return buf.getvalue()

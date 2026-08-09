@@ -156,6 +156,9 @@ export interface AgencySummaryRow {
   code: string;
   name: string;
   level: number;
+  afyp: number;
+  direct: number;
+  override: number;
   total: number;
 }
 

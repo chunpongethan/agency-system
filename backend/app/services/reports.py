@@ -132,24 +132,57 @@ def agent_statement(session: Session, agent_id: int,
 def agency_summary(session: Session,
                    start: date | None = None, end: date | None = None,
                    agent_ids: set[int] | None = None) -> list[dict]:
-    q = (
+    # Commission per agent, split by kind (direct / override).
+    cq = (
         select(
             Agent.id, Agent.code, Agent.name, Agent.level,
+            CommissionEntry.kind,
             func.coalesce(func.sum(CommissionEntry.amount), 0),
         )
         .join(CommissionEntry, CommissionEntry.agent_id == Agent.id)
         .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
-        .group_by(Agent.id)
-        .order_by(func.sum(CommissionEntry.amount).desc())
+        .group_by(Agent.id, CommissionEntry.kind)
     )
     if agent_ids is not None:
-        q = q.where(Agent.id.in_(agent_ids))
-    q = _window(q, start, end)
-    return [
-        {"agent_id": aid, "code": code, "name": name, "level": int(level),
-         "total": float(Decimal(total))}
-        for aid, code, name, level, total in session.execute(q)
-    ]
+        cq = cq.where(Agent.id.in_(agent_ids))
+    cq = _window(cq, start, end)
+
+    rows: dict[int, dict] = {}
+    for aid, code, name, level, kind, amount in session.execute(cq):
+        r = rows.setdefault(aid, {
+            "agent_id": aid, "code": code, "name": name, "level": int(level),
+            "direct": Decimal("0"), "override": Decimal("0"), "afyp": Decimal("0"),
+        })
+        if kind == CommissionKind.DIRECT:
+            r["direct"] += Decimal(amount)
+        else:
+            r["override"] += Decimal(amount)
+
+    # AFYP per agent (own settled sales).
+    aq = (
+        select(Transaction.agent_id,
+               func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
+        .join(Product, Transaction.product_id == Product.id)
+        .where(Transaction.status == TxnStatus.SETTLED)
+        .group_by(Transaction.agent_id)
+    )
+    if agent_ids is not None:
+        aq = aq.where(Transaction.agent_id.in_(agent_ids))
+    aq = _window(aq, start, end)
+    for aid, afyp in session.execute(aq):
+        if aid in rows:
+            rows[aid]["afyp"] = Decimal(afyp)
+
+    out = []
+    for r in rows.values():
+        total = r["direct"] + r["override"]
+        out.append({
+            "agent_id": r["agent_id"], "code": r["code"], "name": r["name"], "level": r["level"],
+            "afyp": float(r["afyp"]), "direct": float(r["direct"]),
+            "override": float(r["override"]), "total": float(total),
+        })
+    out.sort(key=lambda x: x["total"], reverse=True)
+    return out
 
 
 def product_mix(session: Session,

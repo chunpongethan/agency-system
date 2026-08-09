@@ -39,6 +39,18 @@ export default function Reports() {
     { header: t("common.code"), accessorKey: "code" },
     { header: t("common.level"), accessorFn: (r) => `L${r.level}`, id: "level" },
     {
+      header: t("common.afyp"), accessorKey: "afyp", meta: { num: true },
+      cell: (ctx) => money(ctx.getValue() as number),
+    },
+    {
+      header: t("reports.commissionIncome"), accessorKey: "direct", meta: { num: true },
+      cell: (ctx) => money(ctx.getValue() as number),
+    },
+    {
+      header: t("reports.overrideIncome"), accessorKey: "override", meta: { num: true },
+      cell: (ctx) => money(ctx.getValue() as number),
+    },
+    {
       header: t("reports.total"), accessorKey: "total", meta: { num: true },
       cell: (ctx) => money(ctx.getValue() as number),
     },
