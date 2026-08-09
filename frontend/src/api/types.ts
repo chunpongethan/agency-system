@@ -199,6 +199,8 @@ export interface PayoutResult {
     agent_name: string | null;
     agent_code: string | null;
     unit_code: string | null;
+    direct: number;
+    override: number;
     total: number;
   }[];
   total: number;

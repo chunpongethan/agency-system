@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    CommissionEntry, Transaction, Payout, Agent,
+    CommissionEntry, CommissionKind, Transaction, Payout, Agent,
 )
 
 
@@ -35,8 +35,12 @@ def _period_entries(session: Session, year: int, month: int) -> list[tuple[Commi
 
 def _summarise(session: Session, entries: list[CommissionEntry]) -> tuple[list[dict], Decimal]:
     per_agent: dict[int, Decimal] = {}
+    per_direct: dict[int, Decimal] = {}
+    per_override: dict[int, Decimal] = {}
     for e in entries:
         per_agent[e.agent_id] = per_agent.get(e.agent_id, Decimal("0")) + e.amount
+        bucket = per_direct if e.kind == CommissionKind.DIRECT else per_override
+        bucket[e.agent_id] = bucket.get(e.agent_id, Decimal("0")) + e.amount
     total = sum(per_agent.values(), Decimal("0"))
 
     by_id: dict[int, Agent] = {}
@@ -63,6 +67,8 @@ def _summarise(session: Session, entries: list[CommissionEntry]) -> tuple[list[d
             "agent_name": a.name if a else None,
             "agent_code": a.code if a else None,
             "unit_code": resolve_unit(a),
+            "direct": per_direct.get(aid, Decimal("0")),
+            "override": per_override.get(aid, Decimal("0")),
             "total": amt,
         })
     return payable, total
@@ -75,6 +81,8 @@ def _payable_out(payable: list[dict]) -> list[dict]:
             "agent_name": p["agent_name"],
             "agent_code": p["agent_code"],
             "unit_code": p["unit_code"],
+            "direct": float(p["direct"]),
+            "override": float(p["override"]),
             "total": float(p["total"]),
         }
         for p in payable

@@ -74,6 +74,8 @@ export default function AdminPayouts() {
                     <th>{t("common.agent")}</th>
                     <th>{t("common.code")}</th>
                     <th>{t("common.unit")}</th>
+                    <th className="num">{t("common.commission")}</th>
+                    <th className="num">{t("common.override")}</th>
                     <th className="num">{t("admin.payouts.thPayable")}</th>
                   </tr>
                 </thead>
@@ -83,10 +85,20 @@ export default function AdminPayouts() {
                       <td>{p.agent_name ?? `#${p.agent_id}`}</td>
                       <td className="muted">{p.agent_code ?? "—"}</td>
                       <td>{p.unit_code ? <span className="badge unit">{p.unit_code}</span> : <span className="muted">—</span>}</td>
+                      <td className="num">{money(p.direct)}</td>
+                      <td className="num">{money(p.override)}</td>
                       <td className="num">{money(p.total)}</td>
                     </tr>
                   ))}
                 </tbody>
+                <tfoot>
+                  <tr style={{ fontWeight: 700 }}>
+                    <td colSpan={3}>{t("reports.total")}</td>
+                    <td className="num">{money(payout.payable.reduce((s, p) => s + p.direct, 0))}</td>
+                    <td className="num">{money(payout.payable.reduce((s, p) => s + p.override, 0))}</td>
+                    <td className="num">{money(payout.total)}</td>
+                  </tr>
+                </tfoot>
               </table>
             </>
           )}
