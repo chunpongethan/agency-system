@@ -7,7 +7,7 @@ export type Currency = "USD" | "HKD";
 const STORAGE_KEY = "agency_lang";
 const CURRENCY_KEY = "agency_currency";
 const DEFAULT_LANG: Lang = "zh-Hant";
-const DEFAULT_CURRENCY: Currency = "USD";
+const DEFAULT_CURRENCY: Currency = "HKD";
 
 function readStoredLang(): Lang {
   const v = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;

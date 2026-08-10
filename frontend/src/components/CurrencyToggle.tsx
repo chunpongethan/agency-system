@@ -1,7 +1,7 @@
 import { useI18n } from "../i18n/LanguageContext";
 import type { Currency } from "../i18n/LanguageContext";
 
-const CURRENCIES: Currency[] = ["USD", "HKD"];
+const CURRENCIES: Currency[] = ["HKD", "USD"];
 
 // System-wide display-currency switch (USD / HKD). All money figures convert to
 // the chosen currency using fixed demo FX rates.
