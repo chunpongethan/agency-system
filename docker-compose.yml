@@ -32,6 +32,14 @@ services:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-agency}:${POSTGRES_PASSWORD:-agency}@db:5432/${POSTGRES_DB:-agency}
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production-0123456789-abcdef}
       ACCESS_TOKEN_EXPIRE_MINUTES: "480"
+      # Demo data is loaded ONLY when SEED_DEMO=true (dev default here). In
+      # production set SEED_DEMO=false and provide ADMIN_EMAIL / ADMIN_PASSWORD
+      # so a single real admin is created instead of the demo dataset.
+      SEED_DEMO: ${SEED_DEMO:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_CODE: ${ADMIN_CODE:-A000}
     depends_on:
       db:
         condition: service_healthy

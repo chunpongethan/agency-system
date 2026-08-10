@@ -40,8 +40,8 @@ export default function Layout() {
           <span className="badge role">{roleLabel(me?.role)}</span> · L{me?.level}
           {me?.title && <><br />{titleLabel(me.title)}</>}
         </div>
-        <LanguageToggle className="sidebar-lang" />
         <CurrencyToggle className="sidebar-lang" />
+        <LanguageToggle className="sidebar-lang" />
         <button className="logout" onClick={logout}>{t("nav.logout")}</button>
       </aside>
       <main className="main">

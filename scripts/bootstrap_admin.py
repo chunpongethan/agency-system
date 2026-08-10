@@ -1,0 +1,60 @@
+"""
+Create the first real admin account from environment variables — the production
+alternative to the demo seed (scripts/seed.py). Idempotent and non-destructive:
+if an agent with the given code or email already exists it does nothing, so it is
+safe to run on every deploy.
+
+Required env:
+  ADMIN_EMAIL      admin login email
+  ADMIN_PASSWORD   admin password (stored bcrypt-hashed)
+Optional env:
+  ADMIN_CODE       agent code (default "A000")
+  ADMIN_NAME       display name (default "Administrator")
+  DATABASE_URL     SQLAlchemy URL (default local sqlite)
+
+Usage:  ADMIN_EMAIL=... ADMIN_PASSWORD=... python scripts/bootstrap_admin.py
+"""
+from __future__ import annotations
+
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
+
+from sqlalchemy import create_engine, or_, select
+from sqlalchemy.orm import sessionmaker
+
+from app.models.models import Base, Agent, Role
+from app.security import hash_password
+
+email = os.getenv("ADMIN_EMAIL")
+password = os.getenv("ADMIN_PASSWORD")
+code = os.getenv("ADMIN_CODE", "A000")
+name = os.getenv("ADMIN_NAME", "Administrator")
+
+if not email or not password:
+    print("bootstrap_admin: ADMIN_EMAIL and ADMIN_PASSWORD are required", file=sys.stderr)
+    sys.exit(1)
+
+engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///./backend/agency.db"))
+Base.metadata.create_all(engine)
+db = sessionmaker(bind=engine)()
+
+existing = db.execute(
+    select(Agent).where(or_(Agent.code == code, Agent.email == email))
+).scalars().first()
+if existing is not None:
+    print(f"bootstrap_admin: an agent with code={existing.code!r} / email={existing.email!r} "
+          f"already exists — leaving it untouched")
+    db.close()
+    sys.exit(0)
+
+admin = Agent(
+    code=code, name=name, email=email, level=1,
+    role=Role.ADMIN, is_active=True,
+    password_hash=hash_password(password),
+)
+db.add(admin)
+db.commit()
+print(f"bootstrap_admin: created admin {name} ({code}) <{email}>")
+db.close()

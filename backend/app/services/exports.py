@@ -313,18 +313,21 @@ def payout_to_pdf(payout: dict, lang: str | None = None, currency: str | None = 
     elems.append(_table(_payout_header(payout, lang, currency), col_widths=[40 * mm, 120 * mm]))
     elems.append(Spacer(1, 5 * mm))
 
+    # Unit codes can be long; wrap that cell in a Paragraph so it never overflows.
+    unit_style = ParagraphStyle("unit", fontName=_ensure_cjk_font(), fontSize=9, leading=11)
     data = [[i18n.label("name", lang), i18n.label("code", lang), i18n.label("unit", lang),
              i18n.label("commission", lang), i18n.label("override", lang), i18n.label("payable", lang)]]
     for r in payout.get("payable", []):
+        unit = r.get("unit_code") or ""
         data.append([r.get("agent_name") or f'#{r["agent_id"]}', r.get("agent_code") or "",
-                     r.get("unit_code") or "", _money(r.get("direct", 0), currency),
+                     Paragraph(unit, unit_style) if unit else "", _money(r.get("direct", 0), currency),
                      _money(r.get("override", 0), currency), _money(r.get("total", 0), currency)])
     direct_tot, override_tot = _payout_totals(payout)
     data.append([i18n.label("total", lang), "", "",
                  _money(direct_tot, currency), _money(override_tot, currency),
                  _money(payout.get("total", 0), currency)])
     highlight = [len(data) - 1]   # tint the totals row
-    elems.append(_table(data, col_widths=[52 * mm, 26 * mm, 26 * mm, 38 * mm, 38 * mm, 38 * mm],
+    elems.append(_table(data, col_widths=[48 * mm, 22 * mm, 46 * mm, 36 * mm, 36 * mm, 36 * mm],
                         highlight_rows=highlight))
     doc.build(elems)
     return buf.getvalue()

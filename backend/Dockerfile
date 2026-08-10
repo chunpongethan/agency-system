@@ -8,6 +8,14 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# A TrueType CJK font so exported PDFs render Traditional Chinese in any viewer.
+# WenQuanYi Zen Hei installs at /usr/share/fonts/truetype/wqy/wqy-zenhei.ttc,
+# which app/services/exports.py already looks for (glyf-based; loadable by
+# ReportLab's TTFont, unlike Noto CJK's CFF outlines). Override with CJK_FONT_PATH.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends fonts-wqy-zenhei \
+    && rm -rf /var/lib/apt/lists/*
+
 # System deps for bcrypt/psycopg2 wheels are already provided; keep image slim.
 COPY backend/requirements.txt /app/backend/requirements.txt
 RUN pip install --no-cache-dir -r /app/backend/requirements.txt
