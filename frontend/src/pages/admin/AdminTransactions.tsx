@@ -103,7 +103,12 @@ export default function AdminTransactions() {
         </div>
 
         {rowErr && <div className="error" style={{ marginTop: 10 }}>{rowErr}</div>}
-        <p className="muted" style={{ margin: "10px 0" }}>{t("adminTxn.count", { count: rows.length })}</p>
+        {txns.isError && (
+          <div className="error" style={{ marginTop: 10 }}>{errorText(txns.error, t) || t("adminTxn.actionFailed")}</div>
+        )}
+        <p className="muted" style={{ margin: "10px 0" }}>
+          {txns.isLoading ? t("common.loading") : t("adminTxn.count", { count: rows.length })}
+        </p>
 
         <div style={{ overflowX: "auto" }}>
           <table>
