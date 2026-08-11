@@ -25,13 +25,18 @@ from app.models.models import (
     CommissionEntry, now_utc,
 )
 from app.schemas import schemas
-from app.security import verify_password, create_access_token, decode_token, hash_password
+from app.security import (
+    verify_password, create_access_token, decode_token, hash_password,
+    create_reset_token, verify_reset_token,
+)
 from app.services import (
     commission_engine, reports, agent_service, scoping,
-    periods, payouts, exports, audit,
+    periods, payouts, exports, audit, mailer,
 )
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
+# Base URL of the web app, used to build password-reset links in emails.
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
@@ -83,6 +88,11 @@ _DETAIL_TO_CODE = {
     "transaction not found": "transaction_not_found",
     "cannot delete a transaction with paid commission; cancel it instead": "transaction_has_paid",
 }
+
+
+def err(status: int, code: str, message: str) -> HTTPException:
+    """HTTPException that carries a stable machine-readable X-Error-Code header."""
+    return HTTPException(status, message, headers={"X-Error-Code": code})
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -160,6 +170,50 @@ def me(current: Agent = Depends(get_current_agent)):
     return current
 
 
+@app.post("/auth/change-password", status_code=204)
+def change_password(payload: schemas.ChangePasswordIn,
+                    db: Session = Depends(get_db),
+                    current: Agent = Depends(get_current_agent)):
+    """The logged-in user changes their own password (needs the current one)."""
+    if not verify_password(payload.current_password, current.password_hash):
+        raise err(400, "wrong_current_password", "current password is incorrect")
+    current.password_hash = hash_password(payload.new_password)
+    audit.record(db, current.id, "change-password", "agent", current.id)
+    db.commit()
+    return Response(status_code=204)
+
+
+@app.post("/auth/forgot-password", status_code=202)
+def forgot_password(payload: schemas.ForgotPasswordIn, db: Session = Depends(get_db)):
+    """Email a password-reset link. Always returns 202 (never reveals whether the
+    email exists) to avoid account enumeration."""
+    agent = db.execute(select(Agent).where(Agent.email == payload.email)).scalars().first()
+    if agent is not None and agent.is_active:
+        token = create_reset_token(agent.id, agent.password_hash)
+        reset_url = f"{FRONTEND_URL.rstrip('/')}/#/reset-password/{token}"
+        try:
+            mailer.send_password_reset(agent.email, agent.name, reset_url)
+        except Exception:  # noqa: BLE001 — don't leak delivery failures to the caller
+            pass
+    return Response(status_code=202)
+
+
+@app.post("/auth/reset-password", status_code=204)
+def reset_password(payload: schemas.ResetPasswordIn, db: Session = Depends(get_db)):
+    """Set a new password using a token from the reset email."""
+    try:
+        claims = decode_token(payload.token)
+    except jwt.PyJWTError:
+        raise err(400, "invalid_reset_token", "reset link is invalid or has expired")
+    agent = db.get(Agent, int(claims.get("sub"))) if claims.get("sub") else None
+    if agent is None or not verify_reset_token(payload.token, agent.password_hash):
+        raise err(400, "invalid_reset_token", "reset link is invalid or has expired")
+    agent.password_hash = hash_password(payload.new_password)
+    audit.record(db, agent.id, "reset-password", "agent", agent.id)
+    db.commit()
+    return Response(status_code=204)
+
+
 # --- Agents ------------------------------------------------------------------
 @app.post("/agents", response_model=schemas.AgentOut)
 def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
@@ -198,6 +252,10 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
         ).scalars().first()
         if clash is not None:
             raise HTTPException(409, "email already in use")
+    # Admin manual password reset: hash it, and never echo the raw value.
+    new_password = data.pop("password", None)
+    if new_password:
+        agent.password_hash = hash_password(new_password)
     for k, v in data.items():
         setattr(agent, k, v)
     db.flush()

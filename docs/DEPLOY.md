@@ -70,6 +70,7 @@ commissions accumulate as you book real deals.
 | **HTTPS** | reverse proxy | Terminate TLS (Caddy/Traefik/nginx) |
 | **Backups** | `postgres-data` volume | Scheduled `pg_dump` / managed snapshots |
 | **Token expiry** | `ACCESS_TOKEN_EXPIRE_MINUTES` | Tune to policy (default 480 min) |
+| **Password-reset email** | `SMTP_*` + `FRONTEND_URL` | Set SMTP to deliver reset links. If unset, reset links are only logged to the API console (dev). `FRONTEND_URL` is derived from `WEB_DOMAIN` in the prod compose |
 
 ---
 

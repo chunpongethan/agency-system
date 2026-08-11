@@ -39,6 +39,8 @@ export default function Layout() {
           <br />
           <span className="badge role">{roleLabel(me?.role)}</span> · L{me?.level}
           {me?.title && <><br />{titleLabel(me.title)}</>}
+          <br />
+          <NavLink to="/account" style={{ fontSize: 12 }}>{t("nav.account")}</NavLink>
         </div>
         <CurrencyToggle className="sidebar-lang" />
         <LanguageToggle className="sidebar-lang" />

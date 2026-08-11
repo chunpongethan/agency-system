@@ -3,6 +3,9 @@ import { useAuth } from "./auth/AuthContext";
 import { useI18n } from "./i18n/LanguageContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Account from "./pages/Account";
 import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
@@ -42,6 +45,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route
         element={
           <RequireAuth>
@@ -90,6 +95,7 @@ export default function App() {
           }
         />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/account" element={<Account />} />
         <Route
           path="/admin/agents"
           element={<RequireRole roles={["admin"]}><AdminAgents /></RequireRole>}

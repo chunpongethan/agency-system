@@ -50,7 +50,7 @@ export default function AdminAgents() {
 
   // --- Edit agent ---
   const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", password: "" });
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateAgent = useMutation({
     mutationFn: () =>
@@ -58,6 +58,7 @@ export default function AdminAgents() {
         name: editForm.name, email: editForm.email, role: editForm.role,
         title: (editForm.title || null) as Title | null,
         unit_code: editForm.unit_code || null,
+        password: editForm.password || undefined,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["agents"] }); setEditId(null); setEditErr(null); },
     onError: (e) => setEditErr(errorText(e, t) || t("admin.agents.saveFailed")),
@@ -74,7 +75,7 @@ export default function AdminAgents() {
 
   function startEdit(a: Agent) {
     setEditId(a.id);
-    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "" });
+    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", password: "" });
     setEditErr(null);
   }
   function terminate(a: Agent) {
@@ -166,6 +167,9 @@ export default function AdminAgents() {
             <div><label>{t("admin.agents.unitCode")}</label>
               <input value={editForm.unit_code} placeholder="e.g. U-LEO"
                 onChange={(e) => setEditForm({ ...editForm, unit_code: e.target.value })} /></div>
+            <div><label>{t("admin.agents.newPassword")}</label>
+              <input type="text" value={editForm.password} autoComplete="new-password"
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} /></div>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             {t("admin.agents.editNote")}

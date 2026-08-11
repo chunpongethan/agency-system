@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { errorText } from "../api/client";
@@ -62,6 +62,9 @@ export default function Login() {
             {busy ? t("login.signingIn") : t("login.signIn")}
           </button>
         </div>
+        <p className="hint" style={{ marginTop: 12 }}>
+          <Link to="/forgot-password">{t("login.forgot")}</Link>
+        </p>
         <p className="hint">{t("login.hint")}</p>
       </form>
     </div>

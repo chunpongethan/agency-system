@@ -17,6 +17,32 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
 
 
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str
+
+    @model_validator(mode="after")
+    def _min_length(self):
+        if len(self.new_password) < 8:
+            raise ValueError("new password must be at least 8 characters")
+        return self
+
+
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    token: str
+    new_password: str
+
+    @model_validator(mode="after")
+    def _min_length(self):
+        if len(self.new_password) < 8:
+            raise ValueError("new password must be at least 8 characters")
+        return self
+
+
 class MeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -50,6 +76,7 @@ class AgentUpdate(BaseModel):
     unit_code: str | None = None
     role: str | None = None
     is_active: bool | None = None
+    password: str | None = None  # admin manual reset; blank = keep current
 
 
 class AgentOut(BaseModel):
