@@ -42,9 +42,23 @@ export default function AdminTransactions() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editRef, setEditRef] = useState("");
   const [editForm, setEditForm] = useState({
-    notional: "", trade_date: "", policy_no: "", product_id: "", agent_id: "",
+    notional: "", trade_date: "", policy_no: "", product_id: "",
+    agent_id: "",            // closing agent
+    lead_agent_id: "", sales_dev_agent_id: "",
+    lead_pct: "0", sales_dev_pct: "0", closing_pct: "100",
+    deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
+  // 直客 manual override levels (up to 4): agent + rate %.
+  const [editOverrides, setEditOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
   const [editErr, setEditErr] = useState<string | null>(null);
+
+  // Agents pickable for a role (exclude admins; keep inactive so an existing
+  // assignment still renders). 直客 overrides are limited to 直客-flagged agents.
+  const roleOptions = (agents.data ?? []).filter((a) => a.role !== "admin");
+  const dcAgents = roleOptions.filter((a) => a.direct_client && a.is_active);
+  const isDirectClient = editForm.deal_type === "direct_client";
+  const pctSum = Number(editForm.lead_pct || 0) + Number(editForm.sales_dev_pct || 0) + Number(editForm.closing_pct || 0);
+  const pctValid = Math.round(pctSum * 100) === 10000;
 
   const update = useMutation({
     mutationFn: () => api.updateTransaction(editId!, {
@@ -53,6 +67,15 @@ export default function AdminTransactions() {
       policy_no: editForm.policy_no || null,
       product_id: Number(editForm.product_id),
       agent_id: Number(editForm.agent_id),
+      lead_agent_id: editForm.lead_agent_id ? Number(editForm.lead_agent_id) : null,
+      sales_dev_agent_id: editForm.sales_dev_agent_id ? Number(editForm.sales_dev_agent_id) : null,
+      lead_pct: editForm.lead_pct || "0",
+      sales_dev_pct: editForm.sales_dev_pct || "0",
+      closing_pct: editForm.closing_pct || "0",
+      deal_type: editForm.deal_type,
+      direct_overrides: isDirectClient
+        ? editOverrides.filter((o) => o.agent_id && o.pct).map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }))
+        : null,
     }),
     onSuccess: () => { invalidate(); setEditId(null); setEditErr(null); },
     onError: (e) => setEditErr(errorText(e, t) || t("adminTxn.actionFailed")),
@@ -64,7 +87,18 @@ export default function AdminTransactions() {
     setEditForm({
       notional: r.notional, trade_date: r.trade_date, policy_no: r.policy_no ?? "",
       product_id: String(r.product_id), agent_id: String(r.agent_id),
+      lead_agent_id: r.lead_agent_id ? String(r.lead_agent_id) : "",
+      sales_dev_agent_id: r.sales_dev_agent_id ? String(r.sales_dev_agent_id) : "",
+      lead_pct: r.lead_pct != null ? String(r.lead_pct) : "0",
+      sales_dev_pct: r.sales_dev_pct != null ? String(r.sales_dev_pct) : "0",
+      closing_pct: r.closing_pct != null ? String(r.closing_pct) : "100",
+      deal_type: r.deal_type || "agent",
     });
+    setEditOverrides(
+      r.direct_overrides && r.direct_overrides.length
+        ? r.direct_overrides.map((o) => ({ agent_id: String(o.agent_id), pct: String(o.pct) }))
+        : [{ agent_id: "", pct: "" }],
+    );
     setEditErr(null);
   }
 
@@ -177,7 +211,112 @@ export default function AdminTransactions() {
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); update.mutate(); }}>
           <h2>{t("adminTxn.editTitle", { ref: editRef })}</h2>
           {editErr && <div className="error">{editErr}</div>}
+
+          <label>{t("newTxn.dealType")}</label>
+          <select value={editForm.deal_type}
+            onChange={(e) => setEditForm({ ...editForm, deal_type: e.target.value })}>
+            <option value="agent">{t("newTxn.dealAgent")}</option>
+            <option value="direct_client">{t("newTxn.dealDirectClient")}</option>
+          </select>
+
+          {/* Role agents */}
           <div className="row">
+            <div><label>{t("newTxn.leadAgent")}</label>
+              <select value={editForm.lead_agent_id}
+                onChange={(e) => setEditForm({ ...editForm, lead_agent_id: e.target.value })}>
+                <option value="">—</option>
+                {roleOptions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+                ))}
+              </select></div>
+            <div><label>{t("newTxn.salesDevAgent")}</label>
+              <select value={editForm.sales_dev_agent_id}
+                onChange={(e) => setEditForm({ ...editForm, sales_dev_agent_id: e.target.value })}>
+                <option value="">—</option>
+                {roleOptions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+                ))}
+              </select></div>
+            <div><label>{t("newTxn.closingAgent")}</label>
+              <select value={editForm.agent_id} required
+                onChange={(e) => setEditForm({ ...editForm, agent_id: e.target.value })}>
+                {roleOptions.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
+                ))}
+              </select></div>
+          </div>
+
+          {/* Split percentages */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 6 }}>
+            <h2 style={{ fontSize: 14 }}>{t("newTxn.splitTitle")}</h2>
+            {!pctValid && <span style={{ fontSize: 12, color: "var(--bad)" }}>{t("newTxn.splitMustBe100", { sum: pctSum })}</span>}
+          </div>
+          <div className="row">
+            <div><label>{t("newTxn.pctLead")}</label>
+              <input type="number" min="0" max="100" step="1" value={editForm.lead_pct}
+                onChange={(e) => setEditForm({ ...editForm, lead_pct: e.target.value })} /></div>
+            <div><label>{t("newTxn.pctSalesDev")}</label>
+              <input type="number" min="0" max="100" step="1" value={editForm.sales_dev_pct}
+                onChange={(e) => setEditForm({ ...editForm, sales_dev_pct: e.target.value })} /></div>
+            <div><label>{t("newTxn.pctClosing")}</label>
+              <input type="number" min="0" max="100" step="1" value={editForm.closing_pct}
+                onChange={(e) => setEditForm({ ...editForm, closing_pct: e.target.value })} /></div>
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("newTxn.splitNote")}</p>
+
+          {/* 直客 override levels */}
+          {isDirectClient && (
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+              <h2 style={{ fontSize: 14 }}>{t("newTxn.overrideLevels")}</h2>
+              <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>{t("newTxn.overrideNote")}</p>
+              {dcAgents.length === 0 ? (
+                <div className="error" style={{ fontSize: 12 }}>{t("newTxn.noDcAgents")}</div>
+              ) : (
+                <>
+                  {editOverrides.map((o, i) => (
+                    <div className="row" key={i} style={{ alignItems: "flex-end" }}>
+                      <div style={{ flex: 3 }}>
+                        {i === 0 && <label>{t("common.agent")}</label>}
+                        <select value={o.agent_id}
+                          onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, agent_id: e.target.value } : x))}>
+                          <option value="">{t("newTxn.selectDcAgent")}</option>
+                          {dcAgents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        {i === 0 && <label>{t("newTxn.ratePct")}</label>}
+                        <input type="number" min="0" max="100" step="1" value={o.pct}
+                          onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, pct: e.target.value } : x))} />
+                      </div>
+                      <div className="shrink">
+                        <button type="button" className="ghost" style={{ color: "var(--bad)" }}
+                          disabled={editOverrides.length === 1}
+                          onClick={() => setEditOverrides(editOverrides.filter((_, j) => j !== i))}>
+                          {t("newTxn.removeLevel")}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {editOverrides.length < 4 && (
+                    <button type="button" className="ghost" style={{ marginTop: 8 }}
+                      onClick={() => setEditOverrides([...editOverrides, { agent_id: "", pct: "" }])}>
+                      {t("newTxn.addLevel")}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Product / notional / date / policy */}
+          <div className="row" style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+            <div><label>{t("adminTxn.product")}</label>
+              <select value={editForm.product_id} required
+                onChange={(e) => setEditForm({ ...editForm, product_id: e.target.value })}>
+                {(products.data ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
+                ))}
+              </select></div>
             <div><label>{t("adminTxn.notional")}</label>
               <input type="number" step="0.01" value={editForm.notional} required
                 onChange={(e) => setEditForm({ ...editForm, notional: e.target.value })} /></div>
@@ -188,24 +327,9 @@ export default function AdminTransactions() {
               <input value={editForm.policy_no}
                 onChange={(e) => setEditForm({ ...editForm, policy_no: e.target.value })} /></div>
           </div>
-          <div className="row">
-            <div><label>{t("adminTxn.product")}</label>
-              <select value={editForm.product_id} required
-                onChange={(e) => setEditForm({ ...editForm, product_id: e.target.value })}>
-                {(products.data ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
-                ))}
-              </select></div>
-            <div><label>{t("adminTxn.owningAgent")}</label>
-              <select value={editForm.agent_id} required
-                onChange={(e) => setEditForm({ ...editForm, agent_id: e.target.value })}>
-                {(agents.data ?? []).map((a) => (
-                  <option key={a.id} value={a.id}>{a.code} · {a.name}</option>
-                ))}
-              </select></div>
-          </div>
+
           <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-            <button className="primary" type="submit" disabled={update.isPending}>
+            <button className="primary" type="submit" disabled={update.isPending || !pctValid}>
               {update.isPending ? t("common.saving") : t("adminTxn.save")}
             </button>
             <button className="ghost" type="button" onClick={() => setEditId(null)}>{t("common.cancel")}</button>

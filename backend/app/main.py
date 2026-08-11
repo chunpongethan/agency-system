@@ -537,12 +537,17 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
             "id": txn.id, "ref": txn.ref, "trade_date": txn.trade_date,
             "status": txn.status.value,
             "deal_type": (txn.deal_type.value if txn.deal_type else "agent"),
+            "direct_overrides": txn.direct_overrides,
             "notional": txn.notional, "currency": txn.currency,
             "policy_no": txn.policy_no,
             "client_id": txn.client_id, "client_name": cname, "client_ref": cref,
             "product_id": txn.product_id, "product_name": pname,
             "product_type": ptype.value,
             "agent_id": txn.agent_id, "agent_name": aname, "agent_code": acode,
+            "lead_agent_id": txn.lead_agent_id,
+            "sales_dev_agent_id": txn.sales_dev_agent_id,
+            "lead_pct": txn.lead_pct, "sales_dev_pct": txn.sales_dev_pct,
+            "closing_pct": txn.closing_pct,
         })
     return out
 

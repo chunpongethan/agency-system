@@ -132,6 +132,12 @@ export interface AdminTxnRow {
   agent_id: number;
   agent_name: string;
   agent_code: string;
+  lead_agent_id?: number | null;
+  sales_dev_agent_id?: number | null;
+  lead_pct?: string | null;
+  sales_dev_pct?: string | null;
+  closing_pct?: string | null;
+  direct_overrides?: { agent_id: number; pct: number | string }[] | null;
 }
 
 export interface OverrideRule {
