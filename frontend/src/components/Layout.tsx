@@ -27,6 +27,7 @@ export default function Layout() {
             <>
               <div className="nav-section">{t("nav.admin")}</div>
               <NavLink to="/admin/agents">{t("nav.agents")}</NavLink>
+              <NavLink to="/admin/transactions">{t("nav.transactions")}</NavLink>
               <NavLink to="/admin/products">{t("nav.products")}</NavLink>
               <NavLink to="/admin/rules">{t("nav.rules")}</NavLink>
               <NavLink to="/admin/payouts">{t("nav.payouts")}</NavLink>

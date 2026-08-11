@@ -13,6 +13,7 @@ import NewTransaction from "./pages/NewTransaction";
 import Hierarchy from "./pages/Hierarchy";
 import Reports from "./pages/Reports";
 import AdminAgents from "./pages/admin/AdminAgents";
+import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminRules from "./pages/admin/AdminRules";
 import AdminPayouts from "./pages/admin/AdminPayouts";
@@ -99,6 +100,10 @@ export default function App() {
         <Route
           path="/admin/agents"
           element={<RequireRole roles={["admin"]}><AdminAgents /></RequireRole>}
+        />
+        <Route
+          path="/admin/transactions"
+          element={<RequireRole roles={["admin"]}><AdminTransactions /></RequireRole>}
         />
         <Route
           path="/admin/products"

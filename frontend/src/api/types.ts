@@ -114,6 +114,26 @@ export interface Transaction {
   trade_date: string;
 }
 
+export interface AdminTxnRow {
+  id: number;
+  ref: string;
+  trade_date: string;
+  status: string;
+  deal_type: string;
+  notional: string;
+  currency: string;
+  policy_no?: string | null;
+  client_id: number;
+  client_name: string;
+  client_ref: string;
+  product_id: number;
+  product_name: string;
+  product_type: string;
+  agent_id: number;
+  agent_name: string;
+  agent_code: string;
+}
+
 export interface OverrideRule {
   id: number;
   product_type: string;

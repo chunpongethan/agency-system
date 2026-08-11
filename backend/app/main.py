@@ -501,6 +501,52 @@ def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db
     return schemas.NextRefOut(ref=_next_ref(db, d))
 
 
+@app.get("/transactions")
+def list_transactions(status: str | None = None, agent_id: int | None = None,
+                      q: str | None = None, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    """Admin transaction-maintenance list, enriched with client/product/agent names.
+
+    Optional filters: `status` (pending/approved/cancelled), `agent_id`, and a
+    free-text `q` matched against ref, client, product, policy no. and agent.
+    """
+    stmt = (
+        select(Transaction, Client.name, Client.ref, Product.name, Product.type,
+               Agent.name, Agent.code)
+        .join(Client, Transaction.client_id == Client.id)
+        .join(Product, Transaction.product_id == Product.id)
+        .join(Agent, Transaction.agent_id == Agent.id)
+        .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
+    )
+    if status:
+        try:
+            stmt = stmt.where(Transaction.status == TxnStatus(status))
+        except ValueError:
+            raise err(422, "validation", f"invalid status: {status}")
+    if agent_id:
+        stmt = stmt.where(Transaction.agent_id == agent_id)
+    needle = (q or "").strip().lower()
+    out = []
+    for txn, cname, cref, pname, ptype, aname, acode in db.execute(stmt).all():
+        if needle:
+            hay = " ".join(str(x or "") for x in
+                           (txn.ref, cname, pname, txn.policy_no, aname, acode)).lower()
+            if needle not in hay:
+                continue
+        out.append({
+            "id": txn.id, "ref": txn.ref, "trade_date": txn.trade_date,
+            "status": txn.status.value,
+            "deal_type": (txn.deal_type.value if txn.deal_type else "agent"),
+            "notional": txn.notional, "currency": txn.currency,
+            "policy_no": txn.policy_no,
+            "client_id": txn.client_id, "client_name": cname, "client_ref": cref,
+            "product_id": txn.product_id, "product_name": pname,
+            "product_type": ptype.value,
+            "agent_id": txn.agent_id, "agent_name": aname, "agent_code": acode,
+        })
+    return out
+
+
 # Adding, editing and deleting transactions is admin-only (agents are view-only).
 @app.post("/transactions", response_model=schemas.TransactionOut)
 def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,

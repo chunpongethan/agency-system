@@ -4,7 +4,7 @@
 import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
-  TeamProductionRow, AgentScorecard, ProductMix,
+  TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -144,6 +144,12 @@ export const api = {
     request<{ deleted: number }>(`/override-rules/${id}`, { method: "DELETE" }),
 
   // Transactions
+  listTransactions: (params?: { status?: string; agent_id?: number; q?: string }) =>
+    request<AdminTxnRow[]>(`/transactions${qs({
+      status: params?.status,
+      agent_id: params?.agent_id != null ? String(params.agent_id) : undefined,
+      q: params?.q,
+    })}`),
   nextTransactionRef: (period?: string) =>
     request<{ ref: string }>(`/transactions/next-ref${period ? `?period=${period}` : ""}`),
   createTransaction: (payload: Record<string, unknown>) =>
