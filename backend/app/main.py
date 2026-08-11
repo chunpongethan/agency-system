@@ -582,21 +582,21 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
             raise HTTPException(404, "agent not found")
 
     data = payload.model_dump()
-    # Normalise deal type + direct-client override levels (JSON-serialisable).
+    # Normalise deal type + override levels (JSON-serialisable). Manual override
+    # levels are honoured for both deal types; 直客 additionally requires each
+    # override agent to be 直客-eligible. A 代理 deal with no manual levels stores
+    # None and lets the engine derive overrides from the hierarchy.
     data["deal_type"] = DealType(data.get("deal_type") or "agent")
     overrides = data.pop("direct_overrides", None)
-    if data["deal_type"] == DealType.DIRECT_CLIENT:
-        norm = []
-        for row in (overrides or []):
-            ag = db.get(Agent, row["agent_id"])
-            if ag is None:
-                raise HTTPException(404, "agent not found")
-            if not ag.direct_client:
-                raise err(400, "not_direct_client", "selected agent is not 直客-eligible")
-            norm.append({"agent_id": row["agent_id"], "pct": float(row["pct"])})
-        data["direct_overrides"] = norm or None
-    else:
-        data["direct_overrides"] = None
+    norm = []
+    for row in (overrides or []):
+        ag = db.get(Agent, row["agent_id"])
+        if ag is None:
+            raise HTTPException(404, "agent not found")
+        if data["deal_type"] == DealType.DIRECT_CLIENT and not ag.direct_client:
+            raise err(400, "not_direct_client", "selected agent is not 直客-eligible")
+        norm.append({"agent_id": row["agent_id"], "pct": float(row["pct"])})
+    data["direct_overrides"] = norm or None
 
     trade_date = data.get("trade_date") or date.today()
     # Admin may route a sale dated into a locked period to the next open period.
@@ -634,6 +634,28 @@ def preview_transaction(payload: schemas.TransactionPreviewIn,
     )
     total = sum((line["amount"] for line in lines), start=Decimal("0"))
     return schemas.CommissionPreviewOut(lines=lines, total=total)
+
+
+@app.get("/transactions/override-defaults")
+def override_defaults(lead_agent_id: int, product_id: int,
+                      trade_date: date | None = None,
+                      db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    """Default 代理 override levels for a lead agent + product: the lead's upline
+    chain with the rule rate per gap, used to pre-fill the editable editor."""
+    product = db.get(Product, product_id)
+    if product is None:
+        raise err(404, "product_not_found", "product not found")
+    rows = commission_engine.hierarchy_overrides(
+        db, lead_agent_id, product.type, trade_date or date.today())
+    out = []
+    for r in rows:
+        ag = db.get(Agent, r["agent_id"])
+        out.append({"agent_id": r["agent_id"], "level_gap": r["level_gap"],
+                    "pct": r["pct"],
+                    "agent_name": ag.name if ag else None,
+                    "agent_code": ag.code if ag else None})
+    return out
 
 
 @app.patch("/transactions/{txn_id}", response_model=schemas.TransactionOut)

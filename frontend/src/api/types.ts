@@ -141,6 +141,14 @@ export interface AdminTxnRow {
   direct_overrides?: { agent_id: number; pct: number | string }[] | null;
 }
 
+export interface OverrideDefault {
+  agent_id: number;
+  level_gap: number;
+  pct: number;
+  agent_name: string | null;
+  agent_code: string | null;
+}
+
 export interface OverrideRule {
   id: number;
   product_type: string;

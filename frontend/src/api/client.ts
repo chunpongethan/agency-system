@@ -4,7 +4,7 @@
 import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
-  TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow,
+  TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -159,6 +159,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  overrideDefaults: (leadAgentId: number, productId: number) =>
+    request<OverrideDefault[]>(`/transactions/override-defaults${qs({
+      lead_agent_id: String(leadAgentId), product_id: String(productId),
+    })}`),
   approveTransaction: (id: number) =>
     request<Transaction>(`/transactions/${id}/approve`, { method: "POST" }),
   cancelTransaction: (id: number) =>

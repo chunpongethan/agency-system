@@ -136,9 +136,11 @@ def _role_shares(txn: Transaction) -> tuple[dict[int, Decimal], int]:
     return shares, lead_id
 
 
-def _direct_client_rates(txn: Transaction) -> dict[int, Decimal]:
-    """For a 直客 deal, the admin-assigned override rate per agent (combining any
-    agent that appears on more than one level). Rate is a fraction (25% -> 0.25)."""
+def _manual_override_rates(txn: Transaction) -> dict[int, Decimal]:
+    """Admin-assigned override rate per agent from ``direct_overrides`` (combining
+    any agent that appears on more than one level). Rate is a fraction
+    (25% -> 0.25). Used by both 直客 deals and 代理 deals whose overrides the admin
+    has set/adjusted; an empty result means "fall back to the hierarchy" (代理)."""
     rates: dict[int, Decimal] = {}
     for row in (txn.direct_overrides or []):
         aid = row.get("agent_id")
@@ -149,6 +151,25 @@ def _direct_client_rates(txn: Transaction) -> dict[int, Decimal]:
             continue
         rates[aid] = rates.get(aid, Decimal("0")) + pct / Decimal("100")
     return rates
+
+
+def hierarchy_overrides(session: Session, lead_id: int, product_type,
+                        on_date: date) -> list[dict]:
+    """Default override levels for a 代理 deal: walk the lead agent's upline chain
+    and apply the override rule rate in force for each gap. Returns
+    [{agent_id, level_gap, rate, pct}] for gaps 1..4 that actually pay."""
+    lead = session.get(Agent, lead_id)
+    if lead is None:
+        return []
+    rules = _rules_for(session, product_type, on_date)
+    out: list[dict] = []
+    for gap, upline in _upline_chain(session, lead):
+        rate = rules.get(gap)
+        if rate is None or rate == 0:
+            continue
+        out.append({"agent_id": upline.id, "level_gap": gap,
+                    "rate": rate, "pct": float(rate * Decimal("100"))})
+    return out
 
 
 def _period_entries(session: Session, txn: Transaction, product: Product,
@@ -187,11 +208,13 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
             is_reversal=reversal,
         ))
 
-    # Overrides. 直客 (direct-client) deals use the admin-assigned levels; 代理
-    # deals flow up the lead agent's hierarchy. Both are a % of the direct
-    # commission (base_direct).
-    if txn.deal_type == DealType.DIRECT_CLIENT:
-        for gap, (aid, rate) in enumerate(_direct_client_rates(txn).items(), start=1):
+    # Overrides. Admin-assigned levels (direct_overrides) take precedence for
+    # BOTH deal types: 直客 always uses them; a 代理 deal uses them when the admin
+    # has set/adjusted them, otherwise it flows up the lead agent's hierarchy.
+    # Every override is a % of the direct commission (base_direct).
+    manual = _manual_override_rates(txn)
+    if manual:
+        for gap, (aid, rate) in enumerate(manual.items(), start=1):
             out.append(CommissionEntry(
                 transaction_id=txn.id, agent_id=aid,
                 kind=CommissionKind.OVERRIDE, rate=rate,
@@ -199,7 +222,7 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
                 period_index=period_index, accrual_date=accrual_date,
                 is_reversal=reversal,
             ))
-    else:
+    elif txn.deal_type != DealType.DIRECT_CLIENT:
         lead = session.get(Agent, lead_id)
         rules = _rules_for(session, product.type, txn.trade_date)
         for gap, upline in _upline_chain(session, lead):
@@ -246,22 +269,24 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
             "level_gap": 0, "period_index": 0,
         })
 
-    if deal_type == DealType.DIRECT_CLIENT.value:
-        combined: dict[int, Decimal] = {}
-        for row in (direct_overrides or []):
-            aid = row.get("agent_id")
-            if aid is None:
-                continue
-            pct = Decimal(str(row.get("pct") or 0))
-            if pct != 0:
-                combined[aid] = combined.get(aid, Decimal("0")) + pct / Decimal("100")
+    # Manual override levels take precedence for both deal types; a 代理 deal with
+    # no manual levels falls back to the lead agent's hierarchy.
+    combined: dict[int, Decimal] = {}
+    for row in (direct_overrides or []):
+        aid = row.get("agent_id")
+        if aid is None:
+            continue
+        pct = Decimal(str(row.get("pct") or 0))
+        if pct != 0:
+            combined[aid] = combined.get(aid, Decimal("0")) + pct / Decimal("100")
+    if combined:
         for gap, (aid, rate) in enumerate(combined.items(), start=1):
             lines.append({
                 "agent_id": aid, "kind": CommissionKind.OVERRIDE.value,
                 "rate": rate, "amount": _money(base_direct * rate),
                 "level_gap": gap, "period_index": 0,
             })
-    else:
+    elif deal_type != DealType.DIRECT_CLIENT.value:
         lead = session.get(Agent, lead_id)
         rules = _rules_for(session, product.type, trade_date)
         for gap, upline in _upline_chain(session, lead):
