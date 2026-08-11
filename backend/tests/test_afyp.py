@@ -70,4 +70,5 @@ def test_team_production_three_periods(db):
     # the manager writes nothing of their own but earns the gap-1 override (25% of 50k)
     mgr = rows[db._ids["mgr"]]
     assert mgr["ytd"]["afyp"] == 0.0
-    assert mgr["ytd"]["commission"] == 12500.0
+    assert mgr["ytd"]["commission"] == 0.0       # no direct sales of their own
+    assert mgr["ytd"]["override"] == 12500.0     # gap-1 override (25% of 50k)

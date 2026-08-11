@@ -78,6 +78,7 @@ tbody tr:hover { background: #fafafa; }
 .badge.role { background: var(--accent-soft); color: var(--accent); }
 .badge.title { background: #f5f3ff; color: #7c3aed; }
 .badge.unit { background: #ecfeff; color: #0e7490; }
+.badge.dc { background: #fef3c7; color: #92400e; }
 
 tr.subtotal-row { font-weight: 600; background: var(--accent-soft); }
 tr.subtotal-row td { border-top: 1px solid #bfdbfe; color: #1e3a8a; }
@@ -151,9 +152,10 @@ button.ghost:hover { background: #f9fafb; }
 .tree li { margin: 4px 0; }
 .node { display: flex; gap: 4px; align-items: center; }
 .node .caret {
-  background: none; border: none; cursor: pointer; color: var(--muted);
-  font-size: 11px; width: 18px; height: 18px; padding: 0; flex-shrink: 0;
+  background: none; border: none; cursor: pointer; color: var(--ink);
+  font-size: 20px; line-height: 1; width: 26px; height: 26px; padding: 0; flex-shrink: 0;
 }
+.node .caret:hover { color: var(--accent); }
 .node .caret.spacer { cursor: default; }
 .node-main {
   display: inline-flex; gap: 10px; align-items: center; padding: 6px 10px;

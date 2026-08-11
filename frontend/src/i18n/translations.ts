@@ -332,6 +332,7 @@ export const translations: Record<string, Translation> = {
   "hierarchy.collapseAll": { "zh-Hant": "全部收合", en: "Collapse all" },
   "hierarchy.teamAfyp": { "zh-Hant": "團隊 AFYP", en: "team AFYP" },
   "hierarchy.teamComm": { "zh-Hant": "團隊佣金", en: "team comm." },
+  "hierarchy.teamOverride": { "zh-Hant": "團隊越級", en: "team override" },
   "hierarchy.teamProduction": { "zh-Hant": "團隊業績", en: "Team production" },
   "hierarchy.production": { "zh-Hant": "業績", en: "Production" },
   "hierarchy.membersNote": {

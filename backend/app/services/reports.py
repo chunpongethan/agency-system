@@ -285,8 +285,13 @@ def three_period_windows(today: date | None = None) -> dict[str, tuple[date, dat
 
 def production_by_agent(session: Session, agent_ids: set[int],
                         start: date, end: date) -> dict[int, dict]:
-    """Per-agent AFYP (own settled sales) and commission earned, in a window."""
-    out = {aid: {"afyp": Decimal("0"), "commission": Decimal("0")} for aid in agent_ids}
+    """Per-agent AFYP (own settled sales) and commission earned, in a window.
+
+    Commission is returned both as a total and split into direct / override.
+    """
+    out = {aid: {"afyp": Decimal("0"), "commission": Decimal("0"),
+                 "direct": Decimal("0"), "override": Decimal("0")}
+           for aid in agent_ids}
     if not agent_ids:
         return out
 
@@ -303,17 +308,22 @@ def production_by_agent(session: Session, agent_ids: set[int],
     for aid, afyp in session.execute(aq):
         out[aid]["afyp"] = Decimal(afyp)
 
-    # Commission earned (direct + override) by the agent.
+    # Commission earned by the agent, split into direct vs override.
     cq = (
-        select(CommissionEntry.agent_id,
+        select(CommissionEntry.agent_id, CommissionEntry.kind,
                func.coalesce(func.sum(CommissionEntry.amount), 0))
         .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
         .where(CommissionEntry.agent_id.in_(agent_ids))
-        .group_by(CommissionEntry.agent_id)
+        .group_by(CommissionEntry.agent_id, CommissionEntry.kind)
     )
     cq = _window(cq, start, end)
-    for aid, comm in session.execute(cq):
-        out[aid]["commission"] = Decimal(comm)
+    for aid, kind, amount in session.execute(cq):
+        amt = Decimal(amount)
+        if kind == CommissionKind.DIRECT:
+            out[aid]["direct"] += amt
+        else:
+            out[aid]["override"] += amt
+        out[aid]["commission"] += amt
     return out
 
 
@@ -394,6 +404,7 @@ def team_production(session: Session, agent_ids: set[int]) -> list[dict]:
         row = {"agent_id": aid}
         for k in windows:
             row[k] = {"afyp": float(periods_data[k][aid]["afyp"]),
-                      "commission": float(periods_data[k][aid]["commission"])}
+                      "commission": float(periods_data[k][aid]["direct"]),
+                      "override": float(periods_data[k][aid]["override"])}
         rows.append(row)
     return rows

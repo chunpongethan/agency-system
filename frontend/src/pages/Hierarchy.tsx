@@ -7,13 +7,14 @@ import { titleLabel } from "../lib/titles";
 import { roleLabel } from "../i18n/labels";
 import type { Agent, TeamProductionRow, PeriodProduction } from "../api/types";
 
-const ZERO: PeriodProduction = { afyp: 0, commission: 0 };
+const ZERO: PeriodProduction = { afyp: 0, commission: 0, override: 0 };
 
 interface TreeNode extends Agent {
   children: TreeNode[];
   own: TeamProductionRow;      // this agent's own production (3 periods)
   teamAfyp: number;            // rolled-up YTD AFYP over the subtree
-  teamComm: number;            // rolled-up YTD commission over the subtree
+  teamComm: number;            // rolled-up YTD direct commission over the subtree
+  teamOverride: number;        // rolled-up YTD override over the subtree
 }
 
 function buildTree(agents: Agent[], prod: Map<number, TeamProductionRow>): TreeNode[] {
@@ -22,7 +23,7 @@ function buildTree(agents: Agent[], prod: Map<number, TeamProductionRow>): TreeN
     nodes.set(a.id, {
       ...a, children: [],
       own: prod.get(a.id) ?? { agent_id: a.id, ytd: ZERO, last_month: ZERO, current_month: ZERO },
-      teamAfyp: 0, teamComm: 0,
+      teamAfyp: 0, teamComm: 0, teamOverride: 0,
     }),
   );
   const roots: TreeNode[] = [];
@@ -33,7 +34,11 @@ function buildTree(agents: Agent[], prod: Map<number, TeamProductionRow>): TreeN
   const rollup = (n: TreeNode) => {
     n.teamAfyp = n.own.ytd.afyp;
     n.teamComm = n.own.ytd.commission;
-    n.children.forEach((c) => { rollup(c); n.teamAfyp += c.teamAfyp; n.teamComm += c.teamComm; });
+    n.teamOverride = n.own.ytd.override;
+    n.children.forEach((c) => {
+      rollup(c);
+      n.teamAfyp += c.teamAfyp; n.teamComm += c.teamComm; n.teamOverride += c.teamOverride;
+    });
   };
   roots.forEach(rollup);
   return roots;
@@ -70,11 +75,15 @@ function NodeRow({
           <span className="badge role">{roleLabel(node.role)}</span>
           {node.title && <span className="badge title">{titleLabel(node.title)}</span>}
           {isManager && node.unit_code && <span className="badge unit">{node.unit_code}</span>}
+          {node.direct_client && <span className="badge dc">{t("admin.agents.thDirectClient")}</span>}
           <span className="node-metric">
             <span className="metric-label">{t("hierarchy.teamAfyp")}</span> {money(node.teamAfyp)}
           </span>
           <span className="node-metric">
             <span className="metric-label">{t("hierarchy.teamComm")}</span> {money(node.teamComm)}
+          </span>
+          <span className="node-metric">
+            <span className="metric-label">{t("hierarchy.teamOverride")}</span> {money(node.teamOverride)}
           </span>
         </button>
       </div>

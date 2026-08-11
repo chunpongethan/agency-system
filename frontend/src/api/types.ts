@@ -36,7 +36,8 @@ export interface Agent {
 
 export interface PeriodProduction {
   afyp: number;
-  commission: number;
+  commission: number;   // direct commission
+  override: number;
 }
 
 export interface TeamProductionRow {
