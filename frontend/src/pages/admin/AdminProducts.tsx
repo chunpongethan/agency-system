@@ -38,6 +38,17 @@ const emptyForm = (): PForm => ({
   trail_frequency: "monthly", trail_periods: "12", ins: emptyIns(),
 });
 
+// The Yr1–Yr10 inputs are entered as ACTUAL percentages (e.g. 5.00 = 5%), while
+// the backend stores commission rates as fractions (0.05). Convert at the edges.
+function fracToPct(frac: string | null | undefined): string {
+  if (frac == null || String(frac).trim() === "") return "";
+  return String(Math.round(Number(frac) * 10000) / 100);   // 0.0525 -> "5.25"
+}
+function pctToFrac(pctStr: string): string {
+  if (pctStr.trim() === "") return "0";
+  return (Number(pctStr) / 100).toFixed(4);                 // "5.25" -> "0.0525"
+}
+
 function formFromProduct(p: Product): PForm {
   const yc = p.year_commissions ?? [];
   return {
@@ -52,7 +63,7 @@ function formFromProduct(p: Product): PForm {
       professional_investor: p.professional_investor ? "yes" : "no",
       age_min: p.age_min != null ? String(p.age_min) : "",
       age_max: p.age_max != null ? String(p.age_max) : "",
-      yearComm: Array.from({ length: 10 }, (_, i) => yc[i] ?? ""),
+      yearComm: Array.from({ length: 10 }, (_, i) => fracToPct(yc[i])),
     },
   };
 }
@@ -64,8 +75,9 @@ function buildPayload(f: PForm, forCreate: boolean): Record<string, unknown> {
     provider: f.provider || undefined,
     commission_schedule: f.commission_schedule,
     afyp_conversion: f.afyp_conversion,
-    // For insurance the base rate is the Yr1 commission; the backend enforces this too.
-    base_commission_rate: isIns ? (f.ins.yearComm[0]?.trim() || "0") : f.base_commission_rate,
+    // For insurance the base rate is the Yr1 commission (backend enforces this too).
+    // Yr inputs are percentages; convert to the stored fraction.
+    base_commission_rate: isIns ? pctToFrac(f.ins.yearComm[0] ?? "") : f.base_commission_rate,
   };
   if (forCreate) {
     payload.code = f.code;
@@ -80,7 +92,7 @@ function buildPayload(f: PForm, forCreate: boolean): Record<string, unknown> {
     payload.professional_investor = f.ins.professional_investor === "yes";
     payload.age_min = f.ins.age_min ? Number(f.ins.age_min) : null;
     payload.age_max = f.ins.age_max ? Number(f.ins.age_max) : null;
-    payload.year_commissions = f.ins.yearComm.map((v) => (v.trim() === "" ? "0" : v));
+    payload.year_commissions = f.ins.yearComm.map((v) => pctToFrac(v));
   }
   return payload;
 }
@@ -115,7 +127,7 @@ function ProductFields({ value, onChange, isEdit }:
           </select></div>
         {isIns ? (
           <div><label>{t("admin.products.thBaseRate")}</label>
-            <input value={value.ins.yearComm[0]?.trim() ? pct(value.ins.yearComm[0]) : t("admin.products.baseRateEqYr1")}
+            <input value={value.ins.yearComm[0]?.trim() ? `${Number(value.ins.yearComm[0]).toFixed(2)}%` : t("admin.products.baseRateEqYr1")}
               readOnly disabled /></div>
         ) : (
           <div><label>{t("admin.products.baseRateNotional")}</label>
@@ -170,7 +182,7 @@ function ProductFields({ value, onChange, isEdit }:
             {value.ins.yearComm.map((v, i) => (
               <div key={i} className="year-cell">
                 <span className="yr-label">{i === 0 ? t("admin.products.yrBase", { n: 1 }) : t("admin.products.yr", { n: i + 1 })}</span>
-                <input type="number" step="0.01" min="0" placeholder="0" value={v}
+                <input type="number" step="0.01" min="0" max="999.99" placeholder="0.00" value={v}
                   onChange={(e) => {
                     const next = [...value.ins.yearComm];
                     next[i] = e.target.value;

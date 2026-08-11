@@ -29,9 +29,9 @@ export default function NewTransaction() {
     notional: "100000",
     policy_no: "",
     currency: "USD",
-    lead_pct: "0",
-    sales_dev_pct: "0",
-    closing_pct: "100",
+    lead_pct: "34",
+    sales_dev_pct: "33",
+    closing_pct: "33",
     deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
   // 直客 manual override levels (up to 4): agent + rate %.
