@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../api/client";
@@ -48,17 +48,41 @@ export default function AdminTransactions() {
     lead_pct: "0", sales_dev_pct: "0", closing_pct: "100",
     deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
-  // 直客 manual override levels (up to 4): agent + rate %.
+  // Manual override levels (up to 4): agent + rate %. Honoured for both deal
+  // types. editHadOverrides tracks whether the row already stored overrides, so
+  // the hierarchy defaults don't clobber them on load.
   const [editOverrides, setEditOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
+  const [editHadOverrides, setEditHadOverrides] = useState(false);
   const [editErr, setEditErr] = useState<string | null>(null);
 
   // Agents pickable for a role (exclude admins; keep inactive so an existing
-  // assignment still renders). 直客 overrides are limited to 直客-flagged agents.
+  // assignment still renders). 直客 overrides are limited to 直客-flagged agents;
+  // 代理 overrides may go to any active agent.
   const roleOptions = (agents.data ?? []).filter((a) => a.role !== "admin");
   const dcAgents = roleOptions.filter((a) => a.direct_client && a.is_active);
   const isDirectClient = editForm.deal_type === "direct_client";
+  const overrideAgents = isDirectClient ? dcAgents : roleOptions.filter((a) => a.is_active);
   const pctSum = Number(editForm.lead_pct || 0) + Number(editForm.sales_dev_pct || 0) + Number(editForm.closing_pct || 0);
   const pctValid = Math.round(pctSum * 100) === 10000;
+
+  // For a 代理 deal with no stored overrides, pre-fill the editor from the lead
+  // agent's hierarchy (same source as the booking form). The engine treats the
+  // closing agent as the lead when lead_agent_id is unset (legacy deals), so use
+  // that same fallback. Refetches only when the effective lead or product changes.
+  const effLead = editForm.lead_agent_id || editForm.agent_id;
+  const overrideDefaultsQ = useQuery({
+    queryKey: ["overrideDefaults", effLead, editForm.product_id],
+    queryFn: () => api.overrideDefaults(Number(effLead), Number(editForm.product_id)),
+    enabled: editId != null && !isDirectClient && !!effLead && !!editForm.product_id,
+  });
+  useEffect(() => {
+    if (isDirectClient || editHadOverrides) return;
+    const d = overrideDefaultsQ.data;
+    if (!d) return;
+    setEditOverrides(d.length
+      ? d.map((x) => ({ agent_id: String(x.agent_id), pct: String(x.pct) }))
+      : [{ agent_id: "", pct: "" }]);
+  }, [isDirectClient, editHadOverrides, effLead, editForm.product_id, overrideDefaultsQ.data]);
 
   const update = useMutation({
     mutationFn: () => api.updateTransaction(editId!, {
@@ -73,9 +97,12 @@ export default function AdminTransactions() {
       sales_dev_pct: editForm.sales_dev_pct || "0",
       closing_pct: editForm.closing_pct || "0",
       deal_type: editForm.deal_type,
-      direct_overrides: isDirectClient
-        ? editOverrides.filter((o) => o.agent_id && o.pct).map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }))
-        : null,
+      direct_overrides: (() => {
+        const rowsO = editOverrides
+          .filter((o) => o.agent_id && o.pct)
+          .map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }));
+        return rowsO.length ? rowsO : null;
+      })(),
     }),
     onSuccess: () => { invalidate(); setEditId(null); setEditErr(null); },
     onError: (e) => setEditErr(errorText(e, t) || t("adminTxn.actionFailed")),
@@ -94,9 +121,11 @@ export default function AdminTransactions() {
       closing_pct: r.closing_pct != null ? String(r.closing_pct) : "100",
       deal_type: r.deal_type || "agent",
     });
+    const stored = r.direct_overrides && r.direct_overrides.length;
+    setEditHadOverrides(!!stored);
     setEditOverrides(
-      r.direct_overrides && r.direct_overrides.length
-        ? r.direct_overrides.map((o) => ({ agent_id: String(o.agent_id), pct: String(o.pct) }))
+      stored
+        ? r.direct_overrides!.map((o) => ({ agent_id: String(o.agent_id), pct: String(o.pct) }))
         : [{ agent_id: "", pct: "" }],
     );
     setEditErr(null);
@@ -223,7 +252,7 @@ export default function AdminTransactions() {
           <div className="row">
             <div><label>{t("newTxn.leadAgent")}</label>
               <select value={editForm.lead_agent_id}
-                onChange={(e) => setEditForm({ ...editForm, lead_agent_id: e.target.value })}>
+                onChange={(e) => { setEditForm({ ...editForm, lead_agent_id: e.target.value }); setEditHadOverrides(false); }}>
                 <option value="">—</option>
                 {roleOptions.map((a) => (
                   <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
@@ -239,7 +268,7 @@ export default function AdminTransactions() {
               </select></div>
             <div><label>{t("newTxn.closingAgent")}</label>
               <select value={editForm.agent_id} required
-                onChange={(e) => setEditForm({ ...editForm, agent_id: e.target.value })}>
+                onChange={(e) => { setEditForm({ ...editForm, agent_id: e.target.value }); setEditHadOverrides(false); }}>
                 {roleOptions.map((a) => (
                   <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
                 ))}
@@ -264,55 +293,55 @@ export default function AdminTransactions() {
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("newTxn.splitNote")}</p>
 
-          {/* 直客 override levels */}
-          {isDirectClient && (
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
-              <h2 style={{ fontSize: 14 }}>{t("newTxn.overrideLevels")}</h2>
-              <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>{t("newTxn.overrideNote")}</p>
-              {dcAgents.length === 0 ? (
-                <div className="error" style={{ fontSize: 12 }}>{t("newTxn.noDcAgents")}</div>
-              ) : (
-                <>
-                  {editOverrides.map((o, i) => (
-                    <div className="row" key={i} style={{ alignItems: "flex-end" }}>
-                      <div style={{ flex: 3 }}>
-                        {i === 0 && <label>{t("common.agent")}</label>}
-                        <select value={o.agent_id}
-                          onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, agent_id: e.target.value } : x))}>
-                          <option value="">{t("newTxn.selectDcAgent")}</option>
-                          {dcAgents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
-                        </select>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        {i === 0 && <label>{t("newTxn.ratePct")}</label>}
-                        <input type="number" min="0" max="100" step="1" value={o.pct}
-                          onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, pct: e.target.value } : x))} />
-                      </div>
-                      <div className="shrink">
-                        <button type="button" className="ghost" style={{ color: "var(--bad)" }}
-                          disabled={editOverrides.length === 1}
-                          onClick={() => setEditOverrides(editOverrides.filter((_, j) => j !== i))}>
-                          {t("newTxn.removeLevel")}
-                        </button>
-                      </div>
+          {/* Override levels (直客: manual; 代理: loaded from hierarchy, editable) */}
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+            <h2 style={{ fontSize: 14 }}>{isDirectClient ? t("newTxn.overrideLevels") : t("newTxn.overrideHierTitle")}</h2>
+            <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>
+              {isDirectClient ? t("newTxn.overrideNote") : t("newTxn.overrideHierNote")}
+            </p>
+            {isDirectClient && dcAgents.length === 0 ? (
+              <div className="error" style={{ fontSize: 12 }}>{t("newTxn.noDcAgents")}</div>
+            ) : (
+              <>
+                {editOverrides.map((o, i) => (
+                  <div className="row" key={i} style={{ alignItems: "flex-end" }}>
+                    <div style={{ flex: 3 }}>
+                      {i === 0 && <label>{t("common.agent")}</label>}
+                      <select value={o.agent_id}
+                        onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, agent_id: e.target.value } : x))}>
+                        <option value="">{isDirectClient ? t("newTxn.selectDcAgent") : t("newTxn.selectAgent")}</option>
+                        {overrideAgents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
+                      </select>
                     </div>
-                  ))}
-                  {editOverrides.length < 4 && (
-                    <button type="button" className="ghost" style={{ marginTop: 8 }}
-                      onClick={() => setEditOverrides([...editOverrides, { agent_id: "", pct: "" }])}>
-                      {t("newTxn.addLevel")}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                    <div style={{ flex: 1 }}>
+                      {i === 0 && <label>{t("newTxn.ratePct")}</label>}
+                      <input type="number" min="0" max="100" step="1" value={o.pct}
+                        onChange={(e) => setEditOverrides(editOverrides.map((x, j) => j === i ? { ...x, pct: e.target.value } : x))} />
+                    </div>
+                    <div className="shrink">
+                      <button type="button" className="ghost" style={{ color: "var(--bad)" }}
+                        disabled={editOverrides.length === 1}
+                        onClick={() => setEditOverrides(editOverrides.filter((_, j) => j !== i))}>
+                        {t("newTxn.removeLevel")}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {editOverrides.length < 4 && (
+                  <button type="button" className="ghost" style={{ marginTop: 8 }}
+                    onClick={() => setEditOverrides([...editOverrides, { agent_id: "", pct: "" }])}>
+                    {t("newTxn.addLevel")}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Product / notional / date / policy */}
           <div className="row" style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
             <div><label>{t("adminTxn.product")}</label>
               <select value={editForm.product_id} required
-                onChange={(e) => setEditForm({ ...editForm, product_id: e.target.value })}>
+                onChange={(e) => { setEditForm({ ...editForm, product_id: e.target.value }); setEditHadOverrides(false); }}>
                 {(products.data ?? []).map((p) => (
                   <option key={p.id} value={p.id}>{p.code} · {p.name}</option>
                 ))}
