@@ -140,6 +140,8 @@ export const translations: Record<string, Translation> = {
   "error.transaction_not_found": { "zh-Hant": "找不到該交易", en: "Transaction not found" },
   "error.rule_not_found": { "zh-Hant": "找不到該規則", en: "Override rule not found" },
   "error.email_in_use": { "zh-Hant": "此電郵已被使用", en: "Email already in use" },
+  "error.code_taken": { "zh-Hant": "此代理編號已被使用", en: "Agent code already in use" },
+  "error.duplicate": { "zh-Hant": "資料與現有記錄重複", en: "This record duplicates an existing one" },
   "error.product_has_transactions": {
     "zh-Hant": "此產品已有交易，無法刪除；請改為停用。",
     en: "Cannot delete a product with transactions; deactivate it instead.",

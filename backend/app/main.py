@@ -18,6 +18,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.exceptions import HTTPException as StarletteHTTPException
 import jwt
 from sqlalchemy import create_engine, select, or_, func, delete
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.models import (
@@ -219,11 +220,24 @@ def reset_password(payload: schemas.ResetPasswordIn, db: Session = Depends(get_d
 def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
                  current: Agent = Depends(require_admin)):
     agent_service.validate_agent(db, payload.level, payload.upline_id)
+    # Friendly duplicate checks (code / email are unique) so the client gets a
+    # clear 409 instead of an opaque 500 — a 500 skips CORS headers and surfaces
+    # in the browser as "Failed to fetch".
+    if db.execute(select(Agent).where(Agent.code == payload.code)).scalars().first():
+        raise err(409, "code_taken", "agent code already in use")
+    if payload.email and db.execute(
+        select(Agent).where(Agent.email == payload.email)
+    ).scalars().first():
+        raise err(409, "email_in_use", "email already in use")
     data = payload.model_dump(exclude={"password"})
     agent = Agent(**data)
     if payload.password:
         agent.password_hash = hash_password(payload.password)
-    db.add(agent); db.commit(); db.refresh(agent)
+    try:
+        db.add(agent); db.commit(); db.refresh(agent)
+    except IntegrityError:
+        db.rollback()
+        raise err(409, "duplicate", "agent violates a uniqueness constraint")
     return agent
 
 
@@ -251,7 +265,7 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
             select(Agent).where(Agent.email == data["email"], Agent.id != agent_id)
         ).scalars().first()
         if clash is not None:
-            raise HTTPException(409, "email already in use")
+            raise err(409, "email_in_use", "email already in use")
     # Admin manual password reset: hash it, and never echo the raw value.
     new_password = data.pop("password", None)
     if new_password:
