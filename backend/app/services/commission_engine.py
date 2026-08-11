@@ -27,7 +27,7 @@ from sqlalchemy.orm import Session
 from app.models.models import (
     Agent, Transaction, Product, OverrideRule,
     CommissionEntry, CommissionKind, TxnStatus,
-    CommissionSchedule, TrailFrequency, Role,
+    CommissionSchedule, TrailFrequency, Role, DealType,
 )
 
 CENTS = Decimal("0.01")
@@ -136,6 +136,21 @@ def _role_shares(txn: Transaction) -> tuple[dict[int, Decimal], int]:
     return shares, lead_id
 
 
+def _direct_client_rates(txn: Transaction) -> dict[int, Decimal]:
+    """For a 直客 deal, the admin-assigned override rate per agent (combining any
+    agent that appears on more than one level). Rate is a fraction (25% -> 0.25)."""
+    rates: dict[int, Decimal] = {}
+    for row in (txn.direct_overrides or []):
+        aid = row.get("agent_id")
+        if aid is None:
+            continue
+        pct = Decimal(str(row.get("pct") or 0))
+        if pct == 0:
+            continue
+        rates[aid] = rates.get(aid, Decimal("0")) + pct / Decimal("100")
+    return rates
+
+
 def _period_entries(session: Session, txn: Transaction, product: Product,
                     period_index: int, accrual_date: date,
                     reversal: bool) -> list[CommissionEntry]:
@@ -172,30 +187,44 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
             is_reversal=reversal,
         ))
 
-    lead = session.get(Agent, lead_id)
-    rules = _rules_for(session, product.type, txn.trade_date)
-    for gap, upline in _upline_chain(session, lead):
-        rate = rules.get(gap)
-        if rate is None or rate == 0:
-            continue
-        # Override = rate × the full direct commission (not the notional).
-        out.append(CommissionEntry(
-            transaction_id=txn.id, agent_id=upline.id,
-            kind=CommissionKind.OVERRIDE, rate=rate,
-            amount=_money(base_direct * rate) * sign, level_gap=gap,
-            period_index=period_index, accrual_date=accrual_date,
-            is_reversal=reversal,
-        ))
+    # Overrides. 直客 (direct-client) deals use the admin-assigned levels; 代理
+    # deals flow up the lead agent's hierarchy. Both are a % of the direct
+    # commission (base_direct).
+    if txn.deal_type == DealType.DIRECT_CLIENT:
+        for gap, (aid, rate) in enumerate(_direct_client_rates(txn).items(), start=1):
+            out.append(CommissionEntry(
+                transaction_id=txn.id, agent_id=aid,
+                kind=CommissionKind.OVERRIDE, rate=rate,
+                amount=_money(base_direct * rate) * sign, level_gap=gap,
+                period_index=period_index, accrual_date=accrual_date,
+                is_reversal=reversal,
+            ))
+    else:
+        lead = session.get(Agent, lead_id)
+        rules = _rules_for(session, product.type, txn.trade_date)
+        for gap, upline in _upline_chain(session, lead):
+            rate = rules.get(gap)
+            if rate is None or rate == 0:
+                continue
+            # Override = rate × the full direct commission (not the notional).
+            out.append(CommissionEntry(
+                transaction_id=txn.id, agent_id=upline.id,
+                kind=CommissionKind.OVERRIDE, rate=rate,
+                amount=_money(base_direct * rate) * sign, level_gap=gap,
+                period_index=period_index, accrual_date=accrual_date,
+                is_reversal=reversal,
+            ))
     return out
 
 
 def preview(session: Session, product: Product, notional: Decimal, trade_date: date,
             lead_id: int, sales_dev_id: int, closing_id: int,
-            lead_pct: Decimal, sales_dev_pct: Decimal, closing_pct: Decimal) -> list[dict]:
+            lead_pct: Decimal, sales_dev_pct: Decimal, closing_pct: Decimal,
+            deal_type: str = "agent", direct_overrides: list | None = None) -> list[dict]:
     """
     Compute the commission lines a settlement *would* produce, without persisting
     anything. Mirrors _period_entries for period 0: the direct commission split
-    among the role-agents, plus overrides up the lead agent's chain.
+    among the role-agents, plus overrides (hierarchy for 代理, manual for 直客).
     """
     lines: list[dict] = []
     base_direct = _money(notional * product.base_commission_rate)
@@ -217,17 +246,33 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
             "level_gap": 0, "period_index": 0,
         })
 
-    lead = session.get(Agent, lead_id)
-    rules = _rules_for(session, product.type, trade_date)
-    for gap, upline in _upline_chain(session, lead):
-        rate = rules.get(gap)
-        if rate is None or rate == 0:
-            continue
-        lines.append({
-            "agent_id": upline.id, "kind": CommissionKind.OVERRIDE.value,
-            "rate": rate, "amount": _money(base_direct * rate),
-            "level_gap": gap, "period_index": 0,
-        })
+    if deal_type == DealType.DIRECT_CLIENT.value:
+        combined: dict[int, Decimal] = {}
+        for row in (direct_overrides or []):
+            aid = row.get("agent_id")
+            if aid is None:
+                continue
+            pct = Decimal(str(row.get("pct") or 0))
+            if pct != 0:
+                combined[aid] = combined.get(aid, Decimal("0")) + pct / Decimal("100")
+        for gap, (aid, rate) in enumerate(combined.items(), start=1):
+            lines.append({
+                "agent_id": aid, "kind": CommissionKind.OVERRIDE.value,
+                "rate": rate, "amount": _money(base_direct * rate),
+                "level_gap": gap, "period_index": 0,
+            })
+    else:
+        lead = session.get(Agent, lead_id)
+        rules = _rules_for(session, product.type, trade_date)
+        for gap, upline in _upline_chain(session, lead):
+            rate = rules.get(gap)
+            if rate is None or rate == 0:
+                continue
+            lines.append({
+                "agent_id": upline.id, "kind": CommissionKind.OVERRIDE.value,
+                "rate": rate, "amount": _money(base_direct * rate),
+                "level_gap": gap, "period_index": 0,
+            })
     return lines
 
 

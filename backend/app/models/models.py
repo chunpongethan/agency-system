@@ -83,6 +83,12 @@ class TxnStatus(str, enum.Enum):
     CANCELLED = "cancelled"  # reverses any accrued commission
 
 
+class DealType(str, enum.Enum):
+    """How a transaction's overrides are determined."""
+    AGENT = "agent"                  # 代理: overrides flow up the lead agent's hierarchy
+    DIRECT_CLIENT = "direct_client"  # 直客: admin assigns up to 4 override levels manually
+
+
 class Agent(Base):
     __tablename__ = "agents"
 
@@ -98,6 +104,8 @@ class Agent(Base):
     unit_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
     upline_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # "直客" eligible: may receive manually-assigned overrides on direct-client deals.
+    direct_client: Mapped[bool] = mapped_column(Boolean, default=False)
     joined_at: Mapped[date] = mapped_column(Date, default=date.today)
 
     # --- Auth (Phase 2). password_hash lives on the agent; role drives scoping. ---
@@ -203,6 +211,10 @@ class Transaction(Base):
     lead_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
     sales_dev_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("0"))
     closing_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("100"))
+    # 代理 (default): overrides follow the lead agent's hierarchy. 直客: the admin
+    # assigns up to 4 override levels, stored as [{"agent_id": int, "pct": number}].
+    deal_type: Mapped[DealType] = mapped_column(Enum(DealType), default=DealType.AGENT)
+    direct_overrides: Mapped[list | None] = mapped_column(JSON, nullable=True)
     notional: Mapped[Decimal] = mapped_column(Numeric(18, 2))       # premium / invested amount
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     # Multi-currency (decision 3): store base_currency + a nullable fx_rate for a

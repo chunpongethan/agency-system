@@ -31,16 +31,28 @@ export default function NewTransaction() {
     lead_pct: "0",
     sales_dev_pct: "0",
     closing_pct: "100",
+    deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
+  // 直客 manual override levels (up to 4): agent + rate %.
+  const [overrides, setOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
 
   const agentId = Number(form.agent_id) || 0;   // closing agent
   const notionalNum = Number(form.notional) || 0;
   const pctSum = Number(form.lead_pct || 0) + Number(form.sales_dev_pct || 0) + Number(form.closing_pct || 0);
   const pctValid = Math.round(pctSum * 100) === 10000;
   const rolesChosen = !!form.lead_agent_id && !!form.sales_dev_agent_id && !!form.agent_id;
+  const isDirectClient = form.deal_type === "direct_client";
 
   // Non-admin active agents are eligible for any role.
   const closerOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.is_active);
+  // Only 直客-flagged agents can receive direct-client overrides.
+  const dcAgents = closerOptions.filter((a) => a.direct_client);
+  const overridePayload = () =>
+    overrides.filter((o) => o.agent_id && o.pct).map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }));
+  const dealPayload = () => ({
+    deal_type: form.deal_type,
+    direct_overrides: isDirectClient ? overridePayload() : undefined,
+  });
   // Clients belonging to the chosen closing agent.
   const clientOptions = (clients.data ?? []).filter((c) => c.agent_id === agentId);
   const agentName = (id: number) => agents.data?.find((a) => a.id === id)?.name ?? `#${id}`;
@@ -61,13 +73,15 @@ export default function NewTransaction() {
 
   const preview = useQuery({
     queryKey: ["preview", form.product_id, agentId, notionalNum,
-               form.lead_agent_id, form.sales_dev_agent_id, form.lead_pct, form.sales_dev_pct, form.closing_pct],
+               form.lead_agent_id, form.sales_dev_agent_id, form.lead_pct, form.sales_dev_pct, form.closing_pct,
+               form.deal_type, JSON.stringify(overrides)],
     queryFn: () =>
       api.previewTransaction({
         product_id: Number(form.product_id),
         agent_id: agentId,
         notional: form.notional,
         ...rolePayload(),
+        ...dealPayload(),
       }),
     enabled: !!form.product_id && rolesChosen && notionalNum > 0 && pctValid,
   });
@@ -81,6 +95,7 @@ export default function NewTransaction() {
         notional: form.notional,
         currency: form.currency,
         ...rolePayload(),
+        ...dealPayload(),
       }),
     onSuccess: (txn) => {
       setCreated(txn);
@@ -112,6 +127,13 @@ export default function NewTransaction() {
 
           <label>{t("newTxn.txnCode")}</label>
           <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
+
+          <label>{t("newTxn.dealType")}</label>
+          <select value={form.deal_type}
+            onChange={(e) => setForm({ ...form, deal_type: e.target.value })}>
+            <option value="agent">{t("newTxn.dealAgent")}</option>
+            <option value="direct_client">{t("newTxn.dealDirectClient")}</option>
+          </select>
 
           <label>{t("newTxn.leadAgent")}</label>
           <select value={form.lead_agent_id} required
@@ -164,6 +186,49 @@ export default function NewTransaction() {
             </div>
             <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("newTxn.splitNote")}</p>
           </div>
+
+          {isDirectClient && (
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+              <h2 style={{ fontSize: 14 }}>{t("newTxn.overrideLevels")}</h2>
+              <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>{t("newTxn.overrideNote")}</p>
+              {dcAgents.length === 0 ? (
+                <div className="error" style={{ fontSize: 12 }}>{t("newTxn.noDcAgents")}</div>
+              ) : (
+                <>
+                  {overrides.map((o, i) => (
+                    <div className="row" key={i} style={{ alignItems: "flex-end" }}>
+                      <div style={{ flex: 3 }}>
+                        {i === 0 && <label>{t("common.agent")}</label>}
+                        <select value={o.agent_id}
+                          onChange={(e) => setOverrides(overrides.map((x, j) => j === i ? { ...x, agent_id: e.target.value } : x))}>
+                          <option value="">{t("newTxn.selectDcAgent")}</option>
+                          {dcAgents.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
+                        </select>
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        {i === 0 && <label>{t("newTxn.ratePct")}</label>}
+                        <input type="number" min="0" max="100" step="1" value={o.pct}
+                          onChange={(e) => setOverrides(overrides.map((x, j) => j === i ? { ...x, pct: e.target.value } : x))} />
+                      </div>
+                      <div className="shrink">
+                        <button type="button" className="ghost" style={{ color: "var(--bad)" }}
+                          disabled={overrides.length === 1}
+                          onClick={() => setOverrides(overrides.filter((_, j) => j !== i))}>
+                          {t("newTxn.removeLevel")}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {overrides.length < 4 && (
+                    <button type="button" className="ghost" style={{ marginTop: 8 }}
+                      onClick={() => setOverrides([...overrides, { agent_id: "", pct: "" }])}>
+                      {t("newTxn.addLevel")}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
           <select value={form.client_id} required disabled={!form.agent_id}

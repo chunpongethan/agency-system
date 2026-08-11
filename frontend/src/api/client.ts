@@ -109,7 +109,7 @@ export const api = {
   downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
   createAgent: (payload: Partial<Agent> & { password?: string }) =>
     request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
-  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "role" | "is_active">> & { password?: string }) =>
+  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "role" | "is_active" | "direct_client">> & { password?: string }) =>
     request<Agent>(`/agents/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
 
   // Clients

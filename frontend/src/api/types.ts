@@ -30,6 +30,7 @@ export interface Agent {
   role: Role;
   title: Title | null;
   unit_code: string | null;
+  direct_client: boolean;
   is_active: boolean;
 }
 

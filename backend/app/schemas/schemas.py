@@ -66,6 +66,7 @@ class AgentIn(BaseModel):
     role: str = "agent"
     title: str | None = None
     unit_code: str | None = None
+    direct_client: bool = False
     password: str | None = None
 
 
@@ -76,6 +77,7 @@ class AgentUpdate(BaseModel):
     unit_code: str | None = None
     role: str | None = None
     is_active: bool | None = None
+    direct_client: bool | None = None
     password: str | None = None  # admin manual reset; blank = keep current
 
 
@@ -90,6 +92,7 @@ class AgentOut(BaseModel):
     role: str
     title: str | None = None
     unit_code: str | None = None
+    direct_client: bool = False
     is_active: bool
 
 
@@ -203,18 +206,29 @@ class OverrideRuleOut(BaseModel):
 # split the direct commission by percentage; agent_id is the Closing agent. The
 # same agent may hold multiple roles. lead/sales_dev fall back to the closing
 # agent when omitted, so single-agent bookings still work.
+class DirectOverrideIn(BaseModel):
+    agent_id: int
+    pct: Decimal
+
+
 class _RoleSplit(BaseModel):
     lead_agent_id: int | None = None
     sales_dev_agent_id: int | None = None
     lead_pct: Decimal = Decimal("0")
     sales_dev_pct: Decimal = Decimal("0")
     closing_pct: Decimal = Decimal("100")
+    # 代理 (default) or 直客 (admin-assigned override levels).
+    deal_type: str = "agent"
+    direct_overrides: list[DirectOverrideIn] | None = None
 
     @model_validator(mode="after")
     def _pcts_sum_to_100(self):
         total = (self.lead_pct or 0) + (self.sales_dev_pct or 0) + (self.closing_pct or 0)
         if round(float(total), 2) != 100.0:
             raise ValueError("lead + sales-dev + closing percentages must total 100")
+        if self.deal_type == "direct_client" and self.direct_overrides:
+            if len(self.direct_overrides) > 4:
+                raise ValueError("a direct-client deal has at most 4 override levels")
         return self
 
 
@@ -246,6 +260,8 @@ class TransactionUpdate(BaseModel):
     lead_pct: Decimal | None = None
     sales_dev_pct: Decimal | None = None
     closing_pct: Decimal | None = None
+    deal_type: str | None = None
+    direct_overrides: list[DirectOverrideIn] | None = None
     notional: Decimal | None = None
     currency: str | None = None
     trade_date: date | None = None
@@ -263,6 +279,8 @@ class TransactionOut(BaseModel):
     lead_pct: Decimal | None = None
     sales_dev_pct: Decimal | None = None
     closing_pct: Decimal | None = None
+    deal_type: str = "agent"
+    direct_overrides: list | None = None
     notional: Decimal
     currency: str
     status: str

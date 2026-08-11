@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
-    CommissionEntry, now_utc,
+    CommissionEntry, DealType, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -514,6 +514,22 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
             raise HTTPException(404, "agent not found")
 
     data = payload.model_dump()
+    # Normalise deal type + direct-client override levels (JSON-serialisable).
+    data["deal_type"] = DealType(data.get("deal_type") or "agent")
+    overrides = data.pop("direct_overrides", None)
+    if data["deal_type"] == DealType.DIRECT_CLIENT:
+        norm = []
+        for row in (overrides or []):
+            ag = db.get(Agent, row["agent_id"])
+            if ag is None:
+                raise HTTPException(404, "agent not found")
+            if not ag.direct_client:
+                raise err(400, "not_direct_client", "selected agent is not 直客-eligible")
+            norm.append({"agent_id": row["agent_id"], "pct": float(row["pct"])})
+        data["direct_overrides"] = norm or None
+    else:
+        data["direct_overrides"] = None
+
     trade_date = data.get("trade_date") or date.today()
     # Admin may route a sale dated into a locked period to the next open period.
     data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust=adjust)
@@ -541,10 +557,12 @@ def preview_transaction(payload: schemas.TransactionPreviewIn,
     closing_id = payload.agent_id
     lead_id = payload.lead_agent_id or closing_id
     sales_dev_id = payload.sales_dev_agent_id or closing_id
+    overrides = [{"agent_id": r.agent_id, "pct": float(r.pct)} for r in (payload.direct_overrides or [])]
     lines = commission_engine.preview(
         db, product, payload.notional, payload.trade_date or date.today(),
         lead_id, sales_dev_id, closing_id,
         payload.lead_pct, payload.sales_dev_pct, payload.closing_pct,
+        deal_type=payload.deal_type, direct_overrides=overrides,
     )
     total = sum((line["amount"] for line in lines), start=Decimal("0"))
     return schemas.CommissionPreviewOut(lines=lines, total=total)
@@ -567,6 +585,13 @@ def update_transaction(txn_id: int, payload: schemas.TransactionUpdate,
         raise HTTPException(404, "agent not found")
     before = {"notional": txn.notional, "agent_id": txn.agent_id,
               "product_id": txn.product_id, "trade_date": txn.trade_date}
+    if "deal_type" in data:
+        data["deal_type"] = DealType(data["deal_type"] or "agent")
+    if "direct_overrides" in data:
+        rows = data["direct_overrides"] or []
+        data["direct_overrides"] = [
+            {"agent_id": r["agent_id"], "pct": float(r["pct"])} for r in rows
+        ] or None
     for k, v in data.items():
         setattr(txn, k, v)
     db.flush()

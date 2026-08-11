@@ -15,6 +15,7 @@ export default function AdminAgents() {
   const [agentForm, setAgentForm] = useState({
     code: "", name: "", email: "", upline_id: "", unit_code: "",
     title: "business_manager" as Title, role: "agent" as Role, password: "demo1234",
+    direct_client: false,
   });
   const [agentErr, setAgentErr] = useState<string | null>(null);
   const [agentMsg, setAgentMsg] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export default function AdminAgents() {
         upline_id: agentForm.upline_id ? Number(agentForm.upline_id) : null,
         role: agentForm.role, title: agentForm.title,
         unit_code: agentForm.unit_code || null,
+        direct_client: agentForm.direct_client,
         password: agentForm.password || undefined,
       }),
     onSuccess: (a) => {
@@ -50,7 +52,7 @@ export default function AdminAgents() {
 
   // --- Edit agent ---
   const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", password: "" });
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", password: "", direct_client: false });
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateAgent = useMutation({
     mutationFn: () =>
@@ -58,6 +60,7 @@ export default function AdminAgents() {
         name: editForm.name, email: editForm.email, role: editForm.role,
         title: (editForm.title || null) as Title | null,
         unit_code: editForm.unit_code || null,
+        direct_client: editForm.direct_client,
         password: editForm.password || undefined,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["agents"] }); setEditId(null); setEditErr(null); },
@@ -75,7 +78,7 @@ export default function AdminAgents() {
 
   function startEdit(a: Agent) {
     setEditId(a.id);
-    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", password: "" });
+    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", password: "", direct_client: a.direct_client });
     setEditErr(null);
   }
   function terminate(a: Agent) {
@@ -96,7 +99,7 @@ export default function AdminAgents() {
           <thead>
             <tr>
               <th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("admin.agents.thDepth")}</th><th>{t("common.role")}</th><th>{t("common.title")}</th>
-              <th>{t("common.unit")}</th><th>{t("admin.agents.thUpline")}</th><th>{t("common.status")}</th><th></th>
+              <th>{t("common.unit")}</th><th>{t("admin.agents.thDirectClient")}</th><th>{t("admin.agents.thUpline")}</th><th>{t("common.status")}</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -117,6 +120,7 @@ export default function AdminAgents() {
                     </select>
                   </td>
                   <td className="muted">{a.unit_code ?? "—"}</td>
+                  <td>{a.direct_client ? <span className="badge unit">直客</span> : <span className="muted">—</span>}</td>
                   <td className="muted">{upline ? `${upline.name} (${upline.code})` : "—"}</td>
                   <td>
                     <span className={`badge ${a.is_active ? "settled" : "cancelled"}`}>
@@ -170,6 +174,9 @@ export default function AdminAgents() {
             <div><label>{t("admin.agents.newPassword")}</label>
               <input type="text" value={editForm.password} autoComplete="new-password"
                 onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} /></div>
+            <div><label>{t("admin.agents.directClient")}</label>
+              <input type="checkbox" checked={editForm.direct_client} style={{ width: "auto" }}
+                onChange={(e) => setEditForm({ ...editForm, direct_client: e.target.checked })} /></div>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             {t("admin.agents.editNote")}
@@ -231,6 +238,9 @@ export default function AdminAgents() {
           <div><label>{t("admin.agents.password")}</label>
             <input type="text" value={agentForm.password}
               onChange={(e) => setAgentForm({ ...agentForm, password: e.target.value })} /></div>
+          <div><label>{t("admin.agents.directClient")}</label>
+            <input type="checkbox" checked={agentForm.direct_client} style={{ width: "auto" }}
+              onChange={(e) => setAgentForm({ ...agentForm, direct_client: e.target.checked })} /></div>
           <div className="shrink" style={{ alignSelf: "flex-end" }}>
             <button className="primary" type="submit" disabled={createAgent.isPending}>
               {createAgent.isPending ? t("admin.agents.creating") : t("admin.agents.create")}
