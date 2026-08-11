@@ -1,6 +1,8 @@
 """
-Ownership model: clients & their transactions are owner-only; admins are not
-sellers (no client access) but hold authority over transaction data.
+Ownership model: an agent owns their own clients & transactions. Admins are not
+sellers, but as the transaction operators they may read and maintain any client
+(profile details; ownership stays with the agent) and hold authority over
+transaction data.
 """
 from decimal import Decimal
 
@@ -71,7 +73,7 @@ def test_client_is_owner_only(client):
     assert client.get(f"/clients/{ids['cx']}", headers=ay).status_code == 403
 
 
-def test_admin_can_read_but_not_own_clients(client):
+def test_admin_can_read_and_maintain_clients(client):
     ids = client._ids
     adm = auth(client, "ADM")
     # admin (the transaction operator) can read clients ...
@@ -82,9 +84,12 @@ def test_admin_can_read_but_not_own_clients(client):
                           json={"ref": "Z", "name": "z", "agent_id": ids["ax"]})
     assert created.status_code == 200
     assert created.json()["agent_id"] == ids["ax"]
-    # ... but still cannot edit a client profile (owner-only)
-    assert client.patch(f"/clients/{ids['cx']}", headers=adm,
-                        json={"name": "x"}).status_code == 403
+    # ... and can maintain a client profile (details only; ownership unchanged)
+    edited = client.patch(f"/clients/{ids['cx']}", headers=adm,
+                          json={"name": "x-edited"})
+    assert edited.status_code == 200
+    assert edited.json()["name"] == "x-edited"
+    assert edited.json()["agent_id"] == ids["ax"]  # still owned by the agent
 
 
 def test_agents_cannot_book_transactions(client):

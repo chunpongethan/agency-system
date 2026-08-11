@@ -29,8 +29,8 @@ export default function ClientDetail() {
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
-  // Admins can view a client but not edit the profile (owner-only).
-  const canEditProfile = !isAdmin;
+  // Both the owning agent and admins may maintain the client profile.
+  const canEditProfile = true;
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "", risk_profile: "", notes: "",
@@ -89,7 +89,7 @@ export default function ClientDetail() {
 
       <div>
         <form className="card" onSubmit={(e) => { e.preventDefault(); if (canEditProfile) save.mutate(); }}>
-          <h2>{t("clientDetail.profile")} {isAdmin && <span className="muted" style={{ fontSize: 12 }}>{t("clientDetail.readonlyHint")}</span>}</h2>
+          <h2>{t("clientDetail.profile")}</h2>
           {msg && <div className="success">{msg}</div>}
           {error && <div className="error">{error}</div>}
           <label>{t("common.name")}</label>
