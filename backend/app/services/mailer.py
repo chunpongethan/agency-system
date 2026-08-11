@@ -58,7 +58,7 @@ def send_password_reset(to: str, name: str, reset_url: str) -> None:
         f"We received a request to reset your password. Use the link below to set "
         f"a new one (it expires shortly):\n\n{reset_url}\n\n"
         f"If you didn't request this, you can ignore this email.\n\n"
-        f"— Agency Management System\n\n"
+        f"— 承瑞家辦代理系統 (Chengrui Family Office Agency System)\n\n"
         f"———\n"
         f"你好 {name}，\n\n我們收到重設密碼的要求。請使用以下連結設定新密碼"
         f"（連結將於短時間後失效）：\n\n{reset_url}\n\n若非你本人操作，可忽略此電郵。\n"

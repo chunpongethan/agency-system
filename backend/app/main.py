@@ -42,7 +42,7 @@ engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
 Base.metadata.create_all(engine)
 
-app = FastAPI(title="Agency Management System", version="1.0.0")
+app = FastAPI(title="承瑞家辦代理系統", version="1.0.0")
 
 # CORS_ORIGINS: comma-separated list of allowed web origins, or "*" (dev default).
 # In production set it to the web app's origin, e.g. https://app.yourdomain.com.
