@@ -48,7 +48,7 @@ def db():
 def _txn(db, notional="100000", agent=None):
     t = Transaction(ref="T1", client_id=db._client.id, product_id=db._prod.id,
                     agent_id=(agent or db._agents["l4"]).id,
-                    notional=Decimal(notional), status=TxnStatus.SETTLED,
+                    notional=Decimal(notional), status=TxnStatus.APPROVED,
                     trade_date=date.today())
     db.add(t); db.flush()
     return t

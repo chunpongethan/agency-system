@@ -57,7 +57,7 @@ def test_override_is_percent_of_commission_up_to_four_levels(db):
     closer = chain[-1]
     txn = Transaction(ref="T", client_id=db._client.id, product_id=db._prod.id,
                       agent_id=closer.id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 1, 1))
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 1, 1))
     db.add(txn); db.flush()
     entries = commission_engine.compute_for_transaction(db, txn)
     by_agent = {e.agent_id: e for e in entries}
@@ -80,7 +80,7 @@ def test_deep_downline_beyond_four_gaps_earns_zero(db):
     chain = db._chain
     txn = Transaction(ref="T2", client_id=db._client.id, product_id=db._prod.id,
                       agent_id=chain[-1].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 1, 1))
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 1, 1))
     db.add(txn); db.flush()
     entries = commission_engine.compute_for_transaction(db, txn)
     assert all(e.agent_id != chain[0].id for e in entries)

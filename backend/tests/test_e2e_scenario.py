@@ -125,7 +125,7 @@ def test_full_scenario(client):
     })
     assert r.status_code == 200, r.text
     ins_txn = r.json()["id"]
-    assert client.post(f"/transactions/{ins_txn}/settle", headers=admin).status_code == 200
+    assert client.post(f"/transactions/{ins_txn}/approve", headers=admin).status_code == 200
 
     # --- 3. Ledger: direct to closer + overrides at gaps 1/2/3 -----------------
     win = f"?start={TRADE.isoformat()}&end={TRADE.isoformat()}"
@@ -145,7 +145,7 @@ def test_full_scenario(client):
     })
     assert r.status_code == 200
     trail_txn = r.json()["id"]
-    assert client.post(f"/transactions/{trail_txn}/settle", headers=admin).status_code == 200
+    assert client.post(f"/transactions/{trail_txn}/approve", headers=admin).status_code == 200
 
     # On settle only period 0 exists -> one direct fund entry.
     st = client.get(f"/reports/agent/{ids['a4']}", headers=admin).json()

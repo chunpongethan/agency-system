@@ -106,10 +106,10 @@ def test_effective_dated_rule_selection(db):
 
     old = Transaction(ref="OLD", client_id=db._client.id, product_id=prod.id,
                       agent_id=db._agents["l4"].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2023, 6, 1))
+                      status=TxnStatus.APPROVED, trade_date=date(2023, 6, 1))
     new = Transaction(ref="NEW", client_id=db._client.id, product_id=prod.id,
                       agent_id=db._agents["l4"].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 6, 1))
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 6, 1))
     db.add_all([old, new]); db.flush()
 
     old_entries = commission_engine.compute_for_transaction(db, old)
@@ -137,7 +137,7 @@ def test_trail_accrual_over_periods(db):
 
     txn = Transaction(ref="TR", client_id=db._client.id, product_id=trail.id,
                       agent_id=db._agents["l4"].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 1, 15))
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 1, 15))
     db.add(txn); db.flush()
 
     # On settle only period 0 is due.
@@ -170,7 +170,7 @@ def test_upfront_product_single_period(db):
     db.add(prod); db.flush()
     txn = Transaction(ref="UPF", client_id=db._client.id, product_id=prod.id,
                       agent_id=db._agents["l4"].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 1, 1))
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 1, 1))
     db.add(txn); db.flush()
     commission_engine.compute_for_transaction(db, txn)
     commission_engine.run_accruals(db, as_of=date(2030, 1, 1))
@@ -189,7 +189,7 @@ def test_clawback_nets_to_zero(db):
     from app.models.models import now_utc
     txn = Transaction(ref="X", client_id=db._client.id, product_id=prod.id,
                       agent_id=db._agents["l4"].id, notional=Decimal("100000"),
-                      status=TxnStatus.SETTLED, trade_date=date(2024, 1, 1),
+                      status=TxnStatus.APPROVED, trade_date=date(2024, 1, 1),
                       settled_at=now_utc())
     db.add(txn); db.flush()
 
@@ -210,7 +210,7 @@ def test_clawback_nets_to_zero(db):
     assert len(txn.commissions) == 8  # 4 original + 4 reversals
 
     # Re-settle -> reversals gone, net back to original.
-    txn.status = TxnStatus.SETTLED
+    txn.status = TxnStatus.APPROVED
     commission_engine.compute_for_transaction(db, txn)
     db.refresh(txn)
     assert sum(e.amount for e in txn.commissions) == Decimal("7450.00")

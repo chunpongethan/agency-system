@@ -292,8 +292,8 @@ def compute_for_transaction(session: Session, txn: Transaction,
     Regenerate commission entries for one transaction, deterministically from its
     current state, while treating already-*paid* entries as immutable:
 
-      - SETTLED  -> positive entries for every due period.
-      - CANCELLED (that was previously settled) -> the positive entries PLUS a
+      - APPROVED -> positive entries for every due period.
+      - CANCELLED (that was previously approved) -> the positive entries PLUS a
         matching negative reversal for each, netting to zero but visible. If a
         positive was already paid in a payout, its reversal is emitted as an
         unpaid negative adjustment (picked up by the next payout run).
@@ -320,9 +320,9 @@ def compute_for_transaction(session: Session, txn: Transaction,
         )
     )
 
-    was_settled = txn.settled_at is not None
-    generate = txn.status == TxnStatus.SETTLED or (
-        txn.status == TxnStatus.CANCELLED and was_settled
+    was_approved = txn.settled_at is not None
+    generate = txn.status == TxnStatus.APPROVED or (
+        txn.status == TxnStatus.CANCELLED and was_approved
     )
     if not generate:
         session.flush()
@@ -362,7 +362,7 @@ def run_accruals(session: Session, as_of: date | None = None) -> int:
         select(Transaction)
         .join(Product, Transaction.product_id == Product.id)
         .where(Product.commission_schedule == CommissionSchedule.TRAIL)
-        .where(Transaction.status.in_([TxnStatus.SETTLED, TxnStatus.CANCELLED]))
+        .where(Transaction.status.in_([TxnStatus.APPROVED, TxnStatus.CANCELLED]))
     ).scalars().all()
 
     new_entries = 0
@@ -386,7 +386,7 @@ def recompute_all(session: Session, as_of: date | None = None) -> int:
     as_of = as_of or date.today()
     txns = session.execute(
         select(Transaction).where(
-            Transaction.status.in_([TxnStatus.SETTLED, TxnStatus.CANCELLED])
+            Transaction.status.in_([TxnStatus.APPROVED, TxnStatus.CANCELLED])
         )
     ).scalars().all()
     total = 0

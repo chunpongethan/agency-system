@@ -42,7 +42,7 @@ def db():
 def _settle(db, notional, trade_date):
     t = Transaction(ref=f"T{trade_date}", client_id=db._ids["client"],
                     product_id=db._ids["prod"], agent_id=db._ids["ag"],
-                    notional=Decimal(notional), status=TxnStatus.SETTLED,
+                    notional=Decimal(notional), status=TxnStatus.APPROVED,
                     trade_date=trade_date, settled_at=now_utc())
     db.add(t); db.flush()
     commission_engine.compute_for_transaction(db, t, as_of=trade_date)

@@ -64,8 +64,8 @@ export default function ClientDetail() {
     onError: (e) => setError(errorText(e, t) || t("clientDetail.saveFailed")),
   });
 
-  const settle = useMutation({
-    mutationFn: (txnId: number) => api.settleTransaction(txnId),
+  const approve = useMutation({
+    mutationFn: (txnId: number) => api.approveTransaction(txnId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["clientTxns", clientId] }),
   });
   const cancel = useMutation({
@@ -152,9 +152,9 @@ export default function ClientDetail() {
                   {isAdmin && (
                     <td className="num" style={{ whiteSpace: "nowrap" }}>
                       {tx.status === "pending" && (
-                        <button className="ghost" onClick={() => settle.mutate(tx.id)}>{t("clientDetail.settle")}</button>
+                        <button className="ghost" onClick={() => approve.mutate(tx.id)}>{t("clientDetail.approve")}</button>
                       )}{" "}
-                      {tx.status === "settled" && (
+                      {tx.status === "approved" && (
                         <button className="ghost" onClick={() => cancel.mutate(tx.id)}>{t("common.cancel")}</button>
                       )}{" "}
                       <button className="ghost" style={{ color: "var(--bad)" }}

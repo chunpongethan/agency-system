@@ -153,8 +153,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  settleTransaction: (id: number) =>
-    request<Transaction>(`/transactions/${id}/settle`, { method: "POST" }),
+  approveTransaction: (id: number) =>
+    request<Transaction>(`/transactions/${id}/approve`, { method: "POST" }),
   cancelTransaction: (id: number) =>
     request<Transaction>(`/transactions/${id}/cancel`, { method: "POST" }),
   updateTransaction: (id: number, payload: Record<string, unknown>) =>

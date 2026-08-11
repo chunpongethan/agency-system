@@ -625,18 +625,19 @@ def delete_transaction(txn_id: int, db: Session = Depends(get_db),
     return {"deleted": txn_id}
 
 
-@app.post("/transactions/{txn_id}/settle", response_model=schemas.TransactionOut)
-def settle_transaction(txn_id: int, db: Session = Depends(get_db),
-                       current: Agent = Depends(require_admin)):
+@app.post("/transactions/{txn_id}/approve", response_model=schemas.TransactionOut)
+def approve_transaction(txn_id: int, db: Session = Depends(get_db),
+                        current: Agent = Depends(require_admin)):
+    """Admin approves a transaction -> it becomes commissionable."""
     txn = db.get(Transaction, txn_id)
     if txn is None:
-        raise HTTPException(404, "transaction not found")
+        raise err(404, "not_found", "transaction not found")
     before = {"status": txn.status.value}
-    txn.status = TxnStatus.SETTLED
+    txn.status = TxnStatus.APPROVED
     txn.settled_at = now_utc()
     db.flush()
     commission_engine.compute_for_transaction(db, txn)
-    audit.record(db, current.id, "settle", "transaction", txn.id,
+    audit.record(db, current.id, "approve", "transaction", txn.id,
                  before=before, after={"status": txn.status.value})
     db.commit()
     return txn

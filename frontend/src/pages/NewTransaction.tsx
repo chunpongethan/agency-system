@@ -129,8 +129,8 @@ export default function NewTransaction() {
     onError: (e) => setError(errorText(e, t) || t("newTxn.createFailed")),
   });
 
-  const settle = useMutation({
-    mutationFn: (id: number) => api.settleTransaction(id),
+  const approve = useMutation({
+    mutationFn: (id: number) => api.approveTransaction(id),
     onSuccess: (txn) => setCreated(txn),
   });
 
@@ -405,8 +405,8 @@ export default function NewTransaction() {
               {t("newTxn.bookedMsg", { ref: created.ref })} <StatusBadge status={created.status} />
               <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
                 {created.status === "pending" && (
-                  <button className="ghost" type="button" onClick={() => settle.mutate(created.id)}>
-                    {settle.isPending ? t("newTxn.settling") : t("newTxn.settleNow")}
+                  <button className="ghost" type="button" onClick={() => approve.mutate(created.id)}>
+                    {approve.isPending ? t("newTxn.approving") : t("newTxn.approveNow")}
                   </button>
                 )}
                 <button className="ghost" type="button" onClick={() => navigate(`/clients/${created.client_id}`)}>

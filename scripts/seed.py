@@ -133,7 +133,7 @@ txns = [
 ]
 from app.models.models import now_utc
 for t in txns:
-    t.status = TxnStatus.SETTLED
+    t.status = TxnStatus.APPROVED
     t.settled_at = now_utc()
     db.add(t)
 db.flush()

@@ -70,14 +70,14 @@ def test_audit_written_for_txn_lifecycle(client):
     assert r.status_code == 200
     txn_id = r.json()["id"]
     # settle
-    assert client.post(f"/transactions/{txn_id}/settle", headers=h).status_code == 200
+    assert client.post(f"/transactions/{txn_id}/approve", headers=h).status_code == 200
     # cancel
     assert client.post(f"/transactions/{txn_id}/cancel", headers=h).status_code == 200
 
     audit = client.get("/audit", headers=h).json()
     actions = {(a["entity"], a["action"]) for a in audit}
     assert ("transaction", "create") in actions
-    assert ("transaction", "settle") in actions
+    assert ("transaction", "approve") in actions
     assert ("transaction", "cancel") in actions
     # each audit row records who did it
     assert all(a["actor_agent_id"] is not None for a in audit)

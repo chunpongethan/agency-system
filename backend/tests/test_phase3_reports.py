@@ -55,7 +55,7 @@ def db():
 def _settle(db, ref, trade_date, notional="100000"):
     t = Transaction(ref=ref, client_id=db._client.id, product_id=db._prod.id,
                     agent_id=db._a["l4"].id, notional=Decimal(notional),
-                    status=TxnStatus.SETTLED, trade_date=trade_date, settled_at=now_utc())
+                    status=TxnStatus.APPROVED, trade_date=trade_date, settled_at=now_utc())
     db.add(t); db.flush()
     commission_engine.compute_for_transaction(db, t, as_of=trade_date)
     db.commit()

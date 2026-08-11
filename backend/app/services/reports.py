@@ -190,7 +190,7 @@ def agency_summary(session: Session,
         select(Transaction.agent_id,
                func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
         .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.SETTLED)
+        .where(Transaction.status == TxnStatus.APPROVED)
         .group_by(Transaction.agent_id)
     )
     if agent_ids is not None:
@@ -226,7 +226,7 @@ def product_mix(session: Session,
             func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0),
         )
         .join(Transaction, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.SETTLED)
+        .where(Transaction.status == TxnStatus.APPROVED)
         .group_by(Product.id)
     )
     if agent_ids is not None:
@@ -295,7 +295,7 @@ def production_by_agent(session: Session, agent_ids: set[int],
         select(Transaction.agent_id,
                func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
         .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.SETTLED)
+        .where(Transaction.status == TxnStatus.APPROVED)
         .where(Transaction.agent_id.in_(agent_ids))
         .group_by(Transaction.agent_id)
     )
@@ -323,7 +323,7 @@ def _production_split(session: Session, agent_id: int,
     aq = _window(
         select(func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
         .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.SETTLED)
+        .where(Transaction.status == TxnStatus.APPROVED)
         .where(Transaction.agent_id == agent_id),
         start, end,
     )

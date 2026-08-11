@@ -1,7 +1,7 @@
 """
 Audit log for commission-affecting changes: who, when, what, and before/after.
 
-Covered actions (Phase 5): create/settle/cancel transaction, create product,
+Covered actions (Phase 5): create/approve/cancel transaction, create product,
 create/edit override rule, lock/unlock period, run payout. Entries are append-only.
 """
 from __future__ import annotations

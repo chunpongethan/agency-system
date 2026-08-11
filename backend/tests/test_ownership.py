@@ -109,13 +109,13 @@ def test_admin_is_sole_transaction_operator(client):
     assert r.status_code == 200, r.text
     txn_id = r.json()["id"]
     # ... settles, edits, cancels, and deletes it ...
-    assert client.post(f"/transactions/{txn_id}/settle", headers=adm).status_code == 200
+    assert client.post(f"/transactions/{txn_id}/approve", headers=adm).status_code == 200
     assert client.patch(f"/transactions/{txn_id}", headers=adm,
                         json={"notional": "50000"}).status_code == 200
     assert client.post(f"/transactions/{txn_id}/cancel", headers=adm).status_code == 200
     assert client.get(f"/clients/{ids['cx']}/transactions", headers=adm).status_code == 200
     # an agent cannot settle/cancel/edit/delete
     ax = auth(client, "AX")
-    assert client.post(f"/transactions/{txn_id}/settle", headers=ax).status_code == 403
+    assert client.post(f"/transactions/{txn_id}/approve", headers=ax).status_code == 403
     assert client.delete(f"/transactions/{txn_id}", headers=ax).status_code == 403
     assert client.delete(f"/transactions/{txn_id}", headers=adm).status_code == 200

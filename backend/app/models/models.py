@@ -78,8 +78,8 @@ class Role(str, enum.Enum):
 
 
 class TxnStatus(str, enum.Enum):
-    PENDING = "pending"      # submitted, not yet settled
-    SETTLED = "settled"      # commissionable
+    PENDING = "pending"      # submitted, awaiting admin approval
+    APPROVED = "approved"    # admin-approved -> commissionable
     CANCELLED = "cancelled"  # reverses any accrued commission
 
 
