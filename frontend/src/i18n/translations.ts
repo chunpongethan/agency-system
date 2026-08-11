@@ -20,7 +20,7 @@ export const translations: Record<string, Translation> = {
   "nav.agents": { "zh-Hant": "代理人", en: "Agents" },
   "nav.transactions": { "zh-Hant": "交易維護", en: "Transactions" },
   "nav.products": { "zh-Hant": "產品", en: "Products" },
-  "nav.rules": { "zh-Hant": "越級佣金規則", en: "Override rules" },
+  "nav.rules": { "zh-Hant": "管理佣金規則", en: "Override rules" },
   "nav.payouts": { "zh-Hant": "期間與派發", en: "Periods & payouts" },
   "nav.logout": { "zh-Hant": "登出", en: "Log out" },
   "nav.account": { "zh-Hant": "帳戶設定", en: "Account" },
@@ -69,7 +69,7 @@ export const translations: Record<string, Translation> = {
   "common.afyp": { "zh-Hant": "AFYP", en: "AFYP" },
   "common.commission": { "zh-Hant": "佣金", en: "Commission" },
   "common.commissionShort": { "zh-Hant": "佣金", en: "Comm." },
-  "common.override": { "zh-Hant": "越級佣金", en: "Override" },
+  "common.override": { "zh-Hant": "管理佣金", en: "Override" },
   "common.notional": { "zh-Hant": "名義金額", en: "Notional" },
   "common.status": { "zh-Hant": "狀態", en: "Status" },
   "common.product": { "zh-Hant": "產品", en: "Product" },
@@ -97,7 +97,7 @@ export const translations: Record<string, Translation> = {
   "enum.status.cancelled": { "zh-Hant": "已取消", en: "cancelled" },
 
   "enum.kind.direct": { "zh-Hant": "直接佣金", en: "direct" },
-  "enum.kind.override": { "zh-Hant": "越級佣金", en: "override" },
+  "enum.kind.override": { "zh-Hant": "管理佣金", en: "override" },
 
   "enum.title.business_manager": { "zh-Hant": "業務經理", en: "Business Manager" },
   "enum.title.district_manager": { "zh-Hant": "區域經理", en: "District Manager" },
@@ -186,14 +186,14 @@ export const translations: Record<string, Translation> = {
   "scorecard.district": { "zh-Hant": "區域", en: "District" },
   "scorecard.afyp": { "zh-Hant": "AFYP", en: "AFYP" },
   "scorecard.comm": { "zh-Hant": "佣金", en: "Comm." },
-  "scorecard.override": { "zh-Hant": "越級佣金", en: "Override" },
+  "scorecard.override": { "zh-Hant": "管理佣金", en: "Override" },
 
   // --- Dashboard -------------------------------------------------------------
   "dashboard.title": { "zh-Hant": "儀表板", en: "Dashboard" },
   "dashboard.segMonth": { "zh-Hant": "本月", en: "Current month" },
   "dashboard.segYtd": { "zh-Hant": "年初至今", en: "Year to date" },
   "dashboard.directCommission": { "zh-Hant": "直接佣金", en: "Direct commission" },
-  "dashboard.overrideCommission": { "zh-Hant": "越級佣金", en: "Override commission" },
+  "dashboard.overrideCommission": { "zh-Hant": "管理佣金", en: "Override commission" },
   "dashboard.totalEarned": { "zh-Hant": "總收入 · {label}", en: "Total earned · {label}" },
   "dashboard.teamPerformance": { "zh-Hant": "團隊表現", en: "Team performance" },
   "dashboard.teamMeta": { "zh-Hant": "{label} · 團隊 {count} 人 · 合計 {total}", en: "{label} · {count} in line · total {total}" },
@@ -203,7 +203,7 @@ export const translations: Record<string, Translation> = {
   "dashboard.you": { "zh-Hant": "（您）", en: " (you)" },
   "dashboard.noTeamProduction": { "zh-Hant": "此期間沒有團隊業績。", en: "No team production in this window." },
   "dashboard.teamNote1": {
-    "zh-Hant": "業績為您線下每位代理所賺取的佣金（直接＋越級）。前往 ",
+    "zh-Hant": "業績為您線下每位代理所賺取的佣金（直接＋管理）。前往 ",
     en: "Production is commission earned by each agent in your line (direct + overrides). See the ",
   },
   "dashboard.teamNote2": { "zh-Hant": " 查看整體組織樹。", en: " for the rolled-up org tree." },
@@ -257,7 +257,7 @@ export const translations: Record<string, Translation> = {
   "newTxn.dealType": { "zh-Hant": "交易類型", en: "Deal type" },
   "newTxn.dealAgent": { "zh-Hant": "代理", en: "Agent (代理)" },
   "newTxn.dealDirectClient": { "zh-Hant": "直客", en: "Direct client (直客)" },
-  "newTxn.overrideLevels": { "zh-Hant": "越級佣金分配（直客，最多 4 層）", en: "Override levels (direct client, up to 4)" },
+  "newTxn.overrideLevels": { "zh-Hant": "管理佣金分配（直客，最多 4 層）", en: "Override levels (direct client, up to 4)" },
   "newTxn.overrideNote": { "zh-Hant": "每層為直接佣金的百分比，只可選擇「直客」代理。", en: "Each level is a % of the direct commission; only 直客-eligible agents can be picked." },
   "newTxn.selectDcAgent": { "zh-Hant": "選擇直客代理…", en: "Select a 直客 agent…" },
   "newTxn.ratePct": { "zh-Hant": "比率 %", en: "Rate %" },
@@ -268,7 +268,7 @@ export const translations: Record<string, Translation> = {
   "newTxn.salesDevAgent": { "zh-Hant": "業務拓展代理（Sales Development）", en: "Sales Development agent" },
   "newTxn.splitTitle": { "zh-Hant": "佣金分配", en: "Commission split" },
   "newTxn.splitNote": {
-    "zh-Hant": "三個角色按百分比分配直接佣金（合計須為 100%）。同一位代理可擔任多個角色。越級佣金按招攬代理（Lead）的組織架構計算。",
+    "zh-Hant": "三個角色按百分比分配直接佣金（合計須為 100%）。同一位代理可擔任多個角色。管理佣金按招攬代理（Lead）的組織架構計算。",
     en: "The three roles split the direct commission by percentage (must total 100%). The same agent may hold more than one role. Overrides follow the Lead agent's hierarchy.",
   },
   "newTxn.splitMustBe100": { "zh-Hant": "百分比合計須為 100%（目前 {sum}%）", en: "Percentages must total 100% (currently {sum}%)" },
@@ -306,7 +306,7 @@ export const translations: Record<string, Translation> = {
   "newTxn.viewClient": { "zh-Hant": "檢視客戶", en: "View client" },
   "newTxn.previewTitle": { "zh-Hant": "即時佣金預覽", en: "Live commission preview" },
   "newTxn.previewNote": {
-    "zh-Hant": "顯示核准此筆交易的派發金額（第 0 期），與已核准帳目一致。越級佣金按代理佣金的百分比計算（第 1–4 級上線為 25/20/4/1%）。",
+    "zh-Hant": "顯示核准此筆交易的派發金額（第 0 期），與已核准帳目一致。管理佣金按代理佣金的百分比計算（第 1–4 級上線為 25/20/4/1%）。",
     en: "What approving this sale would pay (period 0). Matches the approved ledger. Override rates are a % of the agent's commission (25/20/4/1% for the 1st–4th upline).",
   },
   "newTxn.previewPrompt": { "zh-Hant": "選擇代理及產品以預覽…", en: "Pick an agent and product to preview…" },
@@ -332,7 +332,7 @@ export const translations: Record<string, Translation> = {
   "hierarchy.collapseAll": { "zh-Hant": "全部收合", en: "Collapse all" },
   "hierarchy.teamAfyp": { "zh-Hant": "團隊 AFYP", en: "team AFYP" },
   "hierarchy.teamComm": { "zh-Hant": "團隊佣金", en: "team comm." },
-  "hierarchy.teamOverride": { "zh-Hant": "團隊越級", en: "team override" },
+  "hierarchy.teamOverride": { "zh-Hant": "團隊管理", en: "team override" },
   "hierarchy.teamProduction": { "zh-Hant": "團隊業績", en: "Team production" },
   "hierarchy.production": { "zh-Hant": "業績", en: "Production" },
   "hierarchy.membersNote": {
@@ -363,7 +363,7 @@ export const translations: Record<string, Translation> = {
   "reports.thDate": { "zh-Hant": "交易日期", en: "Date" },
   "reports.thClient": { "zh-Hant": "客戶", en: "Client" },
   "reports.thCommRate": { "zh-Hant": "佣金率", en: "Comm. rate" },
-  "reports.thOverrideRate": { "zh-Hant": "越級佣金率", en: "Override rate" },
+  "reports.thOverrideRate": { "zh-Hant": "管理佣金率", en: "Override rate" },
   "reports.thRate": { "zh-Hant": "比率", en: "Rate" },
   "reports.roleLead": { "zh-Hant": "Lead", en: "Lead" },
   "reports.roleSalesDev": { "zh-Hant": "Sales Dev", en: "Sales Dev" },
@@ -375,7 +375,7 @@ export const translations: Record<string, Translation> = {
   "reports.total": { "zh-Hant": "合計", en: "Total" },
   "reports.agencySummary": { "zh-Hant": "代理處總覽", en: "Agency summary" },
   "reports.commissionIncome": { "zh-Hant": "佣金收入", en: "Commission" },
-  "reports.overrideIncome": { "zh-Hant": "越級佣金收入", en: "Override" },
+  "reports.overrideIncome": { "zh-Hant": "管理佣金收入", en: "Override" },
   "reports.noData": { "zh-Hant": "此期間沒有資料。", en: "No data in this window." },
 
   // --- Admin: agents ---------------------------------------------------------
@@ -454,7 +454,7 @@ export const translations: Record<string, Translation> = {
   "admin.products.yr": { "zh-Hant": "第{n}年", en: "Yr{n}" },
 
   // --- Admin: override rules -------------------------------------------------
-  "admin.rules.title": { "zh-Hant": "越級佣金規則", en: "Override rules" },
+  "admin.rules.title": { "zh-Hant": "管理佣金規則", en: "Override rules" },
   "admin.rules.subtitle": {
     "zh-Hant": "上線按層級差距（第 1–4 級上線）賺取成交代理佣金的此百分比。",
     en: "An upline earns this percentage of the closing agent's commission, by level gap (1st–4th upline).",

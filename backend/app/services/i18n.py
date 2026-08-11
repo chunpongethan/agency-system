@@ -25,7 +25,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "date": "交易日期",
         "client": "客戶",
         "commission_rate": "佣金率",
-        "override_rate": "越級佣金率",
+        "override_rate": "管理佣金率",
         "rate": "比率",
         "tenor_fmt": "{n}年供款期",
         "age_fmt": "年齡{min}–{max}",
@@ -34,7 +34,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "role_sales_dev": "Sales Dev",
         "role_closing": "Closing",
         "direct_total": "直接佣金合計",
-        "override_total": "越級佣金合計",
+        "override_total": "管理佣金合計",
         "grand_total": "總計",
         "subtotal": "小計",
         "agent_id": "代理編號",
@@ -43,10 +43,10 @@ _LABELS: dict[str, dict[str, str]] = {
         "total": "合計",
         "afyp": "AFYP",
         "commission_income": "佣金收入",
-        "override_income": "越級佣金收入",
+        "override_income": "管理佣金收入",
         "unit": "單位",
         "commission": "佣金",
-        "override": "越級佣金",
+        "override": "管理佣金",
         "payable": "應付金額",
         "payout_title": "派發結果",
         "payout_doc": "派發結果",
@@ -105,7 +105,7 @@ _LABELS: dict[str, dict[str, str]] = {
 # Enum values rendered inside export cells.
 _ENUMS: dict[str, dict[str, dict[str, str]]] = {
     "kind": {
-        "zh-Hant": {"direct": "直接佣金", "override": "越級佣金"},
+        "zh-Hant": {"direct": "直接佣金", "override": "管理佣金"},
         "en": {"direct": "direct", "override": "override"},
     },
     "product_type": {
