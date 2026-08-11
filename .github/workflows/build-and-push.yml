@@ -1,0 +1,59 @@
+# Build the API and web images and push them to GitHub Container Registry (GHCR).
+# Images: ghcr.io/<owner>/<repo>-api  and  ghcr.io/<owner>/<repo>-web
+#
+# The frontend bakes the API URL at build time, so set a repository variable
+# VITE_API_URL (Settings → Secrets and variables → Actions → Variables) to your
+# public API origin, e.g. https://api.yourdomain.com. Then deploy on the VM with
+# deploy/docker-compose.prod.images.yml (no build step there).
+name: build-and-push
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            dockerfile: backend/Dockerfile
+          - name: web
+            dockerfile: frontend/Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # Lowercased automatically by the action.
+          images: ghcr.io/${{ github.repository }}-${{ matrix.name }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Only the web image uses VITE_API_URL; the api build ignores it.
+          build-args: |
+            VITE_API_URL=${{ vars.VITE_API_URL }}
