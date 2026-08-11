@@ -270,6 +270,43 @@ export default function NewTransaction() {
             </div>
           )}
 
+          {!isDirectClient && (
+            <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
+              <h2 style={{ fontSize: 14 }}>{t("newTxn.overrideHierTitle")}</h2>
+              <p className="muted" style={{ fontSize: 12, marginTop: -4 }}>{t("newTxn.overrideHierNote")}</p>
+              {(() => {
+                if (!form.product_id || !rolesChosen || !pctValid)
+                  return <p className="muted" style={{ fontSize: 12 }}>{t("newTxn.overrideHierPrompt")}</p>;
+                if (preview.isFetching) return <div className="spinner">{t("newTxn.calculating")}</div>;
+                const olines = (preview.data?.lines ?? [])
+                  .filter((l) => l.kind === "override")
+                  .sort((a, b) => a.level_gap - b.level_gap);
+                if (olines.length === 0)
+                  return <p className="muted" style={{ fontSize: 12 }}>{t("newTxn.overrideHierNone")}</p>;
+                return (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>{t("common.level")}</th><th>{t("common.agent")}</th>
+                        <th className="num">{t("newTxn.thRate")}</th><th className="num">{t("newTxn.thAmount")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {olines.map((l, i) => (
+                        <tr key={i}>
+                          <td>L{l.level_gap}</td>
+                          <td>{agentName(l.agent_id)}</td>
+                          <td className="num">{pct(l.rate)}</td>
+                          <td className="num">{money(l.amount, form.currency)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </div>
+          )}
+
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
             <input type="checkbox" id="newcli" checked={newClient} style={{ width: "auto" }}
               onChange={(e) => setNewClient(e.target.checked)} />
