@@ -77,9 +77,12 @@ def test_admin_can_read_but_not_own_clients(client):
     # admin (the transaction operator) can read clients ...
     assert client.get(f"/clients/{ids['cx']}", headers=adm).status_code == 200
     assert len(client.get("/clients", headers=adm).json()) == 2  # sees all
-    # ... but cannot create or edit a client profile (owner-only)
-    assert client.post("/clients", headers=adm,
-                       json={"ref": "Z", "name": "z", "agent_id": ids["ax"]}).status_code == 403
+    # ... can create a client on behalf of an agent (books new-client deals) ...
+    created = client.post("/clients", headers=adm,
+                          json={"ref": "Z", "name": "z", "agent_id": ids["ax"]})
+    assert created.status_code == 200
+    assert created.json()["agent_id"] == ids["ax"]
+    # ... but still cannot edit a client profile (owner-only)
     assert client.patch(f"/clients/{ids['cx']}", headers=adm,
                         json={"name": "x"}).status_code == 403
 

@@ -213,7 +213,10 @@ class Transaction(Base):
     closing_pct: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("100"))
     # 代理 (default): overrides follow the lead agent's hierarchy. 直客: the admin
     # assigns up to 4 override levels, stored as [{"agent_id": int, "pct": number}].
-    deal_type: Mapped[DealType] = mapped_column(Enum(DealType), default=DealType.AGENT)
+    deal_type: Mapped[DealType] = mapped_column(
+        Enum(DealType, values_callable=lambda e: [m.value for m in e]),
+        default=DealType.AGENT,
+    )
     direct_overrides: Mapped[list | None] = mapped_column(JSON, nullable=True)
     notional: Mapped[Decimal] = mapped_column(Numeric(18, 2))       # premium / invested amount
     policy_no: Mapped[str | None] = mapped_column(String(60), nullable=True)  # insurance policy number

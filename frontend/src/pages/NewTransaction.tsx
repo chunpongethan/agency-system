@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { api, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
 import { money, pct } from "../lib/format";
-import { kindLabel, scheduleLabel, frequencyLabel } from "../i18n/labels";
+import { kindLabel, scheduleLabel, frequencyLabel, riskLabel, RISK_PROFILES } from "../i18n/labels";
 import StatusBadge from "../components/StatusBadge";
 import type { Transaction } from "../api/types";
 
@@ -38,6 +38,11 @@ export default function NewTransaction() {
   const [overrides, setOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
   // Default 直客 schedule: 4 levels at 25 / 20 / 5 / 1 %.
   const DC_DEFAULT_PCTS = ["25", "20", "5", "1"];
+  // "新客戶": create a new client inline and assign it to the Lead agent.
+  const [newClient, setNewClient] = useState(false);
+  const [clientForm, setClientForm] = useState({ ref: "", name: "", email: "", phone: "", risk_profile: "Balanced" });
+  const leadAgentId = Number(form.lead_agent_id) || 0;
+  const leadName = agents.data?.find((a) => a.id === leadAgentId)?.name ?? "";
 
   const agentId = Number(form.agent_id) || 0;   // closing agent
   const notionalNum = Number(form.notional) || 0;
@@ -90,9 +95,22 @@ export default function NewTransaction() {
   });
 
   const create = useMutation({
-    mutationFn: () =>
-      api.createTransaction({
-        client_id: Number(form.client_id),
+    mutationFn: async () => {
+      let clientId = Number(form.client_id);
+      // Create the new client first, owned by the Lead agent.
+      if (newClient) {
+        const c = await api.createClient({
+          ref: clientForm.ref,
+          name: clientForm.name,
+          email: clientForm.email || undefined,
+          phone: clientForm.phone || undefined,
+          risk_profile: clientForm.risk_profile,
+          agent_id: leadAgentId,
+        });
+        clientId = c.id;
+      }
+      return api.createTransaction({
+        client_id: clientId,
         product_id: Number(form.product_id),
         agent_id: agentId,
         notional: form.notional,
@@ -100,11 +118,13 @@ export default function NewTransaction() {
         currency: form.currency,
         ...rolePayload(),
         ...dealPayload(),
-      }),
+      });
+    },
     onSuccess: (txn) => {
       setCreated(txn);
       setError(null);
       qc.invalidateQueries({ queryKey: ["nextRef"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (e) => setError(errorText(e, t) || t("newTxn.createFailed")),
   });
@@ -116,6 +136,13 @@ export default function NewTransaction() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if (newClient) {
+      if (!leadAgentId) { setError(t("newTxn.newClientNeedsLead")); return; }
+      if (!clientForm.ref.trim() || !clientForm.name.trim()) { setError(t("newTxn.newClientNeedsFields")); return; }
+    } else if (!form.client_id) {
+      setError(t("newTxn.selectClient")); return;
+    }
+    setError(null);
     create.mutate();
   }
 
@@ -243,14 +270,51 @@ export default function NewTransaction() {
             </div>
           )}
 
-          <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
-          <select value={form.client_id} required disabled={!form.agent_id}
-            onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-            <option value="">{form.agent_id ? t("newTxn.selectClient") : t("newTxn.pickAgentFirst")}</option>
-            {clientOptions.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>
-            ))}
-          </select>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+            <input type="checkbox" id="newcli" checked={newClient} style={{ width: "auto" }}
+              onChange={(e) => setNewClient(e.target.checked)} />
+            <label htmlFor="newcli" style={{ margin: 0 }}>{t("newTxn.newClient")}</label>
+          </div>
+
+          {newClient ? (
+            <div style={{ paddingTop: 6 }}>
+              <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+                {t("newTxn.newClientNote", { name: leadName || "—" })}
+              </p>
+              <div className="row">
+                <div><label>{t("clients.reference")}</label>
+                  <input value={clientForm.ref} required
+                    onChange={(e) => setClientForm({ ...clientForm, ref: e.target.value })} /></div>
+                <div><label>{t("common.name")}</label>
+                  <input value={clientForm.name} required
+                    onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })} /></div>
+              </div>
+              <div className="row">
+                <div><label>{t("common.email")}</label>
+                  <input value={clientForm.email}
+                    onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })} /></div>
+                <div><label>{t("common.phone")}</label>
+                  <input value={clientForm.phone}
+                    onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })} /></div>
+                <div><label>{t("clients.riskProfile")}</label>
+                  <select value={clientForm.risk_profile}
+                    onChange={(e) => setClientForm({ ...clientForm, risk_profile: e.target.value })}>
+                    {RISK_PROFILES.map((r) => <option key={r} value={r}>{riskLabel(r)}</option>)}
+                  </select></div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
+              <select value={form.client_id} disabled={!form.agent_id}
+                onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
+                <option value="">{form.agent_id ? t("newTxn.selectClient") : t("newTxn.pickAgentFirst")}</option>
+                {clientOptions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>
+                ))}
+              </select>
+            </>
+          )}
 
           <label>{t("common.product")}</label>
           <select value={form.product_id} required

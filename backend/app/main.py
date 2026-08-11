@@ -279,8 +279,11 @@ def downlines(agent_id: int, db: Session = Depends(get_db),
 def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
     if scoping.is_admin(current):
-        raise HTTPException(403, "admins do not own clients")
-    if payload.agent_id != current.id:
+        # Admins operate transactions on behalf of agents and may create a client
+        # owned by any agent (e.g. the Lead agent when booking a new-client deal).
+        if db.get(Agent, payload.agent_id) is None:
+            raise HTTPException(404, "agent not found")
+    elif payload.agent_id != current.id:
         raise HTTPException(403, "you may only create clients you own")
     client = Client(**payload.model_dump())
     db.add(client); db.commit(); db.refresh(client)
