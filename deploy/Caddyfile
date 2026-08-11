@@ -1,0 +1,20 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# Domains and the ACME contact email come from the environment (see the caddy
+# service in docker-compose.prod.yml). Caddy provisions and renews certs
+# automatically as long as the domains resolve to this VM and 80/443 are open.
+
+{
+	email {$ACME_EMAIL}
+}
+
+# Frontend (nginx-served SPA).
+{$WEB_DOMAIN} {
+	encode gzip
+	reverse_proxy web:80
+}
+
+# API (FastAPI / uvicorn).
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:8000
+}

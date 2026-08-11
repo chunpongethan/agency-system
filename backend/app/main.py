@@ -38,8 +38,13 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False)
 Base.metadata.create_all(engine)
 
 app = FastAPI(title="Agency Management System", version="1.0.0")
+
+# CORS_ORIGINS: comma-separated list of allowed web origins, or "*" (dev default).
+# In production set it to the web app's origin, e.g. https://app.yourdomain.com.
+_cors = os.getenv("CORS_ORIGINS", "*").strip()
+_allow_origins = ["*"] if _cors == "*" else [o.strip() for o in _cors.split(",") if o.strip()]
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    CORSMiddleware, allow_origins=_allow_origins, allow_methods=["*"], allow_headers=["*"],
     # Expose the machine-readable error code so the browser client can localize.
     expose_headers=["X-Error-Code"],
 )
