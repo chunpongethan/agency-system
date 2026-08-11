@@ -27,6 +27,7 @@ export default function NewTransaction() {
     client_id: "",
     product_id: "",
     notional: "100000",
+    policy_no: "",
     currency: "USD",
     lead_pct: "0",
     sales_dev_pct: "0",
@@ -35,6 +36,8 @@ export default function NewTransaction() {
   });
   // 直客 manual override levels (up to 4): agent + rate %.
   const [overrides, setOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
+  // Default 直客 schedule: 4 levels at 25 / 20 / 5 / 1 %.
+  const DC_DEFAULT_PCTS = ["25", "20", "5", "1"];
 
   const agentId = Number(form.agent_id) || 0;   // closing agent
   const notionalNum = Number(form.notional) || 0;
@@ -93,6 +96,7 @@ export default function NewTransaction() {
         product_id: Number(form.product_id),
         agent_id: agentId,
         notional: form.notional,
+        policy_no: isInsurance && form.policy_no ? form.policy_no : undefined,
         currency: form.currency,
         ...rolePayload(),
         ...dealPayload(),
@@ -130,7 +134,16 @@ export default function NewTransaction() {
 
           <label>{t("newTxn.dealType")}</label>
           <select value={form.deal_type}
-            onChange={(e) => setForm({ ...form, deal_type: e.target.value })}>
+            onChange={(e) => {
+              const dt = e.target.value;
+              setForm({ ...form, deal_type: dt });
+              // Preselect the 4-level 直客 schedule (agents still chosen by the admin).
+              if (dt === "direct_client") {
+                setOverrides(DC_DEFAULT_PCTS.map((p) => ({ agent_id: "", pct: p })));
+              } else {
+                setOverrides([{ agent_id: "", pct: "" }]);
+              }
+            }}>
             <option value="agent">{t("newTxn.dealAgent")}</option>
             <option value="direct_client">{t("newTxn.dealDirectClient")}</option>
           </select>
@@ -264,6 +277,14 @@ export default function NewTransaction() {
               </select>
             </div>
           </div>
+
+          {isInsurance && (
+            <>
+              <label>{t("newTxn.policyNo")}</label>
+              <input value={form.policy_no}
+                onChange={(e) => setForm({ ...form, policy_no: e.target.value })} />
+            </>
+          )}
 
           {isInsurance && selectedProduct && (
             <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>

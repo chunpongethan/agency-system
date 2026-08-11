@@ -238,6 +238,7 @@ class TransactionIn(_RoleSplit):
     product_id: int
     agent_id: int          # closing agent
     notional: Decimal
+    policy_no: str | None = None
     currency: str = "USD"
     base_currency: str = "USD"
     fx_rate: Decimal | None = None
@@ -263,6 +264,7 @@ class TransactionUpdate(BaseModel):
     deal_type: str | None = None
     direct_overrides: list[DirectOverrideIn] | None = None
     notional: Decimal | None = None
+    policy_no: str | None = None
     currency: str | None = None
     trade_date: date | None = None
 
@@ -282,6 +284,7 @@ class TransactionOut(BaseModel):
     deal_type: str = "agent"
     direct_overrides: list | None = None
     notional: Decimal
+    policy_no: str | None = None
     currency: str
     status: str
     trade_date: date

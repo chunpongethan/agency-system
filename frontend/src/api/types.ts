@@ -106,7 +106,9 @@ export interface Transaction {
   lead_pct?: string | null;
   sales_dev_pct?: string | null;
   closing_pct?: string | null;
+  deal_type?: string;
   notional: string;
+  policy_no?: string | null;
   currency: string;
   status: string;
   trade_date: string;

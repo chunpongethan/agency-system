@@ -216,6 +216,7 @@ class Transaction(Base):
     deal_type: Mapped[DealType] = mapped_column(Enum(DealType), default=DealType.AGENT)
     direct_overrides: Mapped[list | None] = mapped_column(JSON, nullable=True)
     notional: Mapped[Decimal] = mapped_column(Numeric(18, 2))       # premium / invested amount
+    policy_no: Mapped[str | None] = mapped_column(String(60), nullable=True)  # insurance policy number
     currency: Mapped[str] = mapped_column(String(3), default="USD")
     # Multi-currency (decision 3): store base_currency + a nullable fx_rate for a
     # later conversion pass. v1 computes/reports in the transaction currency only.
