@@ -8,6 +8,12 @@ import { kindLabel, scheduleLabel, frequencyLabel, riskLabel, RISK_PROFILES } fr
 import StatusBadge from "../components/StatusBadge";
 import type { Transaction } from "../api/types";
 
+type Level = { agent_id: string; pct: string };
+// The override editor always shows 4 levels by default; loaded/known levels fill
+// the first rows and the rest are left blank for the admin to complete.
+const padLevels = (rows: Level[]): Level[] =>
+  [...rows, ...Array.from({ length: 4 }, () => ({ agent_id: "", pct: "" }))].slice(0, 4);
+
 export default function NewTransaction() {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -34,8 +40,8 @@ export default function NewTransaction() {
     closing_pct: "33",
     deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
-  // 直客 manual override levels (up to 4): agent + rate %.
-  const [overrides, setOverrides] = useState<{ agent_id: string; pct: string }[]>([{ agent_id: "", pct: "" }]);
+  // Manual override levels (up to 4): agent + rate %. Defaults to 4 blank rows.
+  const [overrides, setOverrides] = useState<Level[]>(() => padLevels([]));
   // Default 直客 schedule: 4 levels at 25 / 20 / 5 / 1 %.
   const DC_DEFAULT_PCTS = ["25", "20", "5", "1"];
   // "新客戶": create a new client inline and assign it to the Lead agent.
@@ -110,9 +116,7 @@ export default function NewTransaction() {
     if (isDirectClient) return;
     const d = overrideDefaultsQ.data;
     if (!d) return;
-    setOverrides(d.length
-      ? d.map((x) => ({ agent_id: String(x.agent_id), pct: String(x.pct) }))
-      : [{ agent_id: "", pct: "" }]);
+    setOverrides(padLevels(d.map((x) => ({ agent_id: String(x.agent_id), pct: String(x.pct) }))));
   }, [isDirectClient, form.lead_agent_id, form.product_id, overrideDefaultsQ.data]);
 
   const create = useMutation({
