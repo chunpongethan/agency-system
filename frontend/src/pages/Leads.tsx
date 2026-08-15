@@ -4,13 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
-import { stageLabel, outcomeLabel, LEAD_STAGES } from "../i18n/labels";
+import { stageLabel, outcomeLabel, caseTypeLabel, LEAD_STAGES, CASE_TYPES } from "../i18n/labels";
 import StageBadge from "../components/StageBadge";
 import type { CaseRow } from "../api/types";
 
 const BLANK = {
   prospect_name: "", email: "", phone: "", notes: "",
   client_id: "", lead_agent_id: "", sdr_agent_id: "", closer_agent_id: "", stage: "lead",
+  case_types: [] as string[],
 };
 
 export default function Leads() {
@@ -60,6 +61,7 @@ export default function Leads() {
         phone: form.phone || undefined,
         notes: form.notes || undefined,
         client_id: form.client_id ? Number(form.client_id) : null,
+        case_types: form.case_types,
         lead_agent_id: Number(form.lead_agent_id),
         sdr_agent_id: form.sdr_agent_id ? Number(form.sdr_agent_id) : null,
         closer_agent_id: form.closer_agent_id ? Number(form.closer_agent_id) : null,
@@ -81,6 +83,7 @@ export default function Leads() {
     setForm({
       prospect_name: c.prospect_name, email: c.email ?? "", phone: c.phone ?? "",
       notes: c.notes ?? "", client_id: c.client_id ? String(c.client_id) : "",
+      case_types: c.case_types ?? [],
       lead_agent_id: String(c.lead_agent_id),
       sdr_agent_id: c.sdr_agent_id ? String(c.sdr_agent_id) : "",
       closer_agent_id: c.closer_agent_id ? String(c.closer_agent_id) : "",
@@ -175,6 +178,11 @@ export default function Leads() {
                       <Link to={`/clients/${c.client_id}`}>{c.client_name}</Link>
                     </div>
                   )}
+                  {c.case_types && c.case_types.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
+                      {c.case_types.map((ct) => <span key={ct} className="badge dc">{caseTypeLabel(ct)}</span>)}
+                    </div>
+                  )}
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 4 }}>
                     <span className="badge role">{t("leads.leadAgent")}: {c.lead_name}</span>
                     {c.sdr_name && <span className="badge unit">{t("leads.sdrAgent")}: {c.sdr_name}</span>}
@@ -183,6 +191,11 @@ export default function Leads() {
                       <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
                     )}
                   </div>
+                  {c.notes && (
+                    <div className="muted" style={{ fontSize: 12, marginTop: 6, whiteSpace: "pre-wrap" }}>
+                      {c.notes}
+                    </div>
+                  )}
                   {editable && (
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, alignItems: "center" }}>
                       <select value={c.stage} title={t("leads.moveTo")} style={{ width: "auto", fontSize: 12, padding: "2px 6px" }}
@@ -254,6 +267,22 @@ export default function Leads() {
                 <option value="">{t("leads.noClient")}</option>
                 {(clients.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>)}
               </select></div>
+          </div>
+          <label>{t("leads.caseTypes")}</label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 8 }}>
+            {CASE_TYPES.map((ct) => (
+              <label key={ct} style={{ display: "flex", alignItems: "center", gap: 6, margin: 0, fontWeight: 400 }}>
+                <input type="checkbox" style={{ width: "auto" }}
+                  checked={form.case_types.includes(ct)}
+                  onChange={(e) => setForm({
+                    ...form,
+                    case_types: e.target.checked
+                      ? [...form.case_types, ct]
+                      : form.case_types.filter((x) => x !== ct),
+                  })} />
+                {caseTypeLabel(ct)}
+              </label>
+            ))}
           </div>
           <label>{t("leads.notes")}</label>
           <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />

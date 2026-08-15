@@ -20,8 +20,18 @@ export function outcomeLabel(outcome: string | null | undefined): string {
   return outcome ? translate(`enum.caseOutcome.${outcome}`) : "—";
 }
 
+export function caseTypeLabel(type: string | null | undefined): string {
+  if (!type) return "—";
+  const key = `enum.caseType.${type}`;
+  const label = translate(key);
+  return label === key ? type : label; // unknown types fall back to the raw value
+}
+
 // Ordered pipeline stages (used for the board columns and stage moves).
 export const LEAD_STAGES = ["lead", "prospect", "m1", "m2", "m3"];
+
+// Case categories (multi-select on a case).
+export const CASE_TYPES = ["property", "eam", "participating", "medical", "hk_identity", "education"];
 
 export function kindLabel(kind: string | null | undefined): string {
   return kind ? translate(`enum.kind.${kind}`) : "—";

@@ -128,6 +128,7 @@ class CaseIn(BaseModel):
     phone: str | None = None
     notes: str | None = None
     client_id: int | None = None
+    case_types: list[str] | None = None
     lead_agent_id: int
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None
@@ -140,6 +141,7 @@ class CaseUpdate(BaseModel):
     phone: str | None = None
     notes: str | None = None
     client_id: int | None = None
+    case_types: list[str] | None = None
     lead_agent_id: int | None = None
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None
@@ -156,6 +158,7 @@ class CaseOut(BaseModel):
     phone: str | None = None
     notes: str | None = None
     client_id: int | None = None
+    case_types: list[str] | None = None
     lead_agent_id: int
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None

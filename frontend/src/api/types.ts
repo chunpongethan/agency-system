@@ -92,6 +92,7 @@ export interface CaseRow {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  case_types: string[] | null;
   stage: string;
   outcome: string;
   client_id: number | null;
