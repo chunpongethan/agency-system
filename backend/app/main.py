@@ -11,7 +11,7 @@ import os
 from datetime import date
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -38,6 +38,8 @@ from app.services import (
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
 # Base URL of the web app, used to build password-reset links in emails.
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+# Where to send login-notification emails (defaults to the bootstrap admin).
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL")
 _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
@@ -152,7 +154,8 @@ def require_admin(current: Agent = Depends(get_current_agent)) -> Agent:
 
 
 @app.post("/auth/login", response_model=schemas.TokenOut)
-def login(payload: schemas.LoginIn, db: Session = Depends(get_db)):
+def login(payload: schemas.LoginIn, background: BackgroundTasks,
+          db: Session = Depends(get_db)):
     agent = db.execute(
         select(Agent).where(
             or_(Agent.code == payload.username, Agent.email == payload.username)
@@ -163,6 +166,11 @@ def login(payload: schemas.LoginIn, db: Session = Depends(get_db)):
     if not agent.is_active:
         raise HTTPException(403, "account disabled")
     token = create_access_token(agent.id, {"role": agent.role.value})
+    # Notify the admin that a user signed in (best-effort, off the request path).
+    if ADMIN_EMAIL:
+        when = now_utc().strftime("%Y-%m-%d %H:%M:%S")
+        background.add_task(mailer.send_login_alert, ADMIN_EMAIL,
+                            agent.name, agent.code, agent.role.value, when)
     return schemas.TokenOut(access_token=token)
 
 

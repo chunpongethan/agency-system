@@ -51,6 +51,23 @@ def send_email(to: str, subject: str, body: str) -> None:
     log.info("password-reset email sent to %s", to)
 
 
+def send_login_alert(to: str, name: str, code: str, role: str, when: str) -> None:
+    """Notify the admin that a user signed in. Best-effort: never raises, so a
+    mail failure can't affect the login it is reporting on."""
+    subject = f"登入通知 Login alert：{name}（{code}）"
+    body = (
+        f"{name}（{code}）以「{role}」身分登入系統。\n"
+        f"時間（UTC）：{when}\n\n"
+        f"{name} ({code}) signed in as {role}.\n"
+        f"Time (UTC): {when}\n\n"
+        f"— 承瑞家辦代理系統 (Chengrui Family Office Agency System)\n"
+    )
+    try:
+        send_email(to, subject, body)
+    except Exception:  # noqa: BLE001 — alerting must not break the request
+        log.warning("failed to send login alert to %s", to, exc_info=True)
+
+
 def send_password_reset(to: str, name: str, reset_url: str) -> None:
     subject = "Reset your password / 重設密碼"
     body = (
