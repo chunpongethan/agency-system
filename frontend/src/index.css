@@ -81,6 +81,18 @@ tbody tr:hover { background: #fafafa; }
 .badge.dc { background: #fef3c7; color: #92400e; }
 
 tr.subtotal-row { font-weight: 600; background: var(--accent-soft); }
+
+/* --- Pipeline (Kanban) board --- */
+.board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; align-items: flex-start; }
+.board .col { flex: 1 0 240px; min-width: 240px; margin: 0; }
+.board .col.drag-over { outline: 2px dashed var(--accent); outline-offset: -4px; }
+.board .col-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.lead-card {
+  border: 1px solid var(--line); border-radius: 8px; background: #fff;
+  padding: 8px 10px; margin-bottom: 8px; cursor: grab;
+}
+.lead-card:last-child { margin-bottom: 0; }
+.lead-card.dragging { opacity: .5; }
 tr.subtotal-row td { border-top: 1px solid #bfdbfe; color: #1e3a8a; }
 
 label { display: block; font-size: 13px; margin: 12px 0 4px; color: #374151; font-weight: 500; }

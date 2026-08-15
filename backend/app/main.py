@@ -19,11 +19,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 import jwt
 from sqlalchemy import create_engine, select, or_, func, delete
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker, aliased
 
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
-    CommissionEntry, DealType, now_utc,
+    CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -254,6 +254,21 @@ def list_agents(db: Session = Depends(get_db),
                 current: Agent = Depends(get_current_agent)):
     ids = scoping.visible_agent_ids(db, current)
     return db.execute(select(Agent).where(Agent.id.in_(ids))).scalars().all()
+
+
+@app.get("/agents/directory")
+def agents_directory(db: Session = Depends(get_db),
+                     current: Agent = Depends(get_current_agent)):
+    """Minimal roster of active, non-admin agents for assignment selectors (e.g.
+    picking the Lead / SDR / Closer on a case). Any authenticated user may read
+    it — GET /agents is scoped to self for a plain agent, so it can't populate
+    cross-agent pickers."""
+    rows = db.execute(
+        select(Agent).where(Agent.is_active.is_(True), Agent.role != Role.ADMIN)
+        .order_by(Agent.level, Agent.code)
+    ).scalars().all()
+    return [{"id": a.id, "code": a.code, "name": a.name,
+             "level": a.level, "unit_code": a.unit_code} for a in rows]
 
 
 @app.patch("/agents/{agent_id}", response_model=schemas.AgentOut)
@@ -766,6 +781,163 @@ def client_transactions(client_id: int, db: Session = Depends(get_db),
     return db.execute(
         select(Transaction).where(Transaction.client_id == client_id)
     ).scalars().all()
+
+
+# --- Cases (sales pipeline; agents self-serve, managers view downlines) ------
+def _next_case_ref(db: Session) -> str:
+    """Auto case code: L-YYYYMM-<seq> per year-month."""
+    now = now_utc()
+    prefix = f"L-{now.year:04d}{now.month:02d}-"
+    existing = db.execute(select(Case.ref).where(Case.ref.like(prefix + "%"))).scalars().all()
+    max_seq = 0
+    for r in existing:
+        try:
+            max_seq = max(max_seq, int(r.rsplit("-", 1)[1]))
+        except (ValueError, IndexError):
+            continue
+    return f"{prefix}{max_seq + 1:03d}"
+
+
+def _validate_case_refs(db: Session, agent_ids, client_id) -> None:
+    for aid in agent_ids:
+        if aid is not None and db.get(Agent, aid) is None:
+            raise HTTPException(404, "agent not found")
+    if client_id is not None and db.get(Client, client_id) is None:
+        raise HTTPException(404, "client not found")
+
+
+@app.get("/cases")
+def list_cases(stage: str | None = None, outcome: str | None = None,
+               agent_id: int | None = None, q: str | None = None,
+               db: Session = Depends(get_db),
+               current: Agent = Depends(get_current_agent)):
+    """Cases visible to the caller: an agent sees cases they're assigned to; a
+    manager sees their whole downline's; an admin sees all. Enriched with agent +
+    client names for the board."""
+    visible = scoping.visible_agent_ids(db, current)
+    Lead = aliased(Agent); Sdr = aliased(Agent); Closer = aliased(Agent)
+    stmt = (
+        select(Case, Lead.name, Lead.code, Sdr.name, Sdr.code,
+               Closer.name, Closer.code, Client.name)
+        .join(Lead, Case.lead_agent_id == Lead.id)
+        .join(Sdr, Case.sdr_agent_id == Sdr.id, isouter=True)
+        .join(Closer, Case.closer_agent_id == Closer.id, isouter=True)
+        .join(Client, Case.client_id == Client.id, isouter=True)
+        .where(or_(Case.lead_agent_id.in_(visible),
+                   Case.sdr_agent_id.in_(visible),
+                   Case.closer_agent_id.in_(visible)))
+        .order_by(Case.updated_at.desc(), Case.id.desc())
+    )
+    if stage:
+        try:
+            stmt = stmt.where(Case.stage == PipelineStage(stage))
+        except ValueError:
+            raise err(422, "validation", f"invalid stage: {stage}")
+    if outcome:
+        try:
+            stmt = stmt.where(Case.outcome == CaseOutcome(outcome))
+        except ValueError:
+            raise err(422, "validation", f"invalid outcome: {outcome}")
+    if agent_id:
+        stmt = stmt.where(or_(Case.lead_agent_id == agent_id,
+                              Case.sdr_agent_id == agent_id,
+                              Case.closer_agent_id == agent_id))
+    needle = (q or "").strip().lower()
+    out = []
+    for (c, lead_name, lead_code, sdr_name, sdr_code,
+         closer_name, closer_code, client_name) in db.execute(stmt).all():
+        if needle:
+            hay = " ".join(str(x or "") for x in
+                           (c.ref, c.prospect_name, c.email, c.phone, lead_name,
+                            lead_code, sdr_name, sdr_code, closer_name,
+                            closer_code, client_name)).lower()
+            if needle not in hay:
+                continue
+        out.append({
+            "id": c.id, "ref": c.ref, "prospect_name": c.prospect_name,
+            "email": c.email, "phone": c.phone, "notes": c.notes,
+            "stage": c.stage.value, "outcome": c.outcome.value,
+            "client_id": c.client_id, "client_name": client_name,
+            "lead_agent_id": c.lead_agent_id, "lead_name": lead_name, "lead_code": lead_code,
+            "sdr_agent_id": c.sdr_agent_id, "sdr_name": sdr_name, "sdr_code": sdr_code,
+            "closer_agent_id": c.closer_agent_id, "closer_name": closer_name, "closer_code": closer_code,
+            "created_at": c.created_at, "closed_at": c.closed_at,
+        })
+    return out
+
+
+@app.post("/cases", response_model=schemas.CaseOut)
+def create_case(payload: schemas.CaseIn, db: Session = Depends(get_db),
+                current: Agent = Depends(get_current_agent)):
+    _validate_case_refs(
+        db, (payload.lead_agent_id, payload.sdr_agent_id, payload.closer_agent_id),
+        payload.client_id)
+    assigned = {payload.lead_agent_id, payload.sdr_agent_id, payload.closer_agent_id}
+    if not scoping.is_admin(current) and current.id not in assigned:
+        raise err(403, "forbidden", "you may only create cases you are assigned to")
+    try:
+        stage = PipelineStage(payload.stage or "lead")
+    except ValueError:
+        raise err(422, "validation", f"invalid stage: {payload.stage}")
+    case = Case(
+        ref=_next_case_ref(db), prospect_name=payload.prospect_name,
+        email=payload.email, phone=payload.phone, notes=payload.notes,
+        client_id=payload.client_id, lead_agent_id=payload.lead_agent_id,
+        sdr_agent_id=payload.sdr_agent_id, closer_agent_id=payload.closer_agent_id,
+        stage=stage,
+    )
+    db.add(case); db.flush()
+    audit.record(db, current.id, "create", "case", case.id,
+                 after={"ref": case.ref, "prospect": case.prospect_name, "stage": stage.value})
+    db.commit(); db.refresh(case)
+    return case
+
+
+@app.patch("/cases/{case_id}", response_model=schemas.CaseOut)
+def update_case(case_id: int, payload: schemas.CaseUpdate,
+                db: Session = Depends(get_db),
+                current: Agent = Depends(get_current_agent)):
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "case not found")
+    scoping.assert_can_edit_case(current, case)
+    data = payload.model_dump(exclude_unset=True)
+    _validate_case_refs(
+        db, (data.get("lead_agent_id"), data.get("sdr_agent_id"), data.get("closer_agent_id")),
+        data.get("client_id"))
+    if data.get("stage") is not None:
+        try:
+            data["stage"] = PipelineStage(data["stage"])
+        except ValueError:
+            raise err(422, "validation", f"invalid stage: {data['stage']}")
+    if data.get("outcome") is not None:
+        try:
+            outcome = CaseOutcome(data["outcome"])
+        except ValueError:
+            raise err(422, "validation", f"invalid outcome: {data['outcome']}")
+        data["outcome"] = outcome
+        case.closed_at = now_utc() if outcome != CaseOutcome.OPEN else None
+    before = {"stage": case.stage.value, "outcome": case.outcome.value}
+    for k, v in data.items():
+        setattr(case, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "case", case.id, before=before,
+                 after={k: (v.value if hasattr(v, "value") else v) for k, v in data.items()})
+    db.commit(); db.refresh(case)
+    return case
+
+
+@app.delete("/cases/{case_id}")
+def delete_case(case_id: int, db: Session = Depends(get_db),
+                current: Agent = Depends(get_current_agent)):
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "case not found")
+    scoping.assert_can_edit_case(current, case)
+    audit.record(db, current.id, "delete", "case", case_id,
+                 before={"ref": case.ref, "prospect": case.prospect_name})
+    db.delete(case); db.commit()
+    return {"deleted": case_id}
 
 
 # --- Reports -----------------------------------------------------------------

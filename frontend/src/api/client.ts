@@ -5,6 +5,7 @@ import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
+  AgentDirectory, CaseRow,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -106,6 +107,7 @@ export const api = {
 
   // Agents
   agents: () => request<Agent[]>("/agents"),
+  agentDirectory: () => request<AgentDirectory[]>("/agents/directory"),
   downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
   createAgent: (payload: Partial<Agent> & { password?: string }) =>
     request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
@@ -124,6 +126,21 @@ export const api = {
     request<Transaction[]>(`/clients/${id}/transactions`),
   agentTransactions: (id: number) =>
     request<Transaction[]>(`/agents/${id}/transactions`),
+
+  // Cases (sales pipeline)
+  listCases: (params?: { stage?: string; outcome?: string; agent_id?: number; q?: string }) =>
+    request<CaseRow[]>(`/cases${qs({
+      stage: params?.stage,
+      outcome: params?.outcome,
+      agent_id: params?.agent_id != null ? String(params.agent_id) : undefined,
+      q: params?.q,
+    })}`),
+  createCase: (payload: Record<string, unknown>) =>
+    request<CaseRow>("/cases", { method: "POST", body: JSON.stringify(payload) }),
+  updateCase: (id: number, payload: Record<string, unknown>) =>
+    request<CaseRow>(`/cases/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteCase: (id: number) =>
+    request<{ deleted: number }>(`/cases/${id}`, { method: "DELETE" }),
 
   // Products
   products: () => request<Product[]>("/products"),

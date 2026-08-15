@@ -76,6 +76,39 @@ export interface Client {
   created_at: string;
 }
 
+export interface AgentDirectory {
+  id: number;
+  code: string;
+  name: string;
+  level: number;
+  unit_code: string | null;
+}
+
+// Enriched case row returned by GET /cases (for the pipeline board).
+export interface CaseRow {
+  id: number;
+  ref: string;
+  prospect_name: string;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  stage: string;
+  outcome: string;
+  client_id: number | null;
+  client_name: string | null;
+  lead_agent_id: number;
+  lead_name: string | null;
+  lead_code: string | null;
+  sdr_agent_id: number | null;
+  sdr_name: string | null;
+  sdr_code: string | null;
+  closer_agent_id: number | null;
+  closer_name: string | null;
+  closer_code: string | null;
+  created_at: string;
+  closed_at: string | null;
+}
+
 export interface Product {
   id: number;
   code: string;

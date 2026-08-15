@@ -12,6 +12,17 @@ export function statusLabel(status: string | null | undefined): string {
   return status ? translate(`enum.status.${status}`) : "—";
 }
 
+export function stageLabel(stage: string | null | undefined): string {
+  return stage ? translate(`enum.leadStage.${stage}`) : "—";
+}
+
+export function outcomeLabel(outcome: string | null | undefined): string {
+  return outcome ? translate(`enum.caseOutcome.${outcome}`) : "—";
+}
+
+// Ordered pipeline stages (used for the board columns and stage moves).
+export const LEAD_STAGES = ["lead", "prospect", "m1", "m2", "m3"];
+
 export function kindLabel(kind: string | null | undefined): string {
   return kind ? translate(`enum.kind.${kind}`) : "—";
 }

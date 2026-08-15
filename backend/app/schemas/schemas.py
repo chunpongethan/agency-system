@@ -121,6 +121,50 @@ class ClientOut(ClientIn):
     created_at: datetime
 
 
+# --- Cases (sales pipeline) -------------------------------------------------
+class CaseIn(BaseModel):
+    prospect_name: str
+    email: str | None = None
+    phone: str | None = None
+    notes: str | None = None
+    client_id: int | None = None
+    lead_agent_id: int
+    sdr_agent_id: int | None = None
+    closer_agent_id: int | None = None
+    stage: str = "lead"
+
+
+class CaseUpdate(BaseModel):
+    prospect_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    notes: str | None = None
+    client_id: int | None = None
+    lead_agent_id: int | None = None
+    sdr_agent_id: int | None = None
+    closer_agent_id: int | None = None
+    stage: str | None = None
+    outcome: str | None = None
+
+
+class CaseOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    ref: str
+    prospect_name: str
+    email: str | None = None
+    phone: str | None = None
+    notes: str | None = None
+    client_id: int | None = None
+    lead_agent_id: int
+    sdr_agent_id: int | None = None
+    closer_agent_id: int | None = None
+    stage: str
+    outcome: str
+    created_at: datetime
+    closed_at: datetime | None = None
+
+
 # --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str

@@ -20,7 +20,7 @@ from __future__ import annotations
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.models import Agent, Client, Role
+from app.models.models import Agent, Client, Case, Role
 
 
 def is_admin(current: Agent) -> bool:
@@ -79,3 +79,31 @@ def assert_can_access_txn(current: Agent, txn_agent_id: int) -> None:
     """
     if not is_admin(current) and current.id != txn_agent_id:
         raise PermissionError("only the owning agent or an admin may access this transaction")
+
+
+def _case_agent_ids(case: Case) -> set[int]:
+    return {aid for aid in (case.lead_agent_id, case.sdr_agent_id, case.closer_agent_id)
+            if aid is not None}
+
+
+def assert_can_view_case(session: Session, current: Agent, case: Case) -> None:
+    """
+    A case is viewable by an admin, or by anyone whose production scope
+    (self for an agent, self+downline subtree for a manager) includes one of the
+    case's assigned agents. Uses the *visibility* layer so managers see downlines'
+    cases (unlike client/transaction ownership, which is owner-only).
+    """
+    if is_admin(current):
+        return
+    if _case_agent_ids(case) & visible_agent_ids(session, current):
+        return
+    raise PermissionError("only an assigned agent, their manager, or an admin may view this case")
+
+
+def assert_can_edit_case(current: Agent, case: Case) -> None:
+    """
+    Editing a case is limited to its assigned agents (Lead / SDR / Closer) or an
+    admin. Managers who merely oversee a downline's case get read-only access.
+    """
+    if not is_admin(current) and current.id not in _case_agent_ids(case):
+        raise PermissionError("only an assigned agent or an admin may edit this case")

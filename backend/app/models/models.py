@@ -89,6 +89,22 @@ class DealType(str, enum.Enum):
     DIRECT_CLIENT = "direct_client"  # 直客: admin assigns up to 4 override levels manually
 
 
+class PipelineStage(str, enum.Enum):
+    """Sales-funnel stage of a lead/case (pre-transaction CRM)."""
+    LEAD = "lead"          # raw lead / name
+    PROSPECT = "prospect"  # benefits / concepts delivered
+    M1 = "m1"              # fact finding
+    M2 = "m2"             # proposal presentation
+    M3 = "m3"            # closing
+
+
+class CaseOutcome(str, enum.Enum):
+    """Whether a case is still open or has been closed won/lost."""
+    OPEN = "open"
+    WON = "won"
+    LOST = "lost"
+
+
 class Agent(Base):
     __tablename__ = "agents"
 
@@ -309,3 +325,39 @@ class AuditEntry(Base):
     before: Mapped[str | None] = mapped_column(Text, nullable=True)
     after: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+
+
+class Case(Base):
+    """A sales opportunity moving through the pre-sale funnel (Lead -> Prospect ->
+    M1 -> M2 -> M3). Worked by three assigned agents (Lead / SDR / Closer). Kept
+    separate from Transaction: closing a case just marks it won/lost."""
+    __tablename__ = "cases"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    ref: Mapped[str] = mapped_column(String(24), unique=True, index=True)
+
+    # Prospect details (a lead is not yet a Client). Optional link to a Client.
+    prospect_name: Mapped[str] = mapped_column(String(120))
+    email: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
+
+    # Three-agent assignment (assignment only — commission split lives on the
+    # eventual Transaction). lead is the owner/sourcer; sdr/closer are optional.
+    lead_agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))
+    sdr_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
+    closer_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
+
+    stage: Mapped[PipelineStage] = mapped_column(
+        Enum(PipelineStage, values_callable=lambda e: [m.value for m in e]),
+        default=PipelineStage.LEAD,
+    )
+    outcome: Mapped[CaseOutcome] = mapped_column(
+        Enum(CaseOutcome, values_callable=lambda e: [m.value for m in e]),
+        default=CaseOutcome.OPEN,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
