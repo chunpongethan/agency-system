@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Leads from "./pages/Leads";
+import Training from "./pages/Training";
 import NewTransaction from "./pages/NewTransaction";
 import Hierarchy from "./pages/Hierarchy";
 import Reports from "./pages/Reports";
@@ -18,6 +19,7 @@ import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminRules from "./pages/admin/AdminRules";
 import AdminTargets from "./pages/admin/AdminTargets";
+import AdminTraining from "./pages/admin/AdminTraining";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import type { ReactElement } from "react";
 
@@ -82,6 +84,14 @@ export default function App() {
           }
         />
         <Route
+          path="/training"
+          element={
+            <RequireRole roles={["agent", "manager", "admin"]}>
+              <Training />
+            </RequireRole>
+          }
+        />
+        <Route
           path="/clients/:id"
           element={
             <RequireRole roles={["agent", "manager", "admin"]}>
@@ -126,6 +136,10 @@ export default function App() {
         <Route
           path="/admin/targets"
           element={<RequireRole roles={["admin"]}><AdminTargets /></RequireRole>}
+        />
+        <Route
+          path="/admin/training"
+          element={<RequireRole roles={["admin"]}><AdminTraining /></RequireRole>}
         />
         <Route
           path="/admin/payouts"

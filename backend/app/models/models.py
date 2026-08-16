@@ -12,7 +12,8 @@ from datetime import datetime, date, timezone
 from decimal import Decimal
 
 from sqlalchemy import (
-    String, Integer, ForeignKey, Numeric, DateTime, Date, Enum, Text, Boolean, JSON
+    String, Integer, ForeignKey, Numeric, DateTime, Date, Enum, Text, Boolean, JSON,
+    LargeBinary,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -376,3 +377,37 @@ class TitleTarget(Base):
     title: Mapped[Title] = mapped_column(
         Enum(Title, values_callable=lambda e: [m.value for m in e]), unique=True)
     target_afyp: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
+
+
+class TrainingMaterial(Base):
+    """A training resource curated by an admin and browsable by every agent.
+    Each item may carry an external link (hosted PDF, video, slides) and/or an
+    uploaded file (bytes live in the sibling `training_files` table). Grouped in
+    the portal by the free-text `category`."""
+    __tablename__ = "training_materials"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    category: Mapped[str] = mapped_column(String(80), index=True)
+    link_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    # Uploaded-file metadata (bytes stored in TrainingFile). Null when none.
+    file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
+
+
+class TrainingFile(Base):
+    """Blob storage for a training material's uploaded file, kept in its own table
+    so listing materials never loads file bytes. One row per material."""
+    __tablename__ = "training_files"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    material_id: Mapped[int] = mapped_column(
+        ForeignKey("training_materials.id"), unique=True, index=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)

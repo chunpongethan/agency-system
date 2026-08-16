@@ -185,6 +185,36 @@ class TitleTargetOut(BaseModel):
     target_afyp: Decimal
 
 
+# --- Training materials (培訓資料) ------------------------------------------
+class TrainingMaterialIn(BaseModel):
+    title: str
+    category: str
+    description: str | None = None
+    link_url: str | None = None
+
+
+class TrainingMaterialUpdate(BaseModel):
+    title: str | None = None
+    category: str | None = None
+    description: str | None = None
+    link_url: str | None = None
+
+
+class TrainingMaterialOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    category: str
+    description: str | None = None
+    link_url: str | None = None
+    file_name: str | None = None
+    content_type: str | None = None
+    file_size: int | None = None
+    has_file: bool = False
+    created_at: datetime
+    updated_at: datetime
+
+
 # --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str

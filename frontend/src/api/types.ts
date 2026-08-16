@@ -81,6 +81,20 @@ export interface TitleTarget {
   target_afyp: number;
 }
 
+export interface TrainingMaterial {
+  id: number;
+  title: string;
+  category: string;
+  description: string | null;
+  link_url: string | null;
+  file_name: string | null;
+  content_type: string | null;
+  file_size: number | null;
+  has_file: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AgentDirectory {
   id: number;
   code: string;

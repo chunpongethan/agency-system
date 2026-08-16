@@ -5,7 +5,7 @@ import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
-  AgentDirectory, CaseRow, TitleTarget,
+  AgentDirectory, CaseRow, TitleTarget, TrainingMaterial,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -151,6 +151,19 @@ export const api = {
   deleteProduct: (id: number) =>
     request<{ deleted: number }>(`/products/${id}`, { method: "DELETE" }),
 
+  // Training materials (培訓資料)
+  listTraining: (params?: { category?: string; q?: string }) =>
+    request<TrainingMaterial[]>(`/training-materials${qs({ category: params?.category, q: params?.q })}`),
+  createTraining: (payload: Record<string, unknown>) =>
+    request<TrainingMaterial>("/training-materials", { method: "POST", body: JSON.stringify(payload) }),
+  updateTraining: (id: number, payload: Record<string, unknown>) =>
+    request<TrainingMaterial>(`/training-materials/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteTraining: (id: number) =>
+    request<{ deleted: number }>(`/training-materials/${id}`, { method: "DELETE" }),
+  uploadTrainingFile: (id: number, file: File) => uploadFile<TrainingMaterial>(`/training-materials/${id}/file`, file),
+  deleteTrainingFile: (id: number) =>
+    request<TrainingMaterial>(`/training-materials/${id}/file`, { method: "DELETE" }),
+
   // Title targets (業績目標設定)
   titleTargets: () => request<TitleTarget[]>("/title-targets"),
   setTitleTarget: (title: string, target_afyp: number) =>
@@ -227,6 +240,30 @@ function qs(params: Record<string, string | undefined>): string {
     .filter(([, v]) => v !== undefined && v !== "")
     .map(([k, v]) => `${k}=${encodeURIComponent(v as string)}`);
   return parts.length ? `?${parts.join("&")}` : "";
+}
+
+// Upload a single file as multipart/form-data with the bearer token attached.
+// The browser sets the multipart boundary, so we must NOT set Content-Type.
+async function uploadFile<T>(path: string, file: File): Promise<T> {
+  const token = getToken();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: form,
+  });
+  if (res.status === 401) clearToken();
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const body = await res.json();
+      detail = body.detail ?? detail;
+      if (Array.isArray(detail)) detail = detail.map((d) => d.msg).join(", ");
+    } catch { /* non-JSON */ }
+    throw new ApiError(res.status, String(detail), res.headers.get("X-Error-Code"));
+  }
+  return res.json() as Promise<T>;
 }
 
 // Download a protected file (CSV/PDF) with the bearer token attached.

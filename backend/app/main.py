@@ -11,7 +11,7 @@ import os
 from datetime import date
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, sessionmaker, aliased
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
-    TitleTarget, now_utc,
+    TitleTarget, TrainingMaterial, TrainingFile, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -975,6 +975,151 @@ def set_title_target(title: str, payload: schemas.TitleTargetIn,
                  after={"target_afyp": float(payload.target_afyp)})
     db.commit()
     return {"title": title, "target_afyp": float(payload.target_afyp)}
+
+
+# --- Training materials (培訓資料; admin maintains, every agent browses) --------
+TRAINING_MAX_UPLOAD_MB = int(os.getenv("TRAINING_MAX_UPLOAD_MB", "25"))
+
+
+def _training_out(m: TrainingMaterial) -> dict:
+    """Serialise a material for the API (file bytes never included)."""
+    return {
+        "id": m.id, "title": m.title, "category": m.category,
+        "description": m.description, "link_url": m.link_url,
+        "file_name": m.file_name, "content_type": m.content_type,
+        "file_size": m.file_size, "has_file": m.file_name is not None,
+        "created_at": m.created_at, "updated_at": m.updated_at,
+    }
+
+
+@app.get("/training-materials", response_model=list[schemas.TrainingMaterialOut])
+def list_training_materials(category: str | None = None, q: str | None = None,
+                            db: Session = Depends(get_db),
+                            current: Agent = Depends(get_current_agent)):
+    """All training materials (newest first), browsable by any authenticated
+    agent. Optional `category` and free-text `q` filters."""
+    stmt = select(TrainingMaterial)
+    if category:
+        stmt = stmt.where(TrainingMaterial.category == category)
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(or_(TrainingMaterial.title.ilike(like),
+                              TrainingMaterial.description.ilike(like)))
+    stmt = stmt.order_by(TrainingMaterial.created_at.desc())
+    return [_training_out(m) for m in db.execute(stmt).scalars()]
+
+
+@app.post("/training-materials", response_model=schemas.TrainingMaterialOut)
+def create_training_material(payload: schemas.TrainingMaterialIn,
+                             db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    m = TrainingMaterial(
+        title=payload.title, category=payload.category,
+        description=payload.description, link_url=payload.link_url,
+        created_by=current.id,
+    )
+    db.add(m); db.flush()
+    audit.record(db, current.id, "create", "training_material", m.id,
+                 after={"title": m.title, "category": m.category})
+    db.commit(); db.refresh(m)
+    return _training_out(m)
+
+
+@app.patch("/training-materials/{material_id}", response_model=schemas.TrainingMaterialOut)
+def update_training_material(material_id: int, payload: schemas.TrainingMaterialUpdate,
+                             db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    m = db.get(TrainingMaterial, material_id)
+    if m is None:
+        raise HTTPException(404, "training material not found")
+    data = payload.model_dump(exclude_unset=True)
+    before = {"title": m.title, "category": m.category, "link_url": m.link_url}
+    for k, v in data.items():
+        setattr(m, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "training_material", m.id,
+                 before=before, after=data)
+    db.commit(); db.refresh(m)
+    return _training_out(m)
+
+
+@app.delete("/training-materials/{material_id}")
+def delete_training_material(material_id: int, db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    m = db.get(TrainingMaterial, material_id)
+    if m is None:
+        raise HTTPException(404, "training material not found")
+    db.execute(delete(TrainingFile).where(TrainingFile.material_id == material_id))
+    audit.record(db, current.id, "delete", "training_material", material_id,
+                 before={"title": m.title, "category": m.category})
+    db.delete(m); db.commit()
+    return {"deleted": material_id}
+
+
+@app.post("/training-materials/{material_id}/file", response_model=schemas.TrainingMaterialOut)
+async def upload_training_file(material_id: int, file: UploadFile = File(...),
+                               db: Session = Depends(get_db),
+                               current: Agent = Depends(require_admin)):
+    m = db.get(TrainingMaterial, material_id)
+    if m is None:
+        raise HTTPException(404, "training material not found")
+    data = await file.read()
+    if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
+        raise err(400, "file_too_large",
+                  f"file exceeds the {TRAINING_MAX_UPLOAD_MB} MB limit")
+    if not data:
+        raise err(400, "empty_file", "uploaded file is empty")
+    row = db.execute(
+        select(TrainingFile).where(TrainingFile.material_id == material_id)
+    ).scalars().first()
+    if row is None:
+        row = TrainingFile(material_id=material_id, data=data)
+        db.add(row)
+    else:
+        row.data = data
+    m.file_name = file.filename or "file"
+    m.content_type = file.content_type or "application/octet-stream"
+    m.file_size = len(data)
+    db.flush()
+    audit.record(db, current.id, "update", "training_material", m.id,
+                 after={"file_name": m.file_name, "file_size": m.file_size})
+    db.commit(); db.refresh(m)
+    return _training_out(m)
+
+
+@app.get("/training-materials/{material_id}/file")
+def download_training_file(material_id: int, db: Session = Depends(get_db),
+                           current: Agent = Depends(get_current_agent)):
+    m = db.get(TrainingMaterial, material_id)
+    if m is None or m.file_name is None:
+        raise HTTPException(404, "file not found")
+    row = db.execute(
+        select(TrainingFile).where(TrainingFile.material_id == material_id)
+    ).scalars().first()
+    if row is None:
+        raise HTTPException(404, "file not found")
+    # Always attachment (never inline) so uploaded content can't execute in-page.
+    filename = m.file_name.replace('"', "")
+    return Response(
+        content=row.data,
+        media_type=m.content_type or "application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.delete("/training-materials/{material_id}/file", response_model=schemas.TrainingMaterialOut)
+def delete_training_file(material_id: int, db: Session = Depends(get_db),
+                         current: Agent = Depends(require_admin)):
+    m = db.get(TrainingMaterial, material_id)
+    if m is None:
+        raise HTTPException(404, "training material not found")
+    db.execute(delete(TrainingFile).where(TrainingFile.material_id == material_id))
+    m.file_name = None; m.content_type = None; m.file_size = None
+    db.flush()
+    audit.record(db, current.id, "delete", "training_material", m.id,
+                 before={"file": "removed"})
+    db.commit(); db.refresh(m)
+    return _training_out(m)
 
 
 # --- Reports -----------------------------------------------------------------
