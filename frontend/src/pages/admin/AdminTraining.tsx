@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, errorText } from "../../api/client";
+import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import type { TrainingMaterial } from "../../api/types";
 
@@ -19,6 +19,16 @@ export default function AdminTraining() {
   const [form, setForm] = useState({ ...BLANK });
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+
+  async function onDownload(m: TrainingMaterial) {
+    setListError(null);
+    try {
+      await downloadFile(`/training-materials/${m.id}/file`, m.file_name || "file");
+    } catch (e) {
+      setListError(errorText(e, t));
+    }
+  }
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
   const onErr = (e: unknown) => setError(errorText(e, t) || t("training.saveFailed"));
@@ -140,6 +150,7 @@ export default function AdminTraining() {
 
       <div className="card">
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}
+        {listError && <div className="error">{listError}</div>}
         <table>
           <thead>
             <tr>
@@ -155,9 +166,19 @@ export default function AdminTraining() {
                 <td>{m.title}</td>
                 <td><span className="badge dc">{m.category}</span></td>
                 <td>
-                  {m.link_url && <span className="badge role" style={{ marginRight: 4 }}>{t("training.hasLink")}</span>}
-                  {m.has_file && <span className="badge unit">{t("training.hasFile")}</span>}
-                  {!m.link_url && !m.has_file && <span className="muted">—</span>}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {m.link_url && (
+                      <a className="badge role" href={m.link_url} target="_blank" rel="noopener noreferrer"
+                        style={{ textDecoration: "none" }}>{t("training.hasLink")} ↗</a>
+                    )}
+                    {m.has_file && (
+                      <button type="button" onClick={() => onDownload(m)}
+                        title={m.file_name ?? undefined}
+                        style={{ width: "auto", padding: "2px 8px", cursor: "pointer", fontSize: 12 }}
+                        className="ghost">↓ {m.file_name ?? t("training.hasFile")}</button>
+                    )}
+                    {!m.link_url && !m.has_file && <span className="muted">—</span>}
+                  </div>
                 </td>
                 <td className="num" style={{ whiteSpace: "nowrap" }}>
                   <button className="ghost" onClick={() => openEdit(m)}>{t("common.edit")}</button>{" "}

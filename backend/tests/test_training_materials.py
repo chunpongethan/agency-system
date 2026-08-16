@@ -124,6 +124,22 @@ def test_oversize_upload_rejected(client):
     assert r.headers.get("X-Error-Code") == "file_too_large"
 
 
+def test_download_non_ascii_filename(client):
+    # A Chinese filename must survive the latin-1-only Content-Disposition header
+    # (RFC 5987 filename*), otherwise the download 500/400s.
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+    blob = b"%PDF chinese-named"
+    up = client.post(f"/training-materials/{mid}/file", headers=adm,
+                     files={"file": ("香港分紅保單.pdf", blob, "application/pdf")})
+    assert up.status_code == 200, up.text
+    dl = client.get(f"/training-materials/{mid}/file", headers=ax)
+    assert dl.status_code == 200, dl.text
+    assert dl.content == blob
+    cd = dl.headers["content-disposition"]
+    assert "filename*=UTF-8''" in cd and "%E9%A6%99" in cd  # 香 percent-encoded
+
+
 def test_remove_file(client):
     adm = auth(client, "ADM")
     mid = mk_material(client, adm).json()["id"]

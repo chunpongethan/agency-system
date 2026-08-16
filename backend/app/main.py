@@ -1099,11 +1099,16 @@ def download_training_file(material_id: int, db: Session = Depends(get_db),
     if row is None:
         raise HTTPException(404, "file not found")
     # Always attachment (never inline) so uploaded content can't execute in-page.
-    filename = m.file_name.replace('"', "")
+    # Encode the filename per RFC 5987 so non-ASCII names (e.g. Chinese) survive
+    # the latin-1-only HTTP header: an ASCII fallback plus a UTF-8 filename*.
+    from urllib.parse import quote
+    name = m.file_name.replace('"', "")
+    ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "file"
+    disposition = f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}"
     return Response(
         content=row.data,
         media_type=m.content_type or "application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": disposition},
     )
 
 
