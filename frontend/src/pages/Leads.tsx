@@ -5,8 +5,7 @@ import { api, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { stageLabel, outcomeLabel, caseTypeLabel, LEAD_STAGES, CASE_TYPES } from "../i18n/labels";
-import { money } from "../lib/format";
-import { getActiveCurrency } from "../i18n/LanguageContext";
+import { moneyFixed } from "../lib/format";
 import StageBadge from "../components/StageBadge";
 import type { CaseRow } from "../api/types";
 
@@ -196,7 +195,7 @@ export default function Leads() {
                   )}
                   {c.expected_afyp != null && (
                     <div style={{ fontSize: 12 }}>
-                      <span className="muted">{t("leads.expectedAfyp")}：</span>{money(c.expected_afyp, getActiveCurrency())}
+                      <span className="muted">{t("leads.expectedAfyp")}：</span>{moneyFixed(c.expected_afyp, "HKD")}
                     </div>
                   )}
                   {c.case_types && c.case_types.length > 0 && (

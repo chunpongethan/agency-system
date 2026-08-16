@@ -26,6 +26,19 @@ export function money(n: number | string, sourceCurrency = "USD"): string {
   }).format(convertCurrency(v, sourceCurrency, display));
 }
 
+// Format a number as-is in a fixed currency (no FX conversion, ignores the
+// display-currency toggle). Used where an amount is entered in one known
+// currency, e.g. 預計AFYP in HKD.
+export function moneyFixed(n: number | string, currency: string): string {
+  const v = typeof n === "string" ? Number(n) : n;
+  if (v == null || !Number.isFinite(v)) return "—";
+  return new Intl.NumberFormat(numberLocale(), {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+  }).format(v);
+}
+
 export function pct(rate: number | string): string {
   const v = typeof rate === "string" ? Number(rate) : rate;
   if (v == null || !Number.isFinite(v)) return "—";
