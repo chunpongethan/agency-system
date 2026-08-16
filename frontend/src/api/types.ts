@@ -94,6 +94,7 @@ export interface CaseRow {
   notes: string | null;
   follow_up: string | null;
   case_types: string[] | null;
+  expected_afyp: number | null;
   stage: string;
   outcome: string;
   client_id: number | null;

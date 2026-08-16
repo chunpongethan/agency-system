@@ -345,6 +345,7 @@ class Case(Base):
     client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     # Case categories (multi-select): 房產方案 / EAM / 分紅險 / 醫療重疾 / 香港身份 / 教育升學.
     case_types: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    expected_afyp: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)  # 預計AFYP
 
     # Three-agent assignment (assignment only — commission split lives on the
     # eventual Transaction). lead is the owner/sourcer; sdr/closer are optional.

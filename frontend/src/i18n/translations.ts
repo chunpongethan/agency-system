@@ -562,6 +562,7 @@ export const translations: Record<string, Translation> = {
   "leads.notes": { "zh-Hant": "備註", en: "Remarks" },
   "leads.followUp": { "zh-Hant": "跟進事項", en: "Follow-up" },
   "leads.caseTypes": { "zh-Hant": "案件類型（可多選）", en: "Case type (multiple)" },
+  "leads.expectedAfyp": { "zh-Hant": "預計AFYP", en: "Expected AFYP" },
   "leads.viewBoard": { "zh-Hant": "看板", en: "Board" },
   "leads.viewTable": { "zh-Hant": "表格", en: "Table" },
   "leads.thProspect": { "zh-Hant": "潛在客戶", en: "Prospect" },

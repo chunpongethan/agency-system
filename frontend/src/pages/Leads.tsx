@@ -5,13 +5,15 @@ import { api, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { stageLabel, outcomeLabel, caseTypeLabel, LEAD_STAGES, CASE_TYPES } from "../i18n/labels";
+import { money } from "../lib/format";
+import { getActiveCurrency } from "../i18n/LanguageContext";
 import StageBadge from "../components/StageBadge";
 import type { CaseRow } from "../api/types";
 
 const BLANK = {
   prospect_name: "", email: "", phone: "", follow_up: "", notes: "",
   client_id: "", lead_agent_id: "", sdr_agent_id: "", closer_agent_id: "", stage: "lead",
-  case_types: [] as string[],
+  case_types: [] as string[], expected_afyp: "",
 };
 
 export default function Leads() {
@@ -64,6 +66,7 @@ export default function Leads() {
         notes: form.notes || undefined,
         client_id: form.client_id ? Number(form.client_id) : null,
         case_types: form.case_types,
+        expected_afyp: form.expected_afyp ? Number(form.expected_afyp) : null,
         lead_agent_id: Number(form.lead_agent_id),
         sdr_agent_id: form.sdr_agent_id ? Number(form.sdr_agent_id) : null,
         closer_agent_id: form.closer_agent_id ? Number(form.closer_agent_id) : null,
@@ -87,6 +90,7 @@ export default function Leads() {
       follow_up: c.follow_up ?? "", notes: c.notes ?? "",
       client_id: c.client_id ? String(c.client_id) : "",
       case_types: c.case_types ?? [],
+      expected_afyp: c.expected_afyp != null ? String(c.expected_afyp) : "",
       lead_agent_id: String(c.lead_agent_id),
       sdr_agent_id: c.sdr_agent_id ? String(c.sdr_agent_id) : "",
       closer_agent_id: c.closer_agent_id ? String(c.closer_agent_id) : "",
@@ -188,6 +192,11 @@ export default function Leads() {
                   {c.client_name && (
                     <div style={{ fontSize: 12 }}>
                       <Link to={`/clients/${c.client_id}`}>{c.client_name}</Link>
+                    </div>
+                  )}
+                  {c.expected_afyp != null && (
+                    <div style={{ fontSize: 12 }}>
+                      <span className="muted">{t("leads.expectedAfyp")}：</span>{money(c.expected_afyp, getActiveCurrency())}
                     </div>
                   )}
                   {c.case_types && c.case_types.length > 0 && (
@@ -365,6 +374,9 @@ export default function Leads() {
               </label>
             ))}
           </div>
+          <label>{t("leads.expectedAfyp")}</label>
+          <input type="number" min="0" step="1000" value={form.expected_afyp}
+            onChange={(e) => setForm({ ...form, expected_afyp: e.target.value })} />
           <label>{t("leads.followUp")}</label>
           <textarea rows={2} value={form.follow_up} onChange={(e) => setForm({ ...form, follow_up: e.target.value })} />
           <label>{t("leads.notes")}</label>

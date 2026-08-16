@@ -130,6 +130,7 @@ class CaseIn(BaseModel):
     client_id: int | None = None
     follow_up: str | None = None
     case_types: list[str] | None = None
+    expected_afyp: Decimal | None = None
     lead_agent_id: int
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None
@@ -144,6 +145,7 @@ class CaseUpdate(BaseModel):
     client_id: int | None = None
     follow_up: str | None = None
     case_types: list[str] | None = None
+    expected_afyp: Decimal | None = None
     lead_agent_id: int | None = None
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None
@@ -162,6 +164,7 @@ class CaseOut(BaseModel):
     client_id: int | None = None
     follow_up: str | None = None
     case_types: list[str] | None = None
+    expected_afyp: Decimal | None = None
     lead_agent_id: int
     sdr_agent_id: int | None = None
     closer_agent_id: int | None = None
