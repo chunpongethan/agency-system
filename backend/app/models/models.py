@@ -411,3 +411,14 @@ class TrainingFile(Base):
     material_id: Mapped[int] = mapped_column(
         ForeignKey("training_materials.id"), unique=True, index=True)
     data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class TrainingCategory(Base):
+    """The maintained list of training types (培訓類別) admins curate; a material's
+    free-text `category` is picked from these. Kept separate from materials so a
+    type can exist with no materials, and deleting a type never orphans data."""
+    __tablename__ = "training_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), unique=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)

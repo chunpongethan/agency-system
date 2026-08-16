@@ -1,18 +1,18 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import type { TrainingMaterial } from "../../api/types";
 
-// Seed category suggestions for the datalist (admins may type their own too).
-const CATEGORY_SUGGESTIONS = ["新人入職", "產品知識", "銷售技巧", "合規法規", "系統操作"];
 const BLANK = { title: "", category: "", description: "", link_url: "" };
 
 export default function AdminTraining() {
   const { t } = useI18n();
   const qc = useQueryClient();
   const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
+  const categories = useQuery({ queryKey: ["trainingCategories"], queryFn: () => api.trainingCategories() });
   const rows = materials.data ?? [];
+  const cats = categories.data ?? [];
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -33,10 +33,39 @@ export default function AdminTraining() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
   const onErr = (e: unknown) => setError(errorText(e, t) || t("training.saveFailed"));
 
-  // Existing category values (for the datalist) merged with the seed suggestions.
-  const categoryOptions = Array.from(
-    new Set([...CATEGORY_SUGGESTIONS, ...rows.map((m) => m.category).filter(Boolean)]),
-  );
+  // --- Training types (培訓類別) management ---------------------------------
+  const invalidateCats = () => qc.invalidateQueries({ queryKey: ["trainingCategories"] });
+  const [catEdits, setCatEdits] = useState<Record<number, string>>({});
+  const [newCat, setNewCat] = useState("");
+  const [catError, setCatError] = useState<string | null>(null);
+  const onCatErr = (e: unknown) => setCatError(errorText(e, t) || t("training.saveFailed"));
+  useEffect(() => {
+    const m: Record<number, string> = {};
+    cats.forEach((c) => { m[c.id] = c.name; });
+    setCatEdits(m);
+  }, [categories.data]);
+
+  const addCat = useMutation({
+    mutationFn: () => api.createTrainingCategory({ name: newCat.trim(), sort_order: cats.length }),
+    onSuccess: () => { invalidateCats(); setNewCat(""); setCatError(null); },
+    onError: onCatErr,
+  });
+  const renameCat = useMutation({
+    mutationFn: (id: number) => api.updateTrainingCategory(id, { name: (catEdits[id] || "").trim() }),
+    onSuccess: () => { invalidateCats(); setCatError(null); },
+    onError: onCatErr,
+  });
+  const delCat = useMutation({
+    mutationFn: (id: number) => api.deleteTrainingCategory(id),
+    onSuccess: () => { invalidateCats(); setCatError(null); },
+    onError: onCatErr,
+  });
+
+  // Options for the material form's type picker: managed types, plus the current
+  // material's category if it's a legacy value not in the managed list.
+  const catNames = cats.map((c) => c.name);
+  const typeOptions = form.category && !catNames.includes(form.category)
+    ? [form.category, ...catNames] : catNames;
 
   const save = useMutation({
     mutationFn: async () => {
@@ -106,11 +135,11 @@ export default function AdminTraining() {
             </div>
             <div>
               <label>{t("training.fCategory")}</label>
-              <input list="training-categories" value={form.category} required
-                onChange={(e) => setForm({ ...form, category: e.target.value })} />
-              <datalist id="training-categories">
-                {categoryOptions.map((c) => <option key={c} value={c} />)}
-              </datalist>
+              <select value={form.category} required
+                onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                <option value="" disabled>{t("training.selectType")}</option>
+                {typeOptions.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
             </div>
           </div>
           <div>
@@ -147,6 +176,40 @@ export default function AdminTraining() {
           </div>
         </form>
       )}
+
+      <div className="card">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+          <h2 style={{ margin: 0 }}>{t("training.types")}</h2>
+          <span className="muted" style={{ fontSize: 13 }}>{t("training.typesHint")}</span>
+        </div>
+        {catError && <div className="error">{catError}</div>}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+          {cats.map((c) => (
+            <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <input style={{ maxWidth: 260 }} value={catEdits[c.id] ?? ""}
+                onChange={(e) => setCatEdits({ ...catEdits, [c.id]: e.target.value })} />
+              <button className="ghost" style={{ padding: "3px 10px" }}
+                disabled={renameCat.isPending || !(catEdits[c.id] ?? "").trim() || catEdits[c.id] === c.name}
+                onClick={() => renameCat.mutate(c.id)}>{t("training.save")}</button>
+              <button className="ghost" style={{ padding: "3px 10px", color: "var(--bad)" }}
+                disabled={delCat.isPending}
+                onClick={() => { if (window.confirm(t("training.confirmDeleteType", { name: c.name }))) delCat.mutate(c.id); }}>
+                {t("common.delete")}
+              </button>
+            </div>
+          ))}
+          {!categories.isLoading && cats.length === 0 && <p className="muted" style={{ margin: 0 }}>{t("training.noTypes")}</p>}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+            <input style={{ maxWidth: 260 }} placeholder={t("training.typeName")} value={newCat}
+              onChange={(e) => setNewCat(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && newCat.trim()) { e.preventDefault(); addCat.mutate(); } }} />
+            <button className="primary" style={{ padding: "3px 12px" }}
+              disabled={addCat.isPending || !newCat.trim()} onClick={() => addCat.mutate()}>
+              {t("training.addType")}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="card">
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}

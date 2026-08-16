@@ -648,4 +648,12 @@ export const translations: Record<string, Translation> = {
   "training.uploading": { "zh-Hant": "上傳中…", en: "Uploading…" },
   "training.confirmDelete": { "zh-Hant": "確定刪除「{title}」？此操作無法復原。", en: "Delete “{title}”? This cannot be undone." },
   "training.saveFailed": { "zh-Hant": "儲存失敗", en: "Could not save" },
+  // training types (培訓類別)
+  "training.types": { "zh-Hant": "培訓類別", en: "Training types" },
+  "training.typesHint": { "zh-Hant": "維護培訓類別；新增資料時可從中選擇。", en: "Maintain the training types available when adding materials." },
+  "training.typeName": { "zh-Hant": "類別名稱", en: "Type name" },
+  "training.addType": { "zh-Hant": "新增類別", en: "Add type" },
+  "training.noTypes": { "zh-Hant": "尚無類別。", en: "No types yet." },
+  "training.confirmDeleteType": { "zh-Hant": "確定刪除類別「{name}」？既有資料的類別文字不受影響。", en: "Delete type “{name}”? Existing materials keep their category text." },
+  "training.selectType": { "zh-Hant": "選擇類別…", en: "Select a type…" },
 };

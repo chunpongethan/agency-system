@@ -140,6 +140,25 @@ def test_download_non_ascii_filename(client):
     assert "filename*=UTF-8''" in cd and "%E9%A6%99" in cd  # 香 percent-encoded
 
 
+def test_category_crud_and_gating(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    # any authenticated agent may read the type list
+    assert client.get("/training-categories", headers=ax).status_code == 200
+    # agent cannot create a type
+    assert client.post("/training-categories", headers=ax, json={"name": "X"}).status_code == 403
+    # admin creates, duplicate is rejected
+    r = client.post("/training-categories", headers=adm, json={"name": "產品知識"})
+    assert r.status_code == 200, r.text
+    cid = r.json()["id"]
+    dup = client.post("/training-categories", headers=adm, json={"name": "產品知識"})
+    assert dup.status_code == 409 and dup.headers.get("X-Error-Code") == "duplicate"
+    # admin renames and deletes
+    assert client.patch(f"/training-categories/{cid}", headers=adm,
+                        json={"name": "產品培訓"}).json()["name"] == "產品培訓"
+    assert client.delete(f"/training-categories/{cid}", headers=adm).status_code == 200
+    assert all(c["id"] != cid for c in client.get("/training-categories", headers=ax).json())
+
+
 def test_remove_file(client):
     adm = auth(client, "ADM")
     mid = mk_material(client, adm).json()["id"]

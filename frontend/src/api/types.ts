@@ -95,6 +95,12 @@ export interface TrainingMaterial {
   updated_at: string;
 }
 
+export interface TrainingCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
 export interface AgentDirectory {
   id: number;
   code: string;

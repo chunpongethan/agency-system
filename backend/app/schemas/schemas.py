@@ -215,6 +215,23 @@ class TrainingMaterialOut(BaseModel):
     updated_at: datetime
 
 
+class TrainingCategoryIn(BaseModel):
+    name: str
+    sort_order: int = 0
+
+
+class TrainingCategoryUpdate(BaseModel):
+    name: str | None = None
+    sort_order: int | None = None
+
+
+class TrainingCategoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
+    sort_order: int
+
+
 # --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str

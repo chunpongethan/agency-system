@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, sessionmaker, aliased
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
-    TitleTarget, TrainingMaterial, TrainingFile, now_utc,
+    TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -45,6 +45,20 @@ _connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite"
 engine = create_engine(DATABASE_URL, connect_args=_connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
 Base.metadata.create_all(engine)
+
+
+def _seed_training_categories() -> None:
+    """Bootstrap the maintained training types on an empty table so the material
+    form always has options; admins can then add/rename/remove them."""
+    defaults = ["新人入職", "產品知識", "銷售技巧", "合規法規", "系統操作"]
+    with SessionLocal() as db:
+        if db.execute(select(TrainingCategory)).first() is None:
+            for i, name in enumerate(defaults):
+                db.add(TrainingCategory(name=name, sort_order=i))
+            db.commit()
+
+
+_seed_training_categories()
 
 app = FastAPI(title="承瑞家辦代理系統", version="1.0.0")
 
@@ -1125,6 +1139,73 @@ def delete_training_file(material_id: int, db: Session = Depends(get_db),
                  before={"file": "removed"})
     db.commit(); db.refresh(m)
     return _training_out(m)
+
+
+# --- Training categories (培訓類別; the maintained list of training types) -----
+@app.get("/training-categories", response_model=list[schemas.TrainingCategoryOut])
+def list_training_categories(db: Session = Depends(get_db),
+                             current: Agent = Depends(get_current_agent)):
+    """The curated training types, readable by any authenticated agent (populates
+    the portal filter and the material form's type picker)."""
+    stmt = select(TrainingCategory).order_by(TrainingCategory.sort_order, TrainingCategory.name)
+    return db.execute(stmt).scalars().all()
+
+
+@app.post("/training-categories", response_model=schemas.TrainingCategoryOut)
+def create_training_category(payload: schemas.TrainingCategoryIn,
+                             db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    name = payload.name.strip()
+    if not name:
+        raise err(422, "validation", "name is required")
+    if db.execute(select(TrainingCategory).where(TrainingCategory.name == name)).first():
+        raise err(409, "duplicate", "a training type with this name already exists")
+    cat = TrainingCategory(name=name, sort_order=payload.sort_order)
+    db.add(cat); db.flush()
+    audit.record(db, current.id, "create", "training_category", cat.id, after={"name": name})
+    db.commit(); db.refresh(cat)
+    return cat
+
+
+@app.patch("/training-categories/{category_id}", response_model=schemas.TrainingCategoryOut)
+def update_training_category(category_id: int, payload: schemas.TrainingCategoryUpdate,
+                             db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    cat = db.get(TrainingCategory, category_id)
+    if cat is None:
+        raise HTTPException(404, "training category not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "name" in data:
+        new_name = (data["name"] or "").strip()
+        if not new_name:
+            raise err(422, "validation", "name is required")
+        clash = db.execute(
+            select(TrainingCategory).where(TrainingCategory.name == new_name,
+                                           TrainingCategory.id != category_id)
+        ).first()
+        if clash:
+            raise err(409, "duplicate", "a training type with this name already exists")
+        data["name"] = new_name
+    for k, v in data.items():
+        setattr(cat, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "training_category", cat.id, after=data)
+    db.commit(); db.refresh(cat)
+    return cat
+
+
+@app.delete("/training-categories/{category_id}")
+def delete_training_category(category_id: int, db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    cat = db.get(TrainingCategory, category_id)
+    if cat is None:
+        raise HTTPException(404, "training category not found")
+    # Materials keep their category string; removing a type only drops it from the
+    # pick list, so no materials are orphaned.
+    audit.record(db, current.id, "delete", "training_category", category_id,
+                 before={"name": cat.name})
+    db.delete(cat); db.commit()
+    return {"deleted": category_id}
 
 
 # --- Reports -----------------------------------------------------------------

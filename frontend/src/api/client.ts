@@ -5,7 +5,7 @@ import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
-  AgentDirectory, CaseRow, TitleTarget, TrainingMaterial,
+  AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -163,6 +163,14 @@ export const api = {
   uploadTrainingFile: (id: number, file: File) => uploadFile<TrainingMaterial>(`/training-materials/${id}/file`, file),
   deleteTrainingFile: (id: number) =>
     request<TrainingMaterial>(`/training-materials/${id}/file`, { method: "DELETE" }),
+  // Training categories (培訓類別)
+  trainingCategories: () => request<TrainingCategory[]>("/training-categories"),
+  createTrainingCategory: (payload: { name: string; sort_order?: number }) =>
+    request<TrainingCategory>("/training-categories", { method: "POST", body: JSON.stringify(payload) }),
+  updateTrainingCategory: (id: number, payload: { name?: string; sort_order?: number }) =>
+    request<TrainingCategory>(`/training-categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteTrainingCategory: (id: number) =>
+    request<{ deleted: number }>(`/training-categories/${id}`, { method: "DELETE" }),
 
   // Title targets (業績目標設定)
   titleTargets: () => request<TitleTarget[]>("/title-targets"),
