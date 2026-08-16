@@ -209,28 +209,32 @@ export default function Leads() {
                     </div>
                   )}
                   {editable && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, alignItems: "center" }}>
-                      <select value={c.stage} title={t("leads.moveTo")} style={{ width: "auto", fontSize: 12, padding: "2px 6px" }}
-                        onChange={(e) => update.mutate({ id: c.id, patch: { stage: e.target.value } })}>
-                        {LEAD_STAGES.map((s) => <option key={s} value={s}>{stageLabel(s)}</option>)}
-                      </select>
-                      {c.outcome === "open" ? (
-                        <>
+                    <>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, alignItems: "center" }}>
+                        <select value={c.stage} title={t("leads.moveTo")} style={{ width: "auto", fontSize: 12, padding: "2px 6px" }}
+                          onChange={(e) => update.mutate({ id: c.id, patch: { stage: e.target.value } })}>
+                          {LEAD_STAGES.map((s) => <option key={s} value={s}>{stageLabel(s)}</option>)}
+                        </select>
+                        {c.outcome === "open" ? (
+                          <>
+                            <button className="ghost" style={{ padding: "2px 8px" }}
+                              onClick={() => update.mutate({ id: c.id, patch: { outcome: "won" } })}>{t("leads.markWon")}</button>
+                            <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }}
+                              onClick={() => update.mutate({ id: c.id, patch: { outcome: "lost" } })}>{t("leads.markLost")}</button>
+                          </>
+                        ) : (
                           <button className="ghost" style={{ padding: "2px 8px" }}
-                            onClick={() => update.mutate({ id: c.id, patch: { outcome: "won" } })}>{t("leads.markWon")}</button>
-                          <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }}
-                            onClick={() => update.mutate({ id: c.id, patch: { outcome: "lost" } })}>{t("leads.markLost")}</button>
-                        </>
-                      ) : (
-                        <button className="ghost" style={{ padding: "2px 8px" }}
-                          onClick={() => update.mutate({ id: c.id, patch: { outcome: "open" } })}>{t("leads.reopen")}</button>
-                      )}
-                      <button className="ghost" style={{ padding: "2px 8px" }} onClick={() => openEdit(c)}>{t("common.edit")}</button>
-                      <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }}
-                        onClick={() => { if (window.confirm(t("leads.confirmDelete", { ref: c.ref }))) remove.mutate(c.id); }}>
-                        {t("common.delete")}
-                      </button>
-                    </div>
+                            onClick={() => update.mutate({ id: c.id, patch: { outcome: "open" } })}>{t("leads.reopen")}</button>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                        <button className="ghost" style={{ padding: "2px 8px" }} onClick={() => openEdit(c)}>{t("common.edit")}</button>
+                        <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }}
+                          onClick={() => { if (window.confirm(t("leads.confirmDelete", { ref: c.ref }))) remove.mutate(c.id); }}>
+                          {t("common.delete")}
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               );
