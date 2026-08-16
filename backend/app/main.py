@@ -986,12 +986,27 @@ def report_agent(agent_id: int, start: date | None = None,
     return reports.agent_statement(db, agent_id, start, end)
 
 
+def _agency_summary_scoped(db: Session, current: Agent,
+                           start: date | None, end: date | None) -> list[dict]:
+    """Agency summary that matches the on-screen team tables: every active,
+    non-admin agent in the caller's visible scope (self + downlines), including
+    those with no production, each carrying its 職級 target for the progress
+    column. Shared by the JSON endpoint and the CSV/PDF exports."""
+    ids = scoping.visible_agent_ids(db, current)
+    roster = db.execute(
+        select(Agent).where(Agent.id.in_(ids), Agent.is_active.is_(True),
+                            Agent.role != Role.ADMIN)
+    ).scalars().all()
+    targets = {tt.title.value: float(tt.target_afyp)
+               for tt in db.execute(select(TitleTarget)).scalars().all() if tt.title}
+    return reports.agency_summary(db, start, end, agent_ids=ids, roster=roster, targets=targets)
+
+
 @app.get("/reports/agency")
 def report_agency(start: date | None = None, end: date | None = None,
                   db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    ids = scoping.visible_agent_ids(db, current)
-    return reports.agency_summary(db, start, end, agent_ids=ids)
+    return _agency_summary_scoped(db, current, start, end)
 
 
 @app.get("/reports/product-mix")
@@ -1067,8 +1082,7 @@ def export_agency_summary(format: str = "csv", lang: str = "zh-Hant", currency: 
                           start: date | None = None, end: date | None = None,
                           db: Session = Depends(get_db),
                           current: Agent = Depends(get_current_agent)):
-    ids = scoping.visible_agent_ids(db, current)
-    summary = reports.agency_summary(db, start, end, agent_ids=ids)
+    summary = _agency_summary_scoped(db, current, start, end)
     if format == "pdf":
         return _export_response(exports.agency_summary_to_pdf(summary, lang, currency), "pdf",
                                 "agency_summary")

@@ -183,17 +183,28 @@ def statement_to_csv(statement: dict, lang: str | None = None, currency: str | N
     return _BOM + buf.getvalue()
 
 
+def _target_pct(r: dict) -> str:
+    """Target-progress cell: achieved (AFYP→HKD) vs the 職級's annual HKD target,
+    matching the on-screen column. '—' when no target applies to the row."""
+    tgt = r.get("target_afyp")
+    if not tgt:
+        return "—"
+    achieved_hkd = float(r.get("afyp", 0)) * _FX["HKD"]
+    return f"{achieved_hkd / tgt * 100:.0f}%"
+
+
 def agency_summary_to_csv(summary: list[dict], lang: str | None = None, currency: str | None = None) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow([i18n.label("agent_id", lang), i18n.label("code", lang), i18n.label("name", lang),
                 i18n.label("level", lang), i18n.label("afyp", lang),
                 i18n.label("commission_income", lang), i18n.label("override_income", lang),
-                i18n.label("total", lang)])
+                i18n.label("total", lang), i18n.label("target_progress", lang)])
     for r in summary:
         w.writerow([r["agent_id"], r["code"], r["name"], r["level"],
                     _money(r.get("afyp", 0), currency), _money(r.get("direct", 0), currency),
-                    _money(r.get("override", 0), currency), _money(r["total"], currency)])
+                    _money(r.get("override", 0), currency), _money(r["total"], currency),
+                    _target_pct(r)])
     return _BOM + buf.getvalue()
 
 
@@ -262,12 +273,14 @@ def agency_summary_to_pdf(summary: list[dict], lang: str | None = None, currency
     elems = [Paragraph(i18n.label("summary_title", lang), _title_style()), Spacer(1, 6 * mm)]
     data = [[i18n.label("code", lang), i18n.label("name", lang), i18n.label("level", lang),
              i18n.label("afyp", lang), i18n.label("commission_income", lang),
-             i18n.label("override_income", lang), i18n.label("total", lang)]]
+             i18n.label("override_income", lang), i18n.label("total", lang),
+             i18n.label("target_progress", lang)]]
     for r in summary:
         data.append([r["code"], r["name"], f'L{r["level"]}',
                      _money(r.get("afyp", 0), currency), _money(r.get("direct", 0), currency),
-                     _money(r.get("override", 0), currency), _money(r["total"], currency)])
-    elems.append(_table(data, col_widths=[24 * mm, 46 * mm, 16 * mm, 34 * mm, 34 * mm, 34 * mm, 34 * mm]))
+                     _money(r.get("override", 0), currency), _money(r["total"], currency),
+                     _target_pct(r)])
+    elems.append(_table(data, col_widths=[22 * mm, 42 * mm, 14 * mm, 32 * mm, 32 * mm, 32 * mm, 32 * mm, 26 * mm]))
     doc.build(elems)
     return buf.getvalue()
 

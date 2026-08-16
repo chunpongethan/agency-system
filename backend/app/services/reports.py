@@ -158,7 +158,16 @@ def agent_statement(session: Session, agent_id: int,
 
 def agency_summary(session: Session,
                    start: date | None = None, end: date | None = None,
-                   agent_ids: set[int] | None = None) -> list[dict]:
+                   agent_ids: set[int] | None = None,
+                   roster: list[Agent] | None = None,
+                   targets: dict[str, float] | None = None) -> list[dict]:
+    """Totals per agent over an optional window.
+
+    When ``roster`` is given, the result lists exactly those agents (each seeded
+    with a zero row so agents with no production still appear) and carries each
+    agent's ``title`` plus its annual ``target_afyp`` for a target-progress
+    column — mirroring the on-screen team tables. Without a roster the behaviour
+    is unchanged (only agents with production, used by period snapshots)."""
     # Commission per agent, split by kind (direct / override).
     cq = (
         select(
@@ -175,11 +184,27 @@ def agency_summary(session: Session,
     cq = _window(cq, start, end)
 
     rows: dict[int, dict] = {}
+    # With a roster, seed a zero row per agent (so those with no production still
+    # show) and restrict output to the roster, dropping anyone outside it.
+    roster_ids: set[int] | None = None
+    if roster is not None:
+        roster_ids = {a.id for a in roster}
+        for a in roster:
+            rows[a.id] = {
+                "agent_id": a.id, "code": a.code, "name": a.name, "level": int(a.level),
+                "title": a.title.value if a.title else None,
+                "direct": Decimal("0"), "override": Decimal("0"), "afyp": Decimal("0"),
+            }
     for aid, code, name, level, kind, amount in session.execute(cq):
-        r = rows.setdefault(aid, {
-            "agent_id": aid, "code": code, "name": name, "level": int(level),
-            "direct": Decimal("0"), "override": Decimal("0"), "afyp": Decimal("0"),
-        })
+        if roster_ids is not None:
+            if aid not in roster_ids:
+                continue
+            r = rows[aid]
+        else:
+            r = rows.setdefault(aid, {
+                "agent_id": aid, "code": code, "name": name, "level": int(level),
+                "direct": Decimal("0"), "override": Decimal("0"), "afyp": Decimal("0"),
+            })
         if kind == CommissionKind.DIRECT:
             r["direct"] += Decimal(amount)
         else:
@@ -203,11 +228,16 @@ def agency_summary(session: Session,
     out = []
     for r in rows.values():
         total = r["direct"] + r["override"]
-        out.append({
+        row = {
             "agent_id": r["agent_id"], "code": r["code"], "name": r["name"], "level": r["level"],
             "afyp": float(r["afyp"]), "direct": float(r["direct"]),
             "override": float(r["override"]), "total": float(total),
-        })
+        }
+        if roster is not None:
+            title = r.get("title")
+            row["title"] = title
+            row["target_afyp"] = (targets or {}).get(title) if title else None
+        out.append(row)
     out.sort(key=lambda x: x["total"], reverse=True)
     return out
 
