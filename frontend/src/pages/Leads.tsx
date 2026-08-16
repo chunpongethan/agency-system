@@ -210,11 +210,13 @@ export default function Leads() {
                   )}
                   {editable && (
                     <>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8, alignItems: "center" }}>
+                      <div style={{ marginTop: 8 }}>
                         <select value={c.stage} title={t("leads.moveTo")} style={{ width: "auto", fontSize: 12, padding: "2px 6px" }}
                           onChange={(e) => update.mutate({ id: c.id, patch: { stage: e.target.value } })}>
                           {LEAD_STAGES.map((s) => <option key={s} value={s}>{stageLabel(s)}</option>)}
                         </select>
+                      </div>
+                      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
                         {c.outcome === "open" ? (
                           <>
                             <button className="ghost" style={{ padding: "2px 8px" }}
