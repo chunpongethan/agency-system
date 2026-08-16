@@ -48,6 +48,9 @@ export default function Dashboard() {
     queryFn: () => api.agencySummary(ytd.start, ytd.end),
     enabled: isManager,
   });
+  // Roster (subtree) supplies the active flag; terminated agents are excluded
+  // from the team total so the dashboard matches the hierarchy, which hides them.
+  const roster = useQuery({ queryKey: ["agents"], queryFn: () => api.agents(), enabled: isManager });
   const teamCards = useQuery({
     queryKey: ["teamScorecards"],
     queryFn: () => api.teamScorecards(),
@@ -68,7 +71,10 @@ export default function Dashboard() {
   // on their own YTD AFYP; managers on their whole team's YTD AFYP.
   const myTargetHkd = (titleTargets.data ?? []).find((tt) => tt.title === me!.title)?.target_afyp ?? 0;
   const ownAfypUsd = scorecard.data?.periods.ytd.afyp ?? 0;
-  const teamAfypUsd = (teamYtd.data ?? []).reduce((s, r) => s + r.afyp, 0);
+  const activeIds = new Set((roster.data ?? []).filter((a) => a.is_active).map((a) => a.id));
+  const teamAfypUsd = (teamYtd.data ?? [])
+    .filter((r) => activeIds.has(r.agent_id))
+    .reduce((s, r) => s + r.afyp, 0);
   const achievedAfypUsd = isManager ? teamAfypUsd : ownAfypUsd;
   const achievedHkd = convertCurrency(achievedAfypUsd, "USD", "HKD");
   const targetRawPct = myTargetHkd > 0 ? (achievedHkd / myTargetHkd) * 100 : 0;
