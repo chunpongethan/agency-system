@@ -44,13 +44,7 @@ export default function AdminAgents() {
     onError: (e) => { setAgentErr(errorText(e, t) || t("admin.agents.createFailed")); setAgentMsg(null); },
   });
 
-  // --- Inline title assignment ---
-  const assignTitle = useMutation({
-    mutationFn: ({ id, title }: { id: number; title: Title }) => api.updateAgent(id, { title }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
-  });
-
-  // --- Edit agent ---
+  // --- Edit agent (the 職級/title is changed here, not inline in the table) ---
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", password: "", direct_client: false });
   const [editErr, setEditErr] = useState<string | null>(null);
@@ -112,12 +106,9 @@ export default function AdminAgents() {
                   <td>L{a.level}</td>
                   <td><span className="badge role">{roleLabel(a.role)}</span></td>
                   <td>
-                    <select value={a.title ?? ""} disabled={!a.is_active}
-                      onChange={(e) => assignTitle.mutate({ id: a.id, title: e.target.value as Title })}
-                      style={{ padding: "4px 6px", fontSize: 12 }}>
-                      <option value="" disabled>{t("admin.agents.assign")}</option>
-                      {TITLE_VALUES.map((tv) => <option key={tv} value={tv}>{titleLabel(tv)}</option>)}
-                    </select>
+                    {a.title
+                      ? <span className="badge title">{titleLabel(a.title)}</span>
+                      : <span className="muted">—</span>}
                   </td>
                   <td className="muted">{a.unit_code ?? "—"}</td>
                   <td>{a.direct_client ? <span className="badge unit">直客</span> : <span className="muted">—</span>}</td>
