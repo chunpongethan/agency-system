@@ -11,6 +11,11 @@ export default function AdminAgents() {
   const qc = useQueryClient();
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
 
+  // Roster filter: terminated agents are hidden unless the admin opts in.
+  const [includeTerminated, setIncludeTerminated] = useState(false);
+  const rosterAgents = (agents.data ?? []).filter((a) => includeTerminated || a.is_active);
+  const terminatedCount = (agents.data ?? []).filter((a) => !a.is_active).length;
+
   // --- Create agent ---
   const [agentForm, setAgentForm] = useState({
     code: "", name: "", email: "", upline_id: "", unit_code: "",
@@ -87,7 +92,14 @@ export default function AdminAgents() {
       <p className="page-sub">{t("admin.agents.subtitle")}</p>
 
       <div className="card">
-        <h2>{t("admin.agents.roster")}</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <h2 style={{ margin: 0 }}>{t("admin.agents.roster")}</h2>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 400, margin: 0, cursor: "pointer" }}>
+            <input type="checkbox" style={{ width: "auto" }} checked={includeTerminated}
+              onChange={(e) => setIncludeTerminated(e.target.checked)} />
+            {t("admin.agents.includeTerminated", { count: terminatedCount })}
+          </label>
+        </div>
         {rowMsg && <div className="error">{rowMsg}</div>}
         <table>
           <thead>
@@ -97,7 +109,7 @@ export default function AdminAgents() {
             </tr>
           </thead>
           <tbody>
-            {agents.data?.map((a) => {
+            {rosterAgents.map((a) => {
               const upline = agents.data?.find((u) => u.id === a.upline_id);
               return (
                 <tr key={a.id} style={a.is_active ? undefined : { opacity: 0.55 }}>

@@ -410,6 +410,7 @@ export const translations: Record<string, Translation> = {
   "admin.agents.assign": { "zh-Hant": "— 指派 —", en: "— assign —" },
   "admin.agents.active": { "zh-Hant": "在職", en: "active" },
   "admin.agents.terminated": { "zh-Hant": "已終止", en: "terminated" },
+  "admin.agents.includeTerminated": { "zh-Hant": "顯示已終止代理（{count}）", en: "Include terminated ({count})" },
   "admin.agents.terminate": { "zh-Hant": "終止", en: "Terminate" },
   "admin.agents.reactivate": { "zh-Hant": "重新啟用", en: "Reactivate" },
   "admin.agents.created": { "zh-Hant": "已建立 {name}（{code}），層級 L{level}。", en: "Created {name} ({code}) at depth L{level}." },
