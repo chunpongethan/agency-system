@@ -411,6 +411,7 @@ export const translations: Record<string, Translation> = {
   "admin.agents.roster": { "zh-Hant": "名冊", en: "Roster" },
   "admin.agents.thDepth": { "zh-Hant": "層級", en: "Depth" },
   "admin.agents.thUpline": { "zh-Hant": "上線", en: "Upline" },
+  "admin.agents.thLastLogin": { "zh-Hant": "最後登入", en: "Last login" },
   "admin.agents.assign": { "zh-Hant": "— 指派 —", en: "— assign —" },
   "admin.agents.active": { "zh-Hant": "在職", en: "active" },
   "admin.agents.terminated": { "zh-Hant": "已終止", en: "terminated" },

@@ -47,6 +47,22 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False)
 Base.metadata.create_all(engine)
 
 
+def _ensure_columns() -> None:
+    """Add columns introduced after the initial schema to existing tables —
+    create_all only creates missing tables, it never alters existing ones. Runs
+    on every startup and is idempotent (only adds what's missing). Works on both
+    SQLite (dev) and Postgres (prod)."""
+    from sqlalchemy import inspect as _sa_inspect, text
+    insp = _sa_inspect(engine)
+    existing = {c["name"] for c in insp.get_columns("agents")}
+    if "last_login_at" not in existing:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE agents ADD COLUMN last_login_at TIMESTAMP"))
+
+
+_ensure_columns()
+
+
 def _seed_training_categories() -> None:
     """Bootstrap the maintained training types on an empty table so the material
     form always has options; admins can then add/rename/remove them."""
@@ -181,6 +197,8 @@ def login(payload: schemas.LoginIn, background: BackgroundTasks,
     if not agent.is_active:
         raise HTTPException(403, "account disabled")
     token = create_access_token(agent.id, {"role": agent.role.value})
+    agent.last_login_at = now_utc()
+    db.commit()
     # Notify the admin that a user signed in (best-effort, off the request path).
     if ADMIN_EMAIL:
         when = now_utc().strftime("%Y-%m-%d %H:%M:%S")

@@ -94,6 +94,7 @@ class AgentOut(BaseModel):
     unit_code: str | None = None
     direct_client: bool = False
     is_active: bool
+    last_login_at: datetime | None = None
 
 
 # --- Clients ----------------------------------------------------------------

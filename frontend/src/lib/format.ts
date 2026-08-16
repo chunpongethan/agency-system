@@ -39,6 +39,18 @@ export function moneyFixed(n: number | string, currency: string): string {
   }).format(v);
 }
 
+// Localized date+time for an ISO timestamp (UTC from the API → viewer's local
+// time). Returns an em dash for null/blank/invalid values.
+export function dateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  // The API stores UTC; if the timestamp carries no zone, parse it as UTC so it
+  // converts correctly to the viewer's local time (not read as local already).
+  const hasZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasZone ? iso : `${iso}Z`);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(numberLocale(), { dateStyle: "medium", timeStyle: "short" });
+}
+
 export function pct(rate: number | string): string {
   const v = typeof rate === "string" ? Number(rate) : rate;
   if (v == null || !Number.isFinite(v)) return "—";

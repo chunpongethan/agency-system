@@ -85,3 +85,15 @@ def test_non_admin_cannot_edit_agents(client):
     agent = auth(client, "A2")
     assert client.patch(f"/agents/{client._ids['a1']}", headers=agent,
                         json={"name": "hax"}).status_code == 403
+
+
+def test_login_records_last_login(client):
+    # Before any login, last_login_at is null; after login it is stamped.
+    admin = auth(client, "ADM")
+    a2 = client._ids["a2"]
+    before = next(a for a in client.get("/agents", headers=admin).json() if a["id"] == a2)
+    assert before["last_login_at"] is None
+    # A2 signs in.
+    auth(client, "A2")
+    after = next(a for a in client.get("/agents", headers=admin).json() if a["id"] == a2)
+    assert after["last_login_at"] is not None

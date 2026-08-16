@@ -4,6 +4,7 @@ import { api, errorText } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { TITLE_VALUES, titleLabel } from "../../lib/titles";
 import { roleLabel, ROLES } from "../../i18n/labels";
+import { dateTime } from "../../lib/format";
 import type { Agent, Role, Title } from "../../api/types";
 
 export default function AdminAgents() {
@@ -105,7 +106,7 @@ export default function AdminAgents() {
           <thead>
             <tr>
               <th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("admin.agents.thDepth")}</th><th>{t("common.role")}</th><th>{t("common.title")}</th>
-              <th>{t("common.unit")}</th><th>{t("admin.agents.thDirectClient")}</th><th>{t("admin.agents.thUpline")}</th><th>{t("common.status")}</th><th></th>
+              <th>{t("common.unit")}</th><th>{t("admin.agents.thDirectClient")}</th><th>{t("admin.agents.thUpline")}</th><th>{t("common.status")}</th><th>{t("admin.agents.thLastLogin")}</th><th></th>
             </tr>
           </thead>
           <tbody>
@@ -130,6 +131,7 @@ export default function AdminAgents() {
                       {a.is_active ? t("admin.agents.active") : t("admin.agents.terminated")}
                     </span>
                   </td>
+                  <td className="muted" style={{ whiteSpace: "nowrap" }}>{dateTime(a.last_login_at)}</td>
                   <td className="num" style={{ whiteSpace: "nowrap" }}>
                     <button className="ghost" onClick={() => startEdit(a)}>{t("common.edit")}</button>{" "}
                     {a.is_active ? (

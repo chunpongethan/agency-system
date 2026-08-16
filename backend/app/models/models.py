@@ -130,6 +130,8 @@ class Agent(Base):
     # per agent keeps the principal <-> hierarchy mapping trivial for scoping.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.AGENT)
+    # Stamp of the agent's most recent successful login (null until they sign in).
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     upline: Mapped["Agent | None"] = relationship(remote_side=[id], backref="downlines")
     clients: Mapped[list["Client"]] = relationship(back_populates="agent")
