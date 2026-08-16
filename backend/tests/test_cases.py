@@ -1,6 +1,6 @@
 """
 Case (sales pipeline) access model: agents self-serve the cases they're assigned
-to; managers *view* (read-only) their downlines' cases via the visibility layer;
+to; managers view *and edit* their downlines' cases via the visibility layer;
 admins do everything.
 """
 import pytest
@@ -87,14 +87,23 @@ def test_peer_agent_cannot_see_or_edit(client):
     assert client.patch(f"/cases/{case['id']}", headers=ay, json={"stage": "m1"}).status_code == 403
 
 
-def test_manager_sees_but_cannot_edit_downline_case(client):
+def test_manager_sees_and_edits_downline_case(client):
     ids = client._ids
     ax, top = auth(client, "AX"), auth(client, "TOP")
     case = mk_case(client, ax, ids["ax"]).json()
     rows = client.get("/cases", headers=top).json()
     assert any(c["id"] == case["id"] for c in rows)          # manager VIEWS downline case
+    r = client.patch(f"/cases/{case['id']}", headers=top, json={"stage": "m1"})
+    assert r.status_code == 200 and r.json()["stage"] == "m1"  # ... and may edit it
+
+
+def test_manager_cannot_edit_case_outside_subtree(client):
+    ids = client._ids
+    top, other = auth(client, "TOP"), auth(client, "OTH")
+    # A case owned by an unrelated agent outside TOP's subtree stays off-limits.
+    case = mk_case(client, other, ids["other"]).json()
     assert client.patch(f"/cases/{case['id']}", headers=top,
-                        json={"stage": "m1"}).status_code == 403  # ... but read-only
+                        json={"stage": "m1"}).status_code == 403
 
 
 def test_admin_sees_all_and_can_edit(client):

@@ -905,7 +905,7 @@ def update_case(case_id: int, payload: schemas.CaseUpdate,
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(404, "case not found")
-    scoping.assert_can_edit_case(current, case)
+    scoping.assert_can_edit_case(db, current, case)
     data = payload.model_dump(exclude_unset=True)
     _validate_case_refs(
         db, (data.get("lead_agent_id"), data.get("sdr_agent_id"), data.get("closer_agent_id")),
@@ -938,7 +938,7 @@ def delete_case(case_id: int, db: Session = Depends(get_db),
     case = db.get(Case, case_id)
     if case is None:
         raise HTTPException(404, "case not found")
-    scoping.assert_can_edit_case(current, case)
+    scoping.assert_can_edit_case(db, current, case)
     audit.record(db, current.id, "delete", "case", case_id,
                  before={"ref": case.ref, "prospect": case.prospect_name})
     db.delete(case); db.commit()

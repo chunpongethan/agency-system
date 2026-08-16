@@ -99,8 +99,11 @@ export default function Leads() {
   }
   function closeForm() { setShowForm(false); setEditId(null); }
 
+  // Admins and managers may edit any case they can see (the list endpoint only
+  // returns a manager's own downline); plain agents edit cases they're assigned to.
   const canEdit = (c: CaseRow) =>
-    me?.role === "admin" || [c.lead_agent_id, c.sdr_agent_id, c.closer_agent_id].includes(me?.id ?? -1);
+    me?.role === "admin" || me?.role === "manager" ||
+    [c.lead_agent_id, c.sdr_agent_id, c.closer_agent_id].includes(me?.id ?? -1);
 
   // Filter by free-text q client-side, then bucket by stage.
   const filtered = useMemo(() => {

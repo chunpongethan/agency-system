@@ -100,10 +100,15 @@ def assert_can_view_case(session: Session, current: Agent, case: Case) -> None:
     raise PermissionError("only an assigned agent, their manager, or an admin may view this case")
 
 
-def assert_can_edit_case(current: Agent, case: Case) -> None:
+def assert_can_edit_case(session: Session, current: Agent, case: Case) -> None:
     """
-    Editing a case is limited to its assigned agents (Lead / SDR / Closer) or an
-    admin. Managers who merely oversee a downline's case get read-only access.
+    Editing a case is allowed for an admin, its assigned agents (Lead / SDR /
+    Closer), or a manager whose downline includes one of those agents. This
+    mirrors the visibility layer, so a manager who can *see* a downline's case
+    may also edit it.
     """
-    if not is_admin(current) and current.id not in _case_agent_ids(case):
-        raise PermissionError("only an assigned agent or an admin may edit this case")
+    if is_admin(current):
+        return
+    if _case_agent_ids(case) & visible_agent_ids(session, current):
+        return
+    raise PermissionError("only an assigned agent, their manager, or an admin may edit this case")
