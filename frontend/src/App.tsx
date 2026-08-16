@@ -17,6 +17,7 @@ import AdminAgents from "./pages/admin/AdminAgents";
 import AdminTransactions from "./pages/admin/AdminTransactions";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminRules from "./pages/admin/AdminRules";
+import AdminTargets from "./pages/admin/AdminTargets";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import type { ReactElement } from "react";
 
@@ -121,6 +122,10 @@ export default function App() {
         <Route
           path="/admin/rules"
           element={<RequireRole roles={["admin"]}><AdminRules /></RequireRole>}
+        />
+        <Route
+          path="/admin/targets"
+          element={<RequireRole roles={["admin"]}><AdminTargets /></RequireRole>}
         />
         <Route
           path="/admin/payouts"

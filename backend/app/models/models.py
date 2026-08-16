@@ -365,3 +365,14 @@ class Case(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class TitleTarget(Base):
+    """Annual AFYP target for a business rank (職級), set by an admin. Agents see
+    their own title's target progress on the dashboard."""
+    __tablename__ = "title_targets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[Title] = mapped_column(
+        Enum(Title, values_callable=lambda e: [m.value for m in e]), unique=True)
+    target_afyp: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))

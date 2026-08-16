@@ -76,6 +76,11 @@ export interface Client {
   created_at: string;
 }
 
+export interface TitleTarget {
+  title: string;
+  target_afyp: number;
+}
+
 export interface AgentDirectory {
   id: number;
   code: string;

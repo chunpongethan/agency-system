@@ -31,6 +31,7 @@ export default function Layout() {
               <NavLink to="/admin/transactions">{t("nav.transactions")}</NavLink>
               <NavLink to="/admin/products">{t("nav.products")}</NavLink>
               <NavLink to="/admin/rules">{t("nav.rules")}</NavLink>
+              <NavLink to="/admin/targets">{t("nav.targets")}</NavLink>
               <NavLink to="/admin/payouts">{t("nav.payouts")}</NavLink>
             </>
           )}

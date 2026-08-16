@@ -5,7 +5,7 @@ import type {
   Me, Agent, Client, Product, Transaction, OverrideRule,
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
-  AgentDirectory, CaseRow,
+  AgentDirectory, CaseRow, TitleTarget,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -150,6 +150,11 @@ export const api = {
     request<Product>(`/products/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteProduct: (id: number) =>
     request<{ deleted: number }>(`/products/${id}`, { method: "DELETE" }),
+
+  // Title targets (業績目標設定)
+  titleTargets: () => request<TitleTarget[]>("/title-targets"),
+  setTitleTarget: (title: string, target_afyp: number) =>
+    request<TitleTarget>(`/title-targets/${title}`, { method: "PUT", body: JSON.stringify({ target_afyp }) }),
 
   // Override rules (admin)
   overrideRules: () => request<OverrideRule[]>("/override-rules"),

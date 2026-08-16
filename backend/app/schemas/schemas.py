@@ -174,6 +174,17 @@ class CaseOut(BaseModel):
     closed_at: datetime | None = None
 
 
+# --- Title targets (業績目標設定) -------------------------------------------
+class TitleTargetIn(BaseModel):
+    target_afyp: Decimal
+
+
+class TitleTargetOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    title: str
+    target_afyp: Decimal
+
+
 # --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str

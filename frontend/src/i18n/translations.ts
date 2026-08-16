@@ -22,6 +22,7 @@ export const translations: Record<string, Translation> = {
   "nav.transactions": { "zh-Hant": "交易維護", en: "Transactions" },
   "nav.products": { "zh-Hant": "產品", en: "Products" },
   "nav.rules": { "zh-Hant": "管理佣金規則", en: "Override rules" },
+  "nav.targets": { "zh-Hant": "業績目標設定", en: "Performance targets" },
   "nav.payouts": { "zh-Hant": "期間與派發", en: "Periods & payouts" },
   "nav.logout": { "zh-Hant": "登出", en: "Log out" },
   "nav.account": { "zh-Hant": "帳戶設定", en: "Account" },
@@ -540,6 +541,20 @@ export const translations: Record<string, Translation> = {
   "adminTxn.confirmDelete": { "zh-Hant": "確定刪除交易 {ref}？此操作無法復原。", en: "Delete transaction {ref}? This cannot be undone." },
   "adminTxn.confirmCancel": { "zh-Hant": "確定取消交易 {ref}？相關佣金將被沖回。", en: "Cancel transaction {ref}? Its commission will be reversed." },
   "adminTxn.actionFailed": { "zh-Hant": "操作失敗", en: "Action failed" },
+
+  // --- Admin: performance targets (業績目標設定) -----------------------------
+  "admin.targets.title": { "zh-Hant": "業績目標設定", en: "Performance targets" },
+  "admin.targets.subtitle": { "zh-Hant": "為每個職級設定年度目標 AFYP（HKD）。", en: "Set the annual AFYP target (HKD) for each rank." },
+  "admin.targets.thRank": { "zh-Hant": "職級", en: "Rank" },
+  "admin.targets.thTarget": { "zh-Hant": "年度目標 AFYP（HKD）", en: "Annual target AFYP (HKD)" },
+  "admin.targets.save": { "zh-Hant": "儲存", en: "Save" },
+  "admin.targets.saved": { "zh-Hant": "已儲存", en: "Saved" },
+  "admin.targets.failed": { "zh-Hant": "儲存失敗", en: "Could not save" },
+
+  // --- Dashboard: annual AFYP target progress --------------------------------
+  "dashboard.targetTitle": { "zh-Hant": "年度目標 AFYP 進度", en: "Annual AFYP target progress" },
+  "dashboard.targetOf": { "zh-Hant": "{achieved} / {target}", en: "{achieved} / {target}" },
+  "dashboard.targetNone": { "zh-Hant": "尚未為您的職級設定年度目標。", en: "No annual target set for your rank yet." },
 
   // --- Leads / sales pipeline ------------------------------------------------
   "leads.title": { "zh-Hant": "潛在客戶管理", en: "Lead Management" },

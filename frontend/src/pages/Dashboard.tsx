@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
-import { money, currentPeriod, yearToDate } from "../lib/format";
+import { money, moneyFixed, convertCurrency, currentPeriod, yearToDate } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
 import { riskLabel } from "../i18n/labels";
 import StatusBadge from "../components/StatusBadge";
@@ -29,6 +29,7 @@ export default function Dashboard() {
     queryKey: ["scorecard", agentId],
     queryFn: () => api.agentScorecard(agentId),
   });
+  const titleTargets = useQuery({ queryKey: ["titleTargets"], queryFn: () => api.titleTargets() });
   const statement = useQuery({
     queryKey: ["statement", agentId, view, win.start, win.end],
     queryFn: () => api.agentStatement(agentId, win.start, win.end),
@@ -53,6 +54,12 @@ export default function Dashboard() {
   });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
+
+  // Annual AFYP target progress for the agent's own 職級, in HKD.
+  const myTargetHkd = (titleTargets.data ?? []).find((tt) => tt.title === me!.title)?.target_afyp ?? 0;
+  const achievedHkd = scorecard.data ? convertCurrency(scorecard.data.periods.ytd.afyp, "USD", "HKD") : 0;
+  const targetRawPct = myTargetHkd > 0 ? (achievedHkd / myTargetHkd) * 100 : 0;
+  const targetBarPct = Math.min(100, targetRawPct);
 
   const teamTotal = (team.data ?? []).reduce((s, r) => s + r.total, 0);
   const teamAfyp = (team.data ?? []).reduce((s, r) => s + r.afyp, 0);
@@ -79,6 +86,27 @@ export default function Dashboard() {
       {scorecard.data && (
         <div style={{ marginTop: 18 }}>
           <Scorecard data={scorecard.data} />
+        </div>
+      )}
+
+      {me!.title && (
+        <div className="card" style={{ marginTop: 18 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+            <h2>{t("dashboard.targetTitle")}</h2>
+            {myTargetHkd > 0 && (
+              <span className="muted" style={{ fontSize: 13 }}>
+                {t("dashboard.targetOf", { achieved: moneyFixed(achievedHkd, "HKD"), target: moneyFixed(myTargetHkd, "HKD") })}
+                {" · "}<strong style={{ color: "var(--good)" }}>{targetRawPct.toFixed(1)}%</strong>
+              </span>
+            )}
+          </div>
+          {myTargetHkd > 0 ? (
+            <div style={{ background: "var(--line)", borderRadius: 999, height: 12, overflow: "hidden", marginTop: 10 }}>
+              <div style={{ width: `${targetBarPct}%`, height: "100%", background: "var(--good)", borderRadius: 999, transition: "width .3s" }} />
+            </div>
+          ) : (
+            <p className="muted" style={{ fontSize: 13, margin: "4px 0 0" }}>{t("dashboard.targetNone")}</p>
+          )}
         </div>
       )}
 

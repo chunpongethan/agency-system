@@ -23,7 +23,8 @@ from sqlalchemy.orm import Session, sessionmaker, aliased
 
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
-    CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, now_utc,
+    CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
+    TitleTarget, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -942,6 +943,38 @@ def delete_case(case_id: int, db: Session = Depends(get_db),
                  before={"ref": case.ref, "prospect": case.prospect_name})
     db.delete(case); db.commit()
     return {"deleted": case_id}
+
+
+# --- Title targets (業績目標設定; admin sets, everyone reads their own) --------
+@app.get("/title-targets")
+def list_title_targets(db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    """Annual AFYP target per 職級 (0 when unset). Readable by any authenticated
+    user so the dashboard can show an agent their own target progress."""
+    existing = {t.title.value: t.target_afyp
+                for t in db.execute(select(TitleTarget)).scalars()}
+    return [{"title": tv.value, "target_afyp": float(existing.get(tv.value, 0))}
+            for tv in Title]
+
+
+@app.put("/title-targets/{title}")
+def set_title_target(title: str, payload: schemas.TitleTargetIn,
+                     db: Session = Depends(get_db),
+                     current: Agent = Depends(require_admin)):
+    try:
+        t_enum = Title(title)
+    except ValueError:
+        raise err(422, "validation", f"invalid title: {title}")
+    row = db.execute(select(TitleTarget).where(TitleTarget.title == t_enum)).scalars().first()
+    if row is None:
+        row = TitleTarget(title=t_enum, target_afyp=payload.target_afyp)
+        db.add(row)
+    else:
+        row.target_afyp = payload.target_afyp
+    audit.record(db, current.id, "update", "title_target", title,
+                 after={"target_afyp": float(payload.target_afyp)})
+    db.commit()
+    return {"title": title, "target_afyp": float(payload.target_afyp)}
 
 
 # --- Reports -----------------------------------------------------------------
