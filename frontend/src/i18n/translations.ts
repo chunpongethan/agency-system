@@ -218,6 +218,7 @@ export const translations: Record<string, Translation> = {
   "dashboard.thRank": { "zh-Hant": "#", en: "#" },
   "dashboard.thProduction": { "zh-Hant": "業績", en: "Production" },
   "dashboard.thShare": { "zh-Hant": "佔比", en: "Share" },
+  "dashboard.thTarget": { "zh-Hant": "目標達成", en: "Target progress" },
   "dashboard.you": { "zh-Hant": "（您）", en: " (you)" },
   "dashboard.noTeamProduction": { "zh-Hant": "此期間沒有團隊業績。", en: "No team production in this window." },
   "dashboard.teamNote1": {

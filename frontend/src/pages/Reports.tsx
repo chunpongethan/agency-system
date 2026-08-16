@@ -47,6 +47,22 @@ export default function Reports() {
     [titleTargets.data],
   );
 
+  // List every (active) agent in scope — self + downlines for a manager — even
+  // those with no production in the window, merging in their figures.
+  const summaryRows = useMemo<AgencySummaryRow[]>(() => {
+    const prod = new Map((summary.data ?? []).map((r) => [r.agent_id, r]));
+    return (agents.data ?? [])
+      .filter((a) => a.is_active && a.role !== "admin")
+      .map((a) => {
+        const p = prod.get(a.id);
+        return {
+          agent_id: a.id, code: a.code, name: a.name, level: a.level,
+          afyp: p?.afyp ?? 0, direct: p?.direct ?? 0, override: p?.override ?? 0, total: p?.total ?? 0,
+        };
+      })
+      .sort((x, y) => y.total - x.total);
+  }, [agents.data, summary.data]);
+
   const qsWin = `start=${start}&end=${end}&lang=${lang}&currency=${currency}`;
   const qsSum = `start=${sumStart}&end=${sumEnd}&lang=${lang}&currency=${currency}`;
 
@@ -304,7 +320,7 @@ export default function Reports() {
         </div>
         {summary.isLoading && <div className="spinner">{t("common.loading")}</div>}
         <DataTable
-          data={summary.data ?? []}
+          data={summaryRows}
           columns={summaryColumns}
           empty={t("reports.noData")}
         />

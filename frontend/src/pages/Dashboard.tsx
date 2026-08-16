@@ -10,6 +10,7 @@ import { riskLabel } from "../i18n/labels";
 import { titleLabel } from "../lib/titles";
 import StatusBadge from "../components/StatusBadge";
 import Scorecard from "../components/Scorecard";
+import TargetProgress from "../components/TargetProgress";
 
 type View = "month" | "ytd";
 
@@ -80,10 +81,25 @@ export default function Dashboard() {
   const targetRawPct = myTargetHkd > 0 ? (achievedHkd / myTargetHkd) * 100 : 0;
   const targetBarPct = Math.min(100, targetRawPct);
 
-  const teamTotal = (team.data ?? []).reduce((s, r) => s + r.total, 0);
-  const teamAfyp = (team.data ?? []).reduce((s, r) => s + r.afyp, 0);
-  const teamDirect = (team.data ?? []).reduce((s, r) => s + r.direct, 0);
-  const teamOverride = (team.data ?? []).reduce((s, r) => s + r.override, 0);
+  // Team performance rows: every active downline (self + subtree), including
+  // those with no production in the window, each carrying its 職級 target so we
+  // can show per-agent target progress.
+  const targetByTitle = new Map((titleTargets.data ?? []).map((tt) => [tt.title, tt.target_afyp]));
+  const prodByAgent = new Map((team.data ?? []).map((r) => [r.agent_id, r]));
+  const teamRows = (roster.data ?? [])
+    .filter((a) => a.is_active && a.role !== "admin")
+    .map((a) => {
+      const p = prodByAgent.get(a.id);
+      return {
+        agent_id: a.id, name: a.name, code: a.code, level: a.level, title: a.title,
+        afyp: p?.afyp ?? 0, direct: p?.direct ?? 0, override: p?.override ?? 0, total: p?.total ?? 0,
+      };
+    })
+    .sort((x, y) => y.total - x.total);
+  const teamTotal = teamRows.reduce((s, r) => s + r.total, 0);
+  const teamAfyp = teamRows.reduce((s, r) => s + r.afyp, 0);
+  const teamDirect = teamRows.reduce((s, r) => s + r.direct, 0);
+  const teamOverride = teamRows.reduce((s, r) => s + r.override, 0);
 
   return (
     <div>
@@ -173,10 +189,10 @@ export default function Dashboard() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <h2>{t("dashboard.teamPerformance")}</h2>
             <span className="muted" style={{ fontSize: 13 }}>
-              {t("dashboard.teamMeta", { label: win.label, count: team.data?.length ?? 0, total: money(teamTotal) })}
+              {t("dashboard.teamMeta", { label: win.label, count: teamRows.length, total: money(teamTotal) })}
             </span>
           </div>
-          {team.isLoading && <div className="spinner">{t("common.loading")}</div>}
+          {(team.isLoading || roster.isLoading) && <div className="spinner">{t("common.loading")}</div>}
           <div style={{ overflowX: "auto" }}>
           <table>
             <thead>
@@ -186,10 +202,11 @@ export default function Dashboard() {
                 <th className="num">{t("common.commission")}</th>
                 <th className="num">{t("common.override")}</th>
                 <th className="num">{t("dashboard.thProduction")}</th><th className="num">{t("dashboard.thShare")}</th>
+                <th>{t("dashboard.thTarget")}</th>
               </tr>
             </thead>
             <tbody>
-              {team.data?.map((r, i) => (
+              {teamRows.map((r, i) => (
                 <tr key={r.agent_id}>
                   <td className="muted">{i + 1}</td>
                   <td>{r.name}{r.agent_id === agentId ? t("dashboard.you") : ""}</td>
@@ -202,13 +219,16 @@ export default function Dashboard() {
                   <td className="num muted">
                     {teamTotal > 0 ? `${((r.total / teamTotal) * 100).toFixed(1)}%` : "—"}
                   </td>
+                  <td>
+                    <TargetProgress afypUsd={r.afyp} targetHkd={r.title ? (targetByTitle.get(r.title) ?? 0) : 0} width={90} />
+                  </td>
                 </tr>
               ))}
-              {team.data?.length === 0 && (
-                <tr><td colSpan={9} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
+              {teamRows.length === 0 && (
+                <tr><td colSpan={10} className="muted">{t("dashboard.noTeamProduction")}</td></tr>
               )}
             </tbody>
-            {team.data && team.data.length > 0 && (
+            {teamRows.length > 0 && (
               <tfoot>
                 <tr style={{ fontWeight: 700 }}>
                   <td colSpan={4}>{t("hierarchy.teamTotal")}</td>
@@ -217,6 +237,7 @@ export default function Dashboard() {
                   <td className="num">{money(teamOverride)}</td>
                   <td className="num">{money(teamTotal)}</td>
                   <td className="num muted">100%</td>
+                  <td></td>
                 </tr>
               </tfoot>
             )}
