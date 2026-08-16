@@ -376,8 +376,10 @@ class TitleTarget(Base):
     __tablename__ = "title_targets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[Title] = mapped_column(
-        Enum(Title, values_callable=lambda e: [m.value for m in e]), unique=True)
+    # Must match Agent.title's Enum config (plain Enum(Title), stores the member
+    # NAME) — both share one native `title` enum type on Postgres, so a
+    # values_callable mismatch here makes inserts fail in prod ("Failed to fetch").
+    title: Mapped[Title] = mapped_column(Enum(Title), unique=True)
     target_afyp: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
 
 
