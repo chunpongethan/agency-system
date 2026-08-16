@@ -340,7 +340,8 @@ class Case(Base):
     prospect_name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str | None] = mapped_column(String(160), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    follow_up: Mapped[str | None] = mapped_column(Text, nullable=True)  # 跟進事項 (next action)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)       # 備註 (remarks)
     client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     # Case categories (multi-select): 房產方案 / EAM / 分紅險 / 醫療重疾 / 香港身份 / 教育升學.
     case_types: Mapped[list | None] = mapped_column(JSON, nullable=True)

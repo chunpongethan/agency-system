@@ -9,7 +9,7 @@ import StageBadge from "../components/StageBadge";
 import type { CaseRow } from "../api/types";
 
 const BLANK = {
-  prospect_name: "", email: "", phone: "", notes: "",
+  prospect_name: "", email: "", phone: "", follow_up: "", notes: "",
   client_id: "", lead_agent_id: "", sdr_agent_id: "", closer_agent_id: "", stage: "lead",
   case_types: [] as string[],
 };
@@ -22,6 +22,7 @@ export default function Leads() {
   const [mineOnly, setMineOnly] = useState(false);
   const [showClosed, setShowClosed] = useState(false);
   const [q, setQ] = useState("");
+  const [view, setView] = useState<"board" | "table">("board");
   const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
@@ -59,6 +60,7 @@ export default function Leads() {
         prospect_name: form.prospect_name,
         email: form.email || undefined,
         phone: form.phone || undefined,
+        follow_up: form.follow_up || null,
         notes: form.notes || undefined,
         client_id: form.client_id ? Number(form.client_id) : null,
         case_types: form.case_types,
@@ -82,7 +84,8 @@ export default function Leads() {
     setEditId(c.id);
     setForm({
       prospect_name: c.prospect_name, email: c.email ?? "", phone: c.phone ?? "",
-      notes: c.notes ?? "", client_id: c.client_id ? String(c.client_id) : "",
+      follow_up: c.follow_up ?? "", notes: c.notes ?? "",
+      client_id: c.client_id ? String(c.client_id) : "",
       case_types: c.case_types ?? [],
       lead_agent_id: String(c.lead_agent_id),
       sdr_agent_id: c.sdr_agent_id ? String(c.sdr_agent_id) : "",
@@ -124,7 +127,15 @@ export default function Leads() {
           <h1 className="page-title">{t("leads.title")}</h1>
           <p className="page-sub">{t("leads.subtitle")}</p>
         </div>
-        <button className="primary" onClick={openCreate}>{t("leads.new")}</button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 2 }}>
+            <button className={view === "board" ? "primary" : "ghost"} style={{ padding: "4px 12px" }}
+              onClick={() => setView("board")}>{t("leads.viewBoard")}</button>
+            <button className={view === "table" ? "primary" : "ghost"} style={{ padding: "4px 12px" }}
+              onClick={() => setView("table")}>{t("leads.viewTable")}</button>
+          </div>
+          <button className="primary" onClick={openCreate}>{t("leads.new")}</button>
+        </div>
       </div>
 
       <div className="card">
@@ -148,6 +159,7 @@ export default function Leads() {
         {error && <div className="error" style={{ marginTop: 10 }}>{error}</div>}
       </div>
 
+      {view === "board" && (
       <div className="board">
         {LEAD_STAGES.map((stage) => (
           <div key={stage}
@@ -191,9 +203,9 @@ export default function Leads() {
                       <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
                     )}
                   </div>
-                  {c.notes && (
-                    <div className="muted" style={{ fontSize: 12, marginTop: 6, whiteSpace: "pre-wrap" }}>
-                      {c.notes}
+                  {c.follow_up && (
+                    <div style={{ fontSize: 12, marginTop: 6, whiteSpace: "pre-wrap" }}>
+                      <span className="muted">{t("leads.followUp")}：</span>{c.follow_up}
                     </div>
                   )}
                   {editable && (
@@ -226,6 +238,69 @@ export default function Leads() {
           </div>
         ))}
       </div>
+      )}
+
+      {view === "table" && (
+        <div className="card" style={{ overflowX: "auto" }}>
+          <table>
+            <thead>
+              <tr>
+                <th>{t("common.ref")}</th>
+                <th>{t("leads.thProspect")}</th>
+                <th>{t("leads.thTypes")}</th>
+                <th>{t("leads.thStage")}</th>
+                <th>{t("leads.followUp")}</th>
+                <th>{t("leads.thAgents")}</th>
+                <th>{t("leads.thOutcome")}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((c) => {
+                const editable = canEdit(c);
+                return (
+                  <tr key={c.id}>
+                    <td>{c.ref}</td>
+                    <td>{c.prospect_name}{c.client_name && (<><br /><Link to={`/clients/${c.client_id}`} className="muted" style={{ fontSize: 12 }}>{c.client_name}</Link></>)}</td>
+                    <td>{(c.case_types ?? []).map((ct) => <span key={ct} className="badge dc" style={{ marginRight: 4 }}>{caseTypeLabel(ct)}</span>)}</td>
+                    <td>{editable ? (
+                      <select value={c.stage} style={{ width: "auto", fontSize: 12, padding: "2px 6px" }}
+                        onChange={(e) => update.mutate({ id: c.id, patch: { stage: e.target.value } })}>
+                        {LEAD_STAGES.map((s) => <option key={s} value={s}>{stageLabel(s)}</option>)}
+                      </select>
+                    ) : <StageBadge stage={c.stage} />}</td>
+                    <td style={{ whiteSpace: "pre-wrap", maxWidth: 240, fontSize: 13 }}>{c.follow_up}</td>
+                    <td style={{ fontSize: 12 }}>{[c.lead_name, c.sdr_name, c.closer_name].filter(Boolean).join(" / ")}</td>
+                    <td>{c.outcome !== "open"
+                      ? <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
+                      : <span className="muted">{outcomeLabel("open")}</span>}</td>
+                    <td className="num" style={{ whiteSpace: "nowrap" }}>
+                      {editable && (
+                        <>
+                          {c.outcome === "open" ? (
+                            <>
+                              <button className="ghost" style={{ padding: "2px 8px" }} onClick={() => update.mutate({ id: c.id, patch: { outcome: "won" } })}>{t("leads.markWon")}</button>{" "}
+                              <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }} onClick={() => update.mutate({ id: c.id, patch: { outcome: "lost" } })}>{t("leads.markLost")}</button>
+                            </>
+                          ) : (
+                            <button className="ghost" style={{ padding: "2px 8px" }} onClick={() => update.mutate({ id: c.id, patch: { outcome: "open" } })}>{t("leads.reopen")}</button>
+                          )}{" "}
+                          <button className="ghost" style={{ padding: "2px 8px" }} onClick={() => openEdit(c)}>{t("common.edit")}</button>{" "}
+                          <button className="ghost" style={{ padding: "2px 8px", color: "var(--bad)" }}
+                            onClick={() => { if (window.confirm(t("leads.confirmDelete", { ref: c.ref }))) remove.mutate(c.id); }}>{t("common.delete")}</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr><td colSpan={8} className="muted">{t("leads.empty")}</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {showForm && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); save.mutate(); }}>
@@ -284,6 +359,8 @@ export default function Leads() {
               </label>
             ))}
           </div>
+          <label>{t("leads.followUp")}</label>
+          <textarea rows={2} value={form.follow_up} onChange={(e) => setForm({ ...form, follow_up: e.target.value })} />
           <label>{t("leads.notes")}</label>
           <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
