@@ -63,6 +63,8 @@ function NodeRow({
   const isCollapsed = collapsed.has(node.id);
   const isManager = node.role === "manager";
   const nodeTarget = node.title ? (targetByTitle.get(node.title) ?? 0) : 0;
+  // Managers are scored on their whole team's YTD AFYP; agents on their own.
+  const nodeAchievedAfyp = isManager ? node.teamAfyp : node.own.ytd.afyp;
   return (
     <li>
       <div className="node">
@@ -91,7 +93,7 @@ function NodeRow({
           {nodeTarget > 0 && (
             <span className="node-metric" onClick={(e) => e.stopPropagation()}>
               <span className="metric-label">{t("hierarchy.targetProgress")}</span>
-              <TargetProgress afypUsd={node.own.ytd.afyp} targetHkd={nodeTarget} width={80} />
+              <TargetProgress afypUsd={nodeAchievedAfyp} targetHkd={nodeTarget} width={80} />
             </span>
           )}
         </button>

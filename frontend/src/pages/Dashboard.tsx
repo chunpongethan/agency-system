@@ -40,6 +40,14 @@ export default function Dashboard() {
     queryFn: () => api.agencySummary(win.start, win.end),
     enabled: isManager,
   });
+  // A manager's target is measured against their whole team's YTD production
+  // (self + all downlines), independent of the month/YTD view toggle. The
+  // agency summary is already scoped to the manager's subtree.
+  const teamYtd = useQuery({
+    queryKey: ["teamYtdTarget", ytd.start, ytd.end],
+    queryFn: () => api.agencySummary(ytd.start, ytd.end),
+    enabled: isManager,
+  });
   const teamCards = useQuery({
     queryKey: ["teamScorecards"],
     queryFn: () => api.teamScorecards(),
@@ -56,9 +64,13 @@ export default function Dashboard() {
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
-  // Annual AFYP target progress for the agent's own 職級, in HKD.
+  // Annual AFYP target progress for the agent's 職級, in HKD. Agents are scored
+  // on their own YTD AFYP; managers on their whole team's YTD AFYP.
   const myTargetHkd = (titleTargets.data ?? []).find((tt) => tt.title === me!.title)?.target_afyp ?? 0;
-  const achievedHkd = scorecard.data ? convertCurrency(scorecard.data.periods.ytd.afyp, "USD", "HKD") : 0;
+  const ownAfypUsd = scorecard.data?.periods.ytd.afyp ?? 0;
+  const teamAfypUsd = (teamYtd.data ?? []).reduce((s, r) => s + r.afyp, 0);
+  const achievedAfypUsd = isManager ? teamAfypUsd : ownAfypUsd;
+  const achievedHkd = convertCurrency(achievedAfypUsd, "USD", "HKD");
   const targetRawPct = myTargetHkd > 0 ? (achievedHkd / myTargetHkd) * 100 : 0;
   const targetBarPct = Math.min(100, targetRawPct);
 
@@ -94,7 +106,7 @@ export default function Dashboard() {
             <>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 20, flexWrap: "wrap", marginTop: 14 }}>
                 <div>
-                  <div className="label">{t("dashboard.targetAchieved")}</div>
+                  <div className="label">{isManager ? t("dashboard.targetAchievedTeam") : t("dashboard.targetAchieved")}</div>
                   <div style={{ fontSize: 30, fontWeight: 800, color: "var(--good)", lineHeight: 1.1 }}>
                     {moneyFixed(achievedHkd, "HKD")}
                   </div>
