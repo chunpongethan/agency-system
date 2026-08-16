@@ -7,6 +7,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import { money, moneyFixed, convertCurrency, currentPeriod, yearToDate } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
 import { riskLabel } from "../i18n/labels";
+import { titleLabel } from "../lib/titles";
 import StatusBadge from "../components/StatusBadge";
 import Scorecard from "../components/Scorecard";
 
@@ -83,30 +84,48 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {scorecard.data && (
-        <div style={{ marginTop: 18 }}>
-          <Scorecard data={scorecard.data} />
+      {me!.title && (
+        <div className="card" style={{ marginTop: 18, borderColor: myTargetHkd > 0 && targetRawPct >= 100 ? "var(--good)" : undefined }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+            <h2 style={{ margin: 0 }}>{t("dashboard.targetTitle")}</h2>
+            <span className="badge title">{titleLabel(me!.title)}</span>
+          </div>
+          {myTargetHkd > 0 ? (
+            <>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 20, flexWrap: "wrap", marginTop: 14 }}>
+                <div>
+                  <div className="label">{t("dashboard.targetAchieved")}</div>
+                  <div style={{ fontSize: 30, fontWeight: 800, color: "var(--good)", lineHeight: 1.1 }}>
+                    {moneyFixed(achievedHkd, "HKD")}
+                  </div>
+                </div>
+                <div style={{ fontSize: 24, color: "var(--muted)", paddingBottom: 4 }}>/</div>
+                <div>
+                  <div className="label">{t("dashboard.targetGoal")}</div>
+                  <div style={{ fontSize: 30, fontWeight: 800, lineHeight: 1.1 }}>
+                    {moneyFixed(myTargetHkd, "HKD")}
+                  </div>
+                </div>
+                <div style={{ marginLeft: "auto", textAlign: "right" }}>
+                  <div className="label">{t("dashboard.targetProgress")}</div>
+                  <div style={{ fontSize: 34, fontWeight: 800, lineHeight: 1, color: targetRawPct >= 100 ? "var(--good)" : "var(--accent)" }}>
+                    {targetRawPct.toFixed(1)}%
+                  </div>
+                </div>
+              </div>
+              <div style={{ background: "var(--line)", borderRadius: 999, height: 14, overflow: "hidden", marginTop: 14 }}>
+                <div style={{ width: `${targetBarPct}%`, height: "100%", background: targetRawPct >= 100 ? "var(--good)" : "var(--accent)", borderRadius: 999, transition: "width .3s" }} />
+              </div>
+            </>
+          ) : (
+            <p className="muted" style={{ fontSize: 13, margin: "8px 0 0" }}>{t("dashboard.targetNone")}</p>
+          )}
         </div>
       )}
 
-      {me!.title && (
-        <div className="card" style={{ marginTop: 18 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
-            <h2>{t("dashboard.targetTitle")}</h2>
-            {myTargetHkd > 0 && (
-              <span className="muted" style={{ fontSize: 13 }}>
-                {t("dashboard.targetOf", { achieved: moneyFixed(achievedHkd, "HKD"), target: moneyFixed(myTargetHkd, "HKD") })}
-                {" · "}<strong style={{ color: "var(--good)" }}>{targetRawPct.toFixed(1)}%</strong>
-              </span>
-            )}
-          </div>
-          {myTargetHkd > 0 ? (
-            <div style={{ background: "var(--line)", borderRadius: 999, height: 12, overflow: "hidden", marginTop: 10 }}>
-              <div style={{ width: `${targetBarPct}%`, height: "100%", background: "var(--good)", borderRadius: 999, transition: "width .3s" }} />
-            </div>
-          ) : (
-            <p className="muted" style={{ fontSize: 13, margin: "4px 0 0" }}>{t("dashboard.targetNone")}</p>
-          )}
+      {scorecard.data && (
+        <div style={{ marginTop: 18 }}>
+          <Scorecard data={scorecard.data} />
         </div>
       )}
 

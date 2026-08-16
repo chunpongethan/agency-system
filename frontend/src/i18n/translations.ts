@@ -554,7 +554,12 @@ export const translations: Record<string, Translation> = {
   // --- Dashboard: annual AFYP target progress --------------------------------
   "dashboard.targetTitle": { "zh-Hant": "年度目標 AFYP 進度", en: "Annual AFYP target progress" },
   "dashboard.targetOf": { "zh-Hant": "{achieved} / {target}", en: "{achieved} / {target}" },
+  "dashboard.targetAchieved": { "zh-Hant": "已達成 AFYP", en: "Achieved AFYP" },
+  "dashboard.targetGoal": { "zh-Hant": "年度目標", en: "Annual target" },
+  "dashboard.targetProgress": { "zh-Hant": "達成率", en: "Progress" },
   "dashboard.targetNone": { "zh-Hant": "尚未為您的職級設定年度目標。", en: "No annual target set for your rank yet." },
+  "reports.targetProgress": { "zh-Hant": "目標達成", en: "Target progress" },
+  "hierarchy.targetProgress": { "zh-Hant": "目標達成", en: "Target progress" },
 
   // --- Leads / sales pipeline ------------------------------------------------
   "leads.title": { "zh-Hant": "潛在客戶管理", en: "Lead Management" },

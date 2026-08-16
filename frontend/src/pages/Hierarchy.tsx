@@ -5,6 +5,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import { money } from "../lib/format";
 import { titleLabel } from "../lib/titles";
 import { roleLabel } from "../i18n/labels";
+import TargetProgress from "../components/TargetProgress";
 import type { Agent, TeamProductionRow, PeriodProduction } from "../api/types";
 
 const ZERO: PeriodProduction = { afyp: 0, commission: 0, override: 0 };
@@ -51,15 +52,17 @@ function flatten(n: TreeNode, out: TreeNode[] = []): TreeNode[] {
 }
 
 function NodeRow({
-  node, collapsed, toggle, selectedId, onSelect,
+  node, collapsed, toggle, selectedId, onSelect, targetByTitle,
 }: {
   node: TreeNode; collapsed: Set<number>; toggle: (id: number) => void;
   selectedId: number | null; onSelect: (id: number) => void;
+  targetByTitle: Map<string, number>;
 }) {
   const { t } = useI18n();
   const hasChildren = node.children.length > 0;
   const isCollapsed = collapsed.has(node.id);
   const isManager = node.role === "manager";
+  const nodeTarget = node.title ? (targetByTitle.get(node.title) ?? 0) : 0;
   return (
     <li>
       <div className="node">
@@ -85,13 +88,19 @@ function NodeRow({
           <span className="node-metric">
             <span className="metric-label">{t("hierarchy.teamOverride")}</span> {money(node.teamOverride)}
           </span>
+          {nodeTarget > 0 && (
+            <span className="node-metric" onClick={(e) => e.stopPropagation()}>
+              <span className="metric-label">{t("hierarchy.targetProgress")}</span>
+              <TargetProgress afypUsd={node.own.ytd.afyp} targetHkd={nodeTarget} width={80} />
+            </span>
+          )}
         </button>
       </div>
       {hasChildren && !isCollapsed && (
         <ul>
           {node.children.map((c) => (
             <NodeRow key={c.id} node={c} collapsed={collapsed} toggle={toggle}
-              selectedId={selectedId} onSelect={onSelect} />
+              selectedId={selectedId} onSelect={onSelect} targetByTitle={targetByTitle} />
           ))}
         </ul>
       )}
@@ -172,10 +181,13 @@ export default function Hierarchy() {
   const { t } = useI18n();
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
   const production = useQuery({ queryKey: ["teamProduction"], queryFn: () => api.teamProduction() });
+  const titleTargets = useQuery({ queryKey: ["titleTargets"], queryFn: () => api.titleTargets() });
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set());
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   if (agents.isLoading || production.isLoading) return <div className="spinner">{t("common.loading")}</div>;
+
+  const targetByTitle = new Map((titleTargets.data ?? []).map((tt) => [tt.title, tt.target_afyp]));
 
   const prodMap = new Map<number, TeamProductionRow>(
     (production.data ?? []).map((r) => [r.agent_id, r]),
@@ -217,7 +229,7 @@ export default function Hierarchy() {
         <ul>
           {roots.map((r) => (
             <NodeRow key={r.id} node={r} collapsed={collapsed} toggle={toggle}
-              selectedId={selectedId} onSelect={setSelectedId} />
+              selectedId={selectedId} onSelect={setSelectedId} targetByTitle={targetByTitle} />
           ))}
         </ul>
       </div>

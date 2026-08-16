@@ -8,6 +8,7 @@ import { money, pct, currentPeriod } from "../lib/format";
 import { productDetails } from "../lib/agency";
 import { productTypeLabel, kindLabel } from "../i18n/labels";
 import DataTable from "../components/DataTable";
+import TargetProgress from "../components/TargetProgress";
 import type { AgencySummaryRow, Product } from "../api/types";
 
 export default function Reports() {
@@ -34,6 +35,17 @@ export default function Reports() {
     queryKey: ["report-mix", start, end],
     queryFn: () => api.productMix(start, end),
   });
+  const titleTargets = useQuery({ queryKey: ["titleTargets"], queryFn: () => api.titleTargets() });
+
+  // agent_id → 職級, and 職級 → annual HKD target, to score each summary row.
+  const titleByAgent = useMemo(
+    () => new Map((agents.data ?? []).map((a) => [a.id, a.title])),
+    [agents.data],
+  );
+  const targetByTitle = useMemo(
+    () => new Map((titleTargets.data ?? []).map((tt) => [tt.title, tt.target_afyp])),
+    [titleTargets.data],
+  );
 
   const qsWin = `start=${start}&end=${end}&lang=${lang}&currency=${currency}`;
   const qsSum = `start=${sumStart}&end=${sumEnd}&lang=${lang}&currency=${currency}`;
@@ -58,7 +70,20 @@ export default function Reports() {
       header: t("reports.total"), accessorKey: "total", meta: { num: true },
       cell: (ctx) => money(ctx.getValue() as number),
     },
-  ], [t]);
+    {
+      header: t("reports.targetProgress"), id: "targetProgress",
+      accessorFn: (r) => {
+        const title = titleByAgent.get(r.agent_id);
+        return title ? (targetByTitle.get(title) ?? 0) : 0;
+      },
+      cell: (ctx) => {
+        const r = ctx.row.original;
+        const title = titleByAgent.get(r.agent_id);
+        const target = title ? (targetByTitle.get(title) ?? 0) : 0;
+        return <TargetProgress afypUsd={r.afyp} targetHkd={target} width={100} />;
+      },
+    },
+  ], [t, titleByAgent, targetByTitle]);
 
   return (
     <div>
