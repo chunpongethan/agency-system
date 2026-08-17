@@ -20,6 +20,16 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 .app { display: flex; min-height: 100vh; }
+
+/* Mobile top bar + drawer backdrop — hidden on desktop, shown under the mobile
+   media query at the bottom of this file. */
+.topbar { display: none; align-items: center; gap: 10px; background: var(--brand);
+  color: #fff; padding: 10px 14px; position: sticky; top: 0; z-index: 30; }
+.topbar .brand { font-weight: 700; font-size: 15px; color: #fff; }
+.hamburger { background: none; border: none; color: #fff; font-size: 22px; line-height: 1;
+  cursor: pointer; padding: 4px 8px; }
+.backdrop { display: none; }
+
 .sidebar {
   width: 220px; background: var(--brand); color: #e5e7eb;
   display: flex; flex-direction: column; padding: 18px 0; flex-shrink: 0;
@@ -131,8 +141,13 @@ button.ghost:hover { background: #f9fafb; }
 .year-cell input { padding: 6px 8px; font-size: 13px; }
 
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
-.row > * { flex: 1; }
-.row > .shrink { flex: 0; }
+/* Basis of 200px: children grow to fill wide rows (desktop unchanged) but wrap to
+   full width on narrow screens instead of squashing to unusable inputs. */
+.row > * { flex: 1 1 200px; }
+.row > .shrink { flex: 0 0 auto; }
+
+/* Wrap wide tables so they scroll inside their own box, not the whole page. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
 .error { background: #fef2f2; color: var(--bad); padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
 .success { background: #ecfdf5; color: var(--good); padding: 10px 12px; border-radius: 6px; font-size: 13px; margin: 10px 0; }
@@ -141,7 +156,8 @@ button.ghost:hover { background: #f9fafb; }
 
 /* Login */
 .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; }
-.login-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 32px; width: 360px; }
+.login-wrap { padding: 16px; }
+.login-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 32px; width: 100%; max-width: 360px; }
 .login-card h1 { font-size: 20px; margin: 0 0 4px; }
 .login-card p.hint { color: var(--muted); font-size: 12px; margin: 16px 0 0; }
 
@@ -181,3 +197,52 @@ button.ghost:hover { background: #f9fafb; }
 .node .node-meta { font-size: 11px; }
 .node-metric { font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; margin-left: 4px; }
 .node-metric .metric-label { font-size: 10px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .03em; margin-right: 3px; }
+
+/* ============================ Mobile (H5) ============================ */
+@media (max-width: 768px) {
+  .app { flex-direction: column; }
+  .topbar { display: flex; }
+
+  /* Sidebar becomes an off-canvas drawer, toggled by the hamburger. */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 82vw; max-width: 300px;
+    transform: translateX(-100%); transition: transform .25s ease; z-index: 50;
+    overflow-y: auto; box-shadow: 2px 0 12px rgba(0,0,0,.25);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .backdrop { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
+
+  .main { padding: 14px 12px; }
+  .page-title { font-size: 19px; }
+  .page-sub { margin-bottom: 16px; }
+  .detail-stats { grid-template-columns: 1fr 1fr; }
+
+  /* Any non-card-ified table scrolls horizontally inside its own box instead of
+     stretching the whole page; nowrap keeps columns intact so the scroll works. */
+  table:not(.cards-on-mobile) {
+    display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch;
+  }
+
+  /* Bigger tap targets; 16px inputs stop iOS from zooming on focus. */
+  input, select, textarea { font-size: 16px; min-height: 42px; }
+  button.primary, button.ghost, .seg button { min-height: 40px; }
+
+  /* Card-per-row tables (opt-in via .cards-on-mobile + per-cell data-label). */
+  .cards-on-mobile thead { display: none; }
+  .cards-on-mobile, .cards-on-mobile tbody, .cards-on-mobile tfoot,
+  .cards-on-mobile tr, .cards-on-mobile td { display: block; width: 100%; }
+  .cards-on-mobile tr {
+    border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px;
+    padding: 4px 10px; background: #fff;
+  }
+  .cards-on-mobile td {
+    display: flex; justify-content: space-between; gap: 12px; text-align: right;
+    border-bottom: 1px solid var(--line); padding: 7px 0;
+  }
+  .cards-on-mobile td:last-child { border-bottom: none; }
+  .cards-on-mobile td::before {
+    content: attr(data-label); font-weight: 600; color: var(--muted);
+    text-align: left; white-space: nowrap;
+  }
+  .cards-on-mobile tbody tr:hover { background: #fff; }
+}

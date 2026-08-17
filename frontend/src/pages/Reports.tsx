@@ -323,6 +323,7 @@ export default function Reports() {
           data={summaryRows}
           columns={summaryColumns}
           empty={t("reports.noData")}
+          cardsOnMobile
         />
       </div>
     </div>

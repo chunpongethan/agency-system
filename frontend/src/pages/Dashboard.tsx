@@ -193,8 +193,8 @@ export default function Dashboard() {
             </span>
           </div>
           {(team.isLoading || roster.isLoading) && <div className="spinner">{t("common.loading")}</div>}
-          <div style={{ overflowX: "auto" }}>
-          <table>
+          <div className="table-scroll">
+          <table className="cards-on-mobile">
             <thead>
               <tr>
                 <th>{t("dashboard.thRank")}</th><th>{t("common.agent")}</th><th>{t("common.code")}</th><th>{t("common.level")}</th>
@@ -208,18 +208,18 @@ export default function Dashboard() {
             <tbody>
               {teamRows.map((r, i) => (
                 <tr key={r.agent_id}>
-                  <td className="muted">{i + 1}</td>
-                  <td>{r.name}{r.agent_id === agentId ? t("dashboard.you") : ""}</td>
-                  <td className="muted">{r.code}</td>
-                  <td>L{r.level}</td>
-                  <td className="num">{money(r.afyp)}</td>
-                  <td className="num">{money(r.direct)}</td>
-                  <td className="num">{money(r.override)}</td>
-                  <td className="num">{money(r.total)}</td>
-                  <td className="num muted">
+                  <td className="muted" data-label={t("dashboard.thRank")}>{i + 1}</td>
+                  <td data-label={t("common.agent")}>{r.name}{r.agent_id === agentId ? t("dashboard.you") : ""}</td>
+                  <td className="muted" data-label={t("common.code")}>{r.code}</td>
+                  <td data-label={t("common.level")}>L{r.level}</td>
+                  <td className="num" data-label={t("common.afyp")}>{money(r.afyp)}</td>
+                  <td className="num" data-label={t("common.commission")}>{money(r.direct)}</td>
+                  <td className="num" data-label={t("common.override")}>{money(r.override)}</td>
+                  <td className="num" data-label={t("dashboard.thProduction")}>{money(r.total)}</td>
+                  <td className="num muted" data-label={t("dashboard.thShare")}>
                     {teamTotal > 0 ? `${((r.total / teamTotal) * 100).toFixed(1)}%` : "—"}
                   </td>
-                  <td>
+                  <td data-label={t("dashboard.thTarget")}>
                     <TargetProgress afypUsd={r.afyp} targetHkd={r.title ? (targetByTitle.get(r.title) ?? 0) : 0} width={90} />
                   </td>
                 </tr>
@@ -232,11 +232,11 @@ export default function Dashboard() {
               <tfoot>
                 <tr style={{ fontWeight: 700 }}>
                   <td colSpan={4}>{t("hierarchy.teamTotal")}</td>
-                  <td className="num">{money(teamAfyp)}</td>
-                  <td className="num">{money(teamDirect)}</td>
-                  <td className="num">{money(teamOverride)}</td>
-                  <td className="num">{money(teamTotal)}</td>
-                  <td className="num muted">100%</td>
+                  <td className="num" data-label={t("common.afyp")}>{money(teamAfyp)}</td>
+                  <td className="num" data-label={t("common.commission")}>{money(teamDirect)}</td>
+                  <td className="num" data-label={t("common.override")}>{money(teamOverride)}</td>
+                  <td className="num" data-label={t("dashboard.thProduction")}>{money(teamTotal)}</td>
+                  <td className="num muted" data-label={t("dashboard.thShare")}>100%</td>
                   <td></td>
                 </tr>
               </tfoot>

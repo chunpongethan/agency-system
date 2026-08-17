@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { titleLabel } from "../lib/titles";
@@ -13,11 +14,21 @@ export default function Layout() {
   const isManager = me?.role === "manager";
   const isSeller = me?.role === "agent" || isManager; // admins don't sell
 
+  // Mobile nav drawer (desktop ignores this — the sidebar is always visible there).
+  const [navOpen, setNavOpen] = useState(false);
+  const location = useLocation();
+  useEffect(() => { setNavOpen(false); }, [location.pathname]);
+
   return (
     <div className="app">
-      <aside className="sidebar">
+      <div className="topbar">
+        <button className="hamburger" aria-label="menu" onClick={() => setNavOpen((v) => !v)}>☰</button>
         <div className="brand">{t("app.brand")}</div>
-        <nav>
+      </div>
+      {navOpen && <div className="backdrop" onClick={() => setNavOpen(false)} />}
+      <aside className={`sidebar ${navOpen ? "open" : ""}`}>
+        <div className="brand">{t("app.brand")}</div>
+        <nav onClick={() => setNavOpen(false)}>
           {isSeller && <NavLink to="/" end>{t("nav.dashboard")}</NavLink>}
           {(isSeller || isAdmin) && <NavLink to="/clients">{t("nav.clients")}</NavLink>}
           {(isSeller || isAdmin) && <NavLink to="/leads">{t("nav.leads")}</NavLink>}

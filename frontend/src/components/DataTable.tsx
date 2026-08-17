@@ -13,10 +13,12 @@ interface Props<T> {
   data: T[];
   columns: ColumnDef<T, any>[];
   empty?: string;
+  // On mobile, render each row as a stacked card (labels from column headers).
+  cardsOnMobile?: boolean;
 }
 
 // A small sortable grid built on TanStack Table, used for ledger/summary grids.
-export default function DataTable<T>({ data, columns, empty }: Props<T>) {
+export default function DataTable<T>({ data, columns, empty, cardsOnMobile }: Props<T>) {
   const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const table = useReactTable({
@@ -29,7 +31,8 @@ export default function DataTable<T>({ data, columns, empty }: Props<T>) {
   });
 
   return (
-    <table>
+    <div className="table-scroll">
+    <table className={cardsOnMobile ? "cards-on-mobile" : ""}>
       <thead>
         {table.getHeaderGroups().map((hg) => (
           <tr key={hg.id}>
@@ -50,14 +53,18 @@ export default function DataTable<T>({ data, columns, empty }: Props<T>) {
       <tbody>
         {table.getRowModel().rows.map((row) => (
           <tr key={row.id}>
-            {row.getVisibleCells().map((cell) => (
-              <td
-                key={cell.id}
-                className={(cell.column.columnDef.meta as { num?: boolean })?.num ? "num" : ""}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
+            {row.getVisibleCells().map((cell) => {
+              const header = cell.column.columnDef.header;
+              return (
+                <td
+                  key={cell.id}
+                  data-label={typeof header === "string" ? header : undefined}
+                  className={(cell.column.columnDef.meta as { num?: boolean })?.num ? "num" : ""}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              );
+            })}
           </tr>
         ))}
         {data.length === 0 && (
@@ -69,5 +76,6 @@ export default function DataTable<T>({ data, columns, empty }: Props<T>) {
         )}
       </tbody>
     </table>
+    </div>
   );
 }
