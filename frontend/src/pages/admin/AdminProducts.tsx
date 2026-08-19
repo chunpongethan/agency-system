@@ -143,7 +143,7 @@ function ProductFields({ value, onChange, isEdit }:
             {SCHEDULES.map((s) => <option key={s} value={s}>{scheduleLabel(s)}</option>)}
           </select></div>
       </div>
-      {value.commission_schedule === "trail" && (
+      {!isIns && value.commission_schedule === "trail" && (
         <div className="row">
           <div><label>{t("admin.products.frequency")}</label>
             <select value={value.trail_frequency}
@@ -154,6 +154,9 @@ function ProductFields({ value, onChange, isEdit }:
             <input type="number" value={value.trail_periods}
               onChange={(e) => onChange({ ...value, trail_periods: e.target.value })} /></div>
         </div>
+      )}
+      {isIns && value.commission_schedule === "trail" && (
+        <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>{t("admin.products.perYearTrailHint")}</p>
       )}
       {isIns && (
         <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)" }}>

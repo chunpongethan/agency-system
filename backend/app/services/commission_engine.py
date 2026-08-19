@@ -40,6 +40,38 @@ def base_rate_for(session: Session, product: Product, company: str) -> Decimal:
     ).scalars().first()
     return pr.base_commission_rate if pr is not None else product.base_commission_rate
 
+
+def year_rates_for(session: Session, product: Product, company: str) -> list[Decimal]:
+    """Per-year commission rates (Yr1..YrN) for a per-year TRAIL product — i.e. an
+    insurance product with a Yr1..Yr10 schedule set to 分期. Period k pays
+    `rates[k]` × notional, one annual installment per year, trimmed to the last
+    non-zero year. Empty for any product that is NOT a per-year trail (upfront
+    products, and flat trail funds with no year schedule), so callers fall back to
+    the flat base rate. The company's schedule falls back to the product's per year."""
+    if product.commission_schedule != CommissionSchedule.TRAIL:
+        return []
+    pr = session.execute(
+        select(ProductRate).where(ProductRate.product_id == product.id,
+                                  ProductRate.company == company)
+    ).scalars().first()
+    company_years = pr.year_commissions if (pr and pr.year_commissions) else None
+    base_years = list(product.year_commissions or [])
+    length = max(len(company_years or []), len(base_years))
+
+    def rate_at(k: int) -> Decimal:
+        v = company_years[k] if (company_years and k < len(company_years)) else None
+        if v in (None, "") and k < len(base_years):
+            v = base_years[k]
+        try:
+            return Decimal(str(v if v not in (None, "") else 0))
+        except Exception:
+            return Decimal("0")
+
+    rates = [rate_at(k) for k in range(length)]
+    while rates and rates[-1] == 0:      # trim trailing zero years
+        rates.pop()
+    return rates
+
 CENTS = Decimal("0.01")
 
 _FREQ_MONTHS = {
@@ -108,9 +140,16 @@ def _rules_for(session: Session, product_type, on: date,
     return rules
 
 
-def scheduled_periods(product: Product, txn: Transaction) -> list[tuple[int, date]]:
+def scheduled_periods(session: Session, product: Product, txn: Transaction) -> list[tuple[int, date]]:
     """All (period_index, accrual_date) an entry could exist for this product."""
     if product.commission_schedule == CommissionSchedule.TRAIL:
+        closer = session.get(Agent, txn.agent_id)
+        company = closer.company if closer else "heritree"
+        year_rates = year_rates_for(session, product, company)
+        if year_rates:
+            # Per-year trail (insurance): one ANNUAL installment per Yr1..YrN.
+            return [(k, _add_months(txn.trade_date, 12 * k)) for k in range(len(year_rates))]
+        # Flat trail (e.g. funds): `trail_periods` periods at `trail_frequency`.
         n = product.trail_periods or 1
         months = _FREQ_MONTHS.get(product.trail_frequency, 1)
         return [(k, _add_months(txn.trade_date, months * k)) for k in range(n)]
@@ -118,10 +157,10 @@ def scheduled_periods(product: Product, txn: Transaction) -> list[tuple[int, dat
     return [(0, txn.trade_date)]
 
 
-def _due_periods(product: Product, txn: Transaction, as_of: date) -> list[tuple[int, date]]:
+def _due_periods(session: Session, product: Product, txn: Transaction, as_of: date) -> list[tuple[int, date]]:
     """Periods that have come due by `as_of`. Period 0 is always due on settle."""
     due = []
-    for k, d in scheduled_periods(product, txn):
+    for k, d in scheduled_periods(session, product, txn):
         if k == 0 or d <= as_of:
             due.append((k, d))
     return due
@@ -197,9 +236,15 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     out: list[CommissionEntry] = []
 
     # The full direct commission is the base every upline override is a % of.
-    # The base rate is the closing agent's company's rate for this product.
+    # The base rate is the closing agent's company's rate for this product — a
+    # per-year rate for a per-year trail (insurance), else the flat base rate.
     closer = session.get(Agent, txn.agent_id)
-    base_rate = base_rate_for(session, product, closer.company if closer else "heritree")
+    company = closer.company if closer else "heritree"
+    year_rates = year_rates_for(session, product, company)
+    if year_rates:
+        base_rate = year_rates[period_index] if period_index < len(year_rates) else Decimal("0")
+    else:
+        base_rate = base_rate_for(session, product, company)
     base_direct = _money(txn.notional * base_rate)
 
     shares, lead_id = _role_shares(txn)
@@ -268,7 +313,10 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
     """
     lines: list[dict] = []
     closer = session.get(Agent, closing_id)
-    base_rate = base_rate_for(session, product, closer.company if closer else "heritree")
+    company = closer.company if closer else "heritree"
+    # Preview mirrors period 0 (Yr1): the first year's rate for a per-year trail.
+    year_rates = year_rates_for(session, product, company)
+    base_rate = year_rates[0] if year_rates else base_rate_for(session, product, company)
     base_direct = _money(notional * base_rate)
 
     shares: dict[int, Decimal] = {}
@@ -324,7 +372,7 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
 def _build_all(session: Session, txn: Transaction, product: Product,
                as_of: date, reversal: bool) -> list[CommissionEntry]:
     out: list[CommissionEntry] = []
-    for period_index, accrual_date in _due_periods(product, txn, as_of):
+    for period_index, accrual_date in _due_periods(session, product, txn, as_of):
         out += _period_entries(
             session, txn, product, period_index, accrual_date, reversal=reversal
         )

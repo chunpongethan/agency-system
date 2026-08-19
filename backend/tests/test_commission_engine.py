@@ -91,3 +91,30 @@ def test_cancelled_txn_clears_entries(db):
     entries = commission_engine.compute_for_transaction(db, t)
     assert entries == []
     assert db.query(CommissionEntry).filter_by(transaction_id=t.id).count() == 0
+
+
+def test_per_year_trail_insurance(db):
+    """An insurance product with a Yr1..Yr3 schedule set to 分期 (TRAIL) pays each
+    year's rate as an annual installment (period 0 = Yr1 at settle, then yearly)."""
+    from app.models.models import CommissionSchedule
+    p = Product(code="PY", name="PerYear", type=ProductType.INSURANCE,
+                base_commission_rate=Decimal("0.20"),
+                commission_schedule=CommissionSchedule.TRAIL,
+                year_commissions=["0.20", "0.10", "0.05"])
+    db.add(p); db.flush()
+    t = Transaction(ref="TPY", client_id=db._client.id, product_id=p.id,
+                    agent_id=db._agents["l4"].id, notional=Decimal("1000000"),
+                    status=TxnStatus.APPROVED, trade_date=date(2024, 1, 1))
+    db.add(t); db.flush()
+
+    # At settle only period 0 (Yr1) is due.
+    e0 = commission_engine.compute_for_transaction(db, t, as_of=date(2024, 1, 1))
+    d0 = [e for e in e0 if e.kind == CommissionKind.DIRECT and not e.is_reversal]
+    assert len(d0) == 1 and d0[0].period_index == 0 and d0[0].amount == Decimal("200000.00")
+
+    # Three years on, Yr1..Yr3 have all come due: 200k, 100k, 50k.
+    e3 = commission_engine.compute_for_transaction(db, t, as_of=date(2026, 6, 1))
+    d3 = sorted([e for e in e3 if e.kind == CommissionKind.DIRECT and not e.is_reversal],
+                key=lambda e: e.period_index)
+    assert [e.period_index for e in d3] == [0, 1, 2]
+    assert [float(e.amount) for e in d3] == [200000.0, 100000.0, 50000.0]

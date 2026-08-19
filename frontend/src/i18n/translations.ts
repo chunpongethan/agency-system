@@ -479,6 +479,7 @@ export const translations: Record<string, Translation> = {
   "admin.products.periods": { "zh-Hant": "期數", en: "Periods" },
   "admin.products.insDetails": { "zh-Hant": "保險詳情", en: "Insurance details" },
   "admin.products.insBaseNote": { "zh-Hant": "基本（一次性）比率設定為下方的第 1 年佣金。", en: "The base (upfront) rate is set to the Yr1 commission below." },
+  "admin.products.perYearTrailHint": { "zh-Hant": "分期：按下方 Yr1–Yr10 逐年發放佣金（每年一期，直到最後一個非零年份）。", en: "分期 (trail): pays each year's rate below as an annual installment (one per year, through the last non-zero year)." },
   "admin.products.paymentTenor": { "zh-Hant": "供款年期（年）", en: "Payment tenor (years)" },
   "admin.products.ageMin": { "zh-Hant": "年齡範圍 — 最小", en: "Age range — min" },
   "admin.products.ageMax": { "zh-Hant": "年齡範圍 — 最大", en: "Age range — max" },
