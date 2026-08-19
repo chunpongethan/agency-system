@@ -13,7 +13,7 @@ from decimal import Decimal
 
 from sqlalchemy import (
     String, Integer, ForeignKey, Numeric, DateTime, Date, Enum, Text, Boolean, JSON,
-    LargeBinary,
+    LargeBinary, UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -111,6 +111,9 @@ class Agent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     code: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    # Tenant company, derived from the code prefix ("cpm..." -> cpm, else heritree).
+    # Plain string (not an Enum) to avoid native-Postgres-enum coupling.
+    company: Mapped[str] = mapped_column(String(20), default="heritree", index=True)
     name: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(160), unique=True)
     # Depth in the tree (1 = top). Plain integer: hierarchy depth is unbounded.
@@ -206,6 +209,7 @@ class OverrideRule(Base):
     __tablename__ = "override_rules"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    company: Mapped[str] = mapped_column(String(20), default="heritree", index=True)
     product_type: Mapped[ProductType] = mapped_column(Enum(ProductType))
     level_gap: Mapped[int] = mapped_column(Integer)  # 1..4
     override_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4))
@@ -297,6 +301,7 @@ class Period(Base):
     __tablename__ = "periods"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    company: Mapped[str] = mapped_column(String(20), default="heritree", index=True)
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)
     is_locked: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -310,6 +315,7 @@ class Payout(Base):
     __tablename__ = "payouts"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    company: Mapped[str] = mapped_column(String(20), default="heritree", index=True)
     year: Mapped[int] = mapped_column(Integer)
     month: Mapped[int] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
@@ -374,12 +380,15 @@ class TitleTarget(Base):
     """Annual AFYP target for a business rank (職級), set by an admin. Agents see
     their own title's target progress on the dashboard."""
     __tablename__ = "title_targets"
+    # One target per (company, 職級).
+    __table_args__ = (UniqueConstraint("company", "title", name="uq_title_target_company_title"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    company: Mapped[str] = mapped_column(String(20), default="heritree", index=True)
     # Must match Agent.title's Enum config (plain Enum(Title), stores the member
     # NAME) — both share one native `title` enum type on Postgres, so a
     # values_callable mismatch here makes inserts fail in prod ("Failed to fetch").
-    title: Mapped[Title] = mapped_column(Enum(Title), unique=True)
+    title: Mapped[Title] = mapped_column(Enum(Title))
     target_afyp: Mapped[Decimal] = mapped_column(Numeric(18, 2), default=Decimal("0"))
 
 

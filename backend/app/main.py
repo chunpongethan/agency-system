@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session, sessionmaker, aliased
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
-    TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, now_utc,
+    TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -54,13 +54,104 @@ def _ensure_columns() -> None:
     SQLite (dev) and Postgres (prod)."""
     from sqlalchemy import inspect as _sa_inspect, text
     insp = _sa_inspect(engine)
-    existing = {c["name"] for c in insp.get_columns("agents")}
-    if "last_login_at" not in existing:
+
+    def cols(table: str) -> set[str]:
+        try:
+            return {c["name"] for c in insp.get_columns(table)}
+        except Exception:
+            return set()
+
+    ddl: list[str] = []
+    if "last_login_at" not in cols("agents"):
+        ddl.append("ALTER TABLE agents ADD COLUMN last_login_at TIMESTAMP")
+    # Tenant company column on the agent + the four global config/aggregate tables.
+    agents_got_company = "company" not in cols("agents")
+    for table in ("agents", "override_rules", "title_targets", "payouts", "periods"):
+        if "company" not in cols(table):
+            ddl.append(f"ALTER TABLE {table} ADD COLUMN company VARCHAR(20) DEFAULT 'heritree'")
+    if ddl:
         with engine.begin() as conn:
-            conn.execute(text("ALTER TABLE agents ADD COLUMN last_login_at TIMESTAMP"))
+            for stmt in ddl:
+                conn.execute(text(stmt))
+    # Backfill each existing agent's company from its code prefix.
+    if agents_got_company:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "UPDATE agents SET company = CASE WHEN lower(code) LIKE 'cpm%' "
+                "THEN 'cpm' ELSE 'heritree' END"
+            ))
+    _drop_legacy_title_unique(insp)
+
+
+def _drop_legacy_title_unique(insp) -> None:
+    """The original title_targets had UNIQUE(title); per-company targets need that
+    gone (uniqueness is now (company, title))."""
+    from sqlalchemy import text
+    if engine.dialect.name == "sqlite":
+        # SQLAlchemy hides SQLite auto-indexes, so probe PRAGMA directly for a
+        # unique index over exactly [title] (the legacy one, not the new composite).
+        with engine.begin() as conn:
+            legacy = False
+            for row in conn.execute(text("PRAGMA index_list(title_targets)")):
+                name, unique = row[1], row[2]
+                if not unique:
+                    continue
+                icols = [r[2] for r in conn.execute(text(f"PRAGMA index_info('{name}')"))]
+                if icols == ["title"]:
+                    legacy = True
+                    break
+            if not legacy:
+                return
+            # SQLite can't drop an inline UNIQUE (auto-index) — rebuild the table.
+            conn.execute(text("ALTER TABLE title_targets RENAME TO _title_targets_old"))
+        TitleTarget.__table__.create(engine)
+        with engine.begin() as conn:
+            conn.execute(text(
+                "INSERT INTO title_targets (id, company, title, target_afyp) "
+                "SELECT id, COALESCE(company,'heritree'), title, target_afyp FROM _title_targets_old"
+            ))
+            conn.execute(text("DROP TABLE _title_targets_old"))
+        return
+    # Postgres: drop the named single-column unique constraint/index if present.
+    try:
+        legacy = [u for u in insp.get_unique_constraints("title_targets")
+                  if u.get("column_names") == ["title"] and u.get("name")]
+        legacy += [i for i in insp.get_indexes("title_targets")
+                   if i.get("unique") and i.get("column_names") == ["title"] and i.get("name")]
+    except Exception:
+        return
+    with engine.begin() as conn:
+        for u in legacy:
+            name = u["name"]
+            try:
+                conn.execute(text(f'ALTER TABLE title_targets DROP CONSTRAINT IF EXISTS "{name}"'))
+            except Exception:
+                try:
+                    conn.execute(text(f'DROP INDEX IF EXISTS "{name}"'))
+                except Exception:
+                    pass
 
 
 _ensure_columns()
+
+
+def _seed_cpm_override_rules() -> None:
+    """So CPM 代理 commissions compute out-of-the-box, copy Heritree's current
+    override-rule set into CPM once, when CPM has none yet."""
+    with SessionLocal() as db:
+        has_cpm = db.execute(select(OverrideRule).where(OverrideRule.company == "cpm")).first()
+        if has_cpm:
+            return
+        heritree = db.execute(select(OverrideRule).where(OverrideRule.company == "heritree")).scalars().all()
+        for r in heritree:
+            db.add(OverrideRule(company="cpm", product_type=r.product_type,
+                                level_gap=r.level_gap, override_rate=r.override_rate,
+                                valid_from=r.valid_from, valid_to=r.valid_to))
+        if heritree:
+            db.commit()
+
+
+_seed_cpm_override_rules()
 
 
 def _seed_training_categories() -> None:
@@ -184,6 +275,16 @@ def require_admin(current: Agent = Depends(get_current_agent)) -> Agent:
     return current
 
 
+def _guard_company(db: Session, current: Agent, agent_id: int | None) -> None:
+    """For a company-scoped admin acting on a specific agent's data: block the op
+    if that agent is in a different company. A no-op for same-company / self."""
+    if agent_id is None:
+        return
+    a = db.get(Agent, agent_id)
+    if a is not None and a.company != current.company:
+        raise err(403, "forbidden", "cross-company access is not allowed")
+
+
 @app.post("/auth/login", response_model=schemas.TokenOut)
 def login(payload: schemas.LoginIn, background: BackgroundTasks,
           db: Session = Depends(get_db)):
@@ -260,7 +361,13 @@ def reset_password(payload: schemas.ResetPasswordIn, db: Session = Depends(get_d
 @app.post("/agents", response_model=schemas.AgentOut)
 def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
                  current: Agent = Depends(require_admin)):
-    agent_service.validate_agent(db, payload.level, payload.upline_id)
+    # A company-scoped admin may only create agents in their own company: the code
+    # prefix must resolve to the admin's company, and the upline must match too.
+    company = scoping.company_for_code(payload.code)
+    if company != current.company:
+        raise err(400, "wrong_company_prefix",
+                  "agent code prefix must match your company")
+    agent_service.validate_agent(db, payload.level, payload.upline_id, company=company)
     # Friendly duplicate checks (code / email are unique) so the client gets a
     # clear 409 instead of an opaque 500 — a 500 skips CORS headers and surfaces
     # in the browser as "Failed to fetch".
@@ -271,7 +378,7 @@ def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
     ).scalars().first():
         raise err(409, "email_in_use", "email already in use")
     data = payload.model_dump(exclude={"password"})
-    agent = Agent(**data)
+    agent = Agent(**data, company=company)
     if payload.password:
         agent.password_hash = hash_password(payload.password)
     try:
@@ -297,7 +404,8 @@ def agents_directory(db: Session = Depends(get_db),
     it — GET /agents is scoped to self for a plain agent, so it can't populate
     cross-agent pickers."""
     rows = db.execute(
-        select(Agent).where(Agent.is_active.is_(True), Agent.role != Role.ADMIN)
+        select(Agent).where(Agent.is_active.is_(True), Agent.role != Role.ADMIN,
+                            Agent.company == current.company)
         .order_by(Agent.level, Agent.code)
     ).scalars().all()
     return [{"id": a.id, "code": a.code, "name": a.name,
@@ -312,6 +420,8 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
     agent = db.get(Agent, agent_id)
     if agent is None:
         raise HTTPException(404, "agent not found")
+    if agent.company != current.company:
+        raise err(403, "forbidden", "cross-company access is not allowed")
     before = {"name": agent.name, "email": agent.email,
               "title": agent.title.value if agent.title else None,
               "role": agent.role.value, "is_active": agent.is_active}
@@ -350,9 +460,10 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
     if scoping.is_admin(current):
         # Admins operate transactions on behalf of agents and may create a client
-        # owned by any agent (e.g. the Lead agent when booking a new-client deal).
+        # owned by any agent in their company (e.g. the Lead agent on a new deal).
         if db.get(Agent, payload.agent_id) is None:
             raise HTTPException(404, "agent not found")
+        _guard_company(db, current, payload.agent_id)
     elif payload.agent_id != current.id:
         raise HTTPException(403, "you may only create clients you own")
     client = Client(**payload.model_dump())
@@ -363,9 +474,11 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
 @app.get("/clients", response_model=list[schemas.ClientOut])
 def list_clients(db: Session = Depends(get_db),
                  current: Agent = Depends(get_current_agent)):
-    # Agents see their own clients; admins (the transaction operators) see all.
+    # Agents see their own clients; a company admin sees all clients in its company.
     q = select(Client)
-    if not scoping.is_admin(current):
+    if scoping.is_admin(current):
+        q = q.join(Agent, Client.agent_id == Agent.id).where(Agent.company == current.company)
+    else:
         q = q.where(Client.agent_id == current.id)
     return db.execute(q).scalars().all()
 
@@ -377,6 +490,8 @@ def get_client(client_id: int, db: Session = Depends(get_db),
     if client is None:
         raise HTTPException(404, "client not found")
     scoping.assert_can_read_client(current, client)
+    if scoping.is_admin(current):
+        _guard_company(db, current, client.agent_id)
     return client
 
 
@@ -388,6 +503,8 @@ def update_client(client_id: int, payload: schemas.ClientUpdate,
     if client is None:
         raise HTTPException(404, "client not found")
     scoping.assert_owns_client(current, client)
+    if scoping.is_admin(current):
+        _guard_company(db, current, client.agent_id)
     for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(client, k, v)
     db.commit(); db.refresh(client)
@@ -397,17 +514,19 @@ def update_client(client_id: int, payload: schemas.ClientUpdate,
 @app.get("/agents/{agent_id}/clients", response_model=list[schemas.ClientOut])
 def agent_clients(agent_id: int, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    # An agent lists their own clients; an admin may list any agent's clients.
+    # An agent lists their own clients; an admin may list any same-company agent's.
     if not scoping.is_admin(current) and agent_id != current.id:
         raise HTTPException(403, "you may only list your own clients")
+    _guard_company(db, current, agent_id)
     return db.execute(select(Client).where(Client.agent_id == agent_id)).scalars().all()
 
 
 @app.get("/agents/{agent_id}/transactions", response_model=list[schemas.TransactionOut])
 def agent_transactions(agent_id: int, db: Session = Depends(get_db),
                        current: Agent = Depends(get_current_agent)):
-    # Own transactions, or any if admin (admins have transaction authority).
+    # Own transactions, or any same-company agent's if admin.
     scoping.assert_can_access_txn(current, agent_id)
+    _guard_company(db, current, agent_id)
     return db.execute(
         select(Transaction).where(Transaction.agent_id == agent_id)
         .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
@@ -491,18 +610,18 @@ def list_products(db: Session = Depends(get_db),
 @app.get("/override-rules", response_model=list[schemas.OverrideRuleOut])
 def list_override_rules(db: Session = Depends(get_db),
                         current: Agent = Depends(get_current_agent)):
-    from app.models.models import OverrideRule
-    return db.execute(select(OverrideRule)).scalars().all()
+    return db.execute(
+        select(OverrideRule).where(OverrideRule.company == current.company)
+    ).scalars().all()
 
 
 @app.post("/override-rules", response_model=schemas.OverrideRuleOut)
 def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(get_db),
                          current: Agent = Depends(require_admin)):
-    from app.models.models import OverrideRule
     data = payload.model_dump()
     if data.get("valid_from") is None:
         data.pop("valid_from", None)  # let the column default apply
-    rule = OverrideRule(**data)
+    rule = OverrideRule(**data, company=current.company)
     db.add(rule); db.flush()
     audit.record(db, current.id, "create", "override_rule", rule.id,
                  after=payload.model_dump())
@@ -514,9 +633,8 @@ def create_override_rule(payload: schemas.OverrideRuleIn, db: Session = Depends(
 def update_override_rule(rule_id: int, payload: schemas.OverrideRuleUpdate,
                          db: Session = Depends(get_db),
                          current: Agent = Depends(require_admin)):
-    from app.models.models import OverrideRule
     rule = db.get(OverrideRule, rule_id)
-    if rule is None:
+    if rule is None or rule.company != current.company:
         raise HTTPException(404, "override rule not found")
     data = payload.model_dump(exclude_unset=True)
     if "valid_from" in data and data["valid_from"] is None:
@@ -532,9 +650,8 @@ def update_override_rule(rule_id: int, payload: schemas.OverrideRuleUpdate,
 @app.delete("/override-rules/{rule_id}")
 def delete_override_rule(rule_id: int, db: Session = Depends(get_db),
                          current: Agent = Depends(require_admin)):
-    from app.models.models import OverrideRule
     rule = db.get(OverrideRule, rule_id)
-    if rule is None:
+    if rule is None or rule.company != current.company:
         raise HTTPException(404, "override rule not found")
     audit.record(db, current.id, "delete", "override_rule", rule_id,
                  before={"product_type": rule.product_type.value,
@@ -586,6 +703,7 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
         .join(Client, Transaction.client_id == Client.id)
         .join(Product, Transaction.product_id == Product.id)
         .join(Agent, Transaction.agent_id == Agent.id)
+        .where(Agent.company == current.company)   # company-scoped admin
         .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
     )
     if status:
@@ -630,12 +748,14 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
     client = db.get(Client, payload.client_id)
     if client is None:
         raise HTTPException(404, "client not found")
+    _guard_company(db, current, client.agent_id)
     product = db.get(Product, payload.product_id)
     if product is None:
         raise HTTPException(404, "product not found")
     for aid in (payload.agent_id, payload.lead_agent_id, payload.sales_dev_agent_id):
         if aid is not None and db.get(Agent, aid) is None:
             raise HTTPException(404, "agent not found")
+        _guard_company(db, current, aid)   # all role agents must be same company
 
     data = payload.model_dump()
     # Normalise deal type + override levels (JSON-serialisable). Manual override
@@ -649,6 +769,7 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
         ag = db.get(Agent, row["agent_id"])
         if ag is None:
             raise HTTPException(404, "agent not found")
+        _guard_company(db, current, row["agent_id"])
         if data["deal_type"] == DealType.DIRECT_CLIENT and not ag.direct_client:
             raise err(400, "not_direct_client", "selected agent is not 直客-eligible")
         norm.append({"agent_id": row["agent_id"], "pct": float(row["pct"])})
@@ -656,7 +777,8 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
 
     trade_date = data.get("trade_date") or date.today()
     # Admin may route a sale dated into a locked period to the next open period.
-    data["trade_date"] = periods.assert_open_for_trade(db, trade_date, allow_adjust=adjust)
+    data["trade_date"] = periods.assert_open_for_trade(
+        db, trade_date, allow_adjust=adjust, company=current.company)
 
     # Auto-generate the transaction code when not supplied.
     if not data.get("ref"):
@@ -722,6 +844,7 @@ def update_transaction(txn_id: int, payload: schemas.TransactionUpdate,
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
+    _guard_company(db, current, txn.agent_id)
     data = payload.model_dump(exclude_unset=True)
     if "client_id" in data and db.get(Client, data["client_id"]) is None:
         raise HTTPException(404, "client not found")
@@ -755,6 +878,7 @@ def delete_transaction(txn_id: int, db: Session = Depends(get_db),
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
+    _guard_company(db, current, txn.agent_id)
     paid = db.execute(
         select(func.count()).select_from(CommissionEntry)
         .where(CommissionEntry.transaction_id == txn_id, CommissionEntry.paid.is_(True))
@@ -775,6 +899,7 @@ def approve_transaction(txn_id: int, db: Session = Depends(get_db),
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise err(404, "not_found", "transaction not found")
+    _guard_company(db, current, txn.agent_id)
     before = {"status": txn.status.value}
     txn.status = TxnStatus.APPROVED
     txn.settled_at = now_utc()
@@ -792,6 +917,7 @@ def cancel_transaction(txn_id: int, db: Session = Depends(get_db),
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise HTTPException(404, "transaction not found")
+    _guard_company(db, current, txn.agent_id)
     before = {"status": txn.status.value}
     txn.status = TxnStatus.CANCELLED
     db.flush()
@@ -809,8 +935,10 @@ def client_transactions(client_id: int, db: Session = Depends(get_db),
     client = db.get(Client, client_id)
     if client is None:
         raise HTTPException(404, "client not found")
-    # The owning agent, or an admin (transaction authority), may read these.
+    # The owning agent, or a same-company admin, may read these.
     scoping.assert_can_access_txn(current, client.agent_id)
+    if scoping.is_admin(current):
+        _guard_company(db, current, client.agent_id)
     return db.execute(
         select(Transaction).where(Transaction.client_id == client_id)
     ).scalars().all()
@@ -984,7 +1112,9 @@ def list_title_targets(db: Session = Depends(get_db),
     """Annual AFYP target per 職級 (0 when unset). Readable by any authenticated
     user so the dashboard can show an agent their own target progress."""
     existing = {t.title.value: t.target_afyp
-                for t in db.execute(select(TitleTarget)).scalars()}
+                for t in db.execute(
+                    select(TitleTarget).where(TitleTarget.company == current.company)
+                ).scalars()}
     return [{"title": tv.value, "target_afyp": float(existing.get(tv.value, 0))}
             for tv in Title]
 
@@ -997,9 +1127,11 @@ def set_title_target(title: str, payload: schemas.TitleTargetIn,
         t_enum = Title(title)
     except ValueError:
         raise err(422, "validation", f"invalid title: {title}")
-    row = db.execute(select(TitleTarget).where(TitleTarget.title == t_enum)).scalars().first()
+    row = db.execute(select(TitleTarget).where(
+        TitleTarget.title == t_enum, TitleTarget.company == current.company
+    )).scalars().first()
     if row is None:
-        row = TitleTarget(title=t_enum, target_afyp=payload.target_afyp)
+        row = TitleTarget(title=t_enum, target_afyp=payload.target_afyp, company=current.company)
         db.add(row)
     else:
         row.target_afyp = payload.target_afyp
@@ -1247,7 +1379,9 @@ def _agency_summary_scoped(db: Session, current: Agent,
                             Agent.role != Role.ADMIN)
     ).scalars().all()
     targets = {tt.title.value: float(tt.target_afyp)
-               for tt in db.execute(select(TitleTarget)).scalars().all() if tt.title}
+               for tt in db.execute(
+                   select(TitleTarget).where(TitleTarget.company == current.company)
+               ).scalars().all() if tt.title}
     return reports.agency_summary(db, start, end, agent_ids=ids, roster=roster, targets=targets)
 
 
@@ -1344,8 +1478,8 @@ def export_agency_summary(format: str = "csv", lang: str = "zh-Hant", currency: 
 def get_period(ym: str, db: Session = Depends(get_db),
                current: Agent = Depends(get_current_agent)):
     year, month = periods.parse_ym(ym)
-    period = periods.get_period(db, year, month)
-    snapshot = periods.period_snapshot(db, year, month)
+    period = periods.get_period(db, year, month, company=current.company)
+    snapshot = periods.period_snapshot(db, year, month, company=current.company)
     return {
         "period": ym,
         "is_locked": bool(period and period.is_locked),
@@ -1358,7 +1492,7 @@ def get_period(ym: str, db: Session = Depends(get_db),
 def lock_period(ym: str, db: Session = Depends(get_db),
                 current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
-    period = periods.lock_period(db, year, month)
+    period = periods.lock_period(db, year, month, company=current.company)
     audit.record(db, current.id, "lock", "period", ym, after={"is_locked": True})
     db.commit()
     return {"period": ym, "is_locked": period.is_locked,
@@ -1369,7 +1503,7 @@ def lock_period(ym: str, db: Session = Depends(get_db),
 def unlock_period(ym: str, db: Session = Depends(get_db),
                   current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
-    periods.unlock_period(db, year, month)
+    periods.unlock_period(db, year, month, company=current.company)
     audit.record(db, current.id, "unlock", "period", ym, after={"is_locked": False})
     db.commit()
     return {"period": ym, "is_locked": False}
@@ -1380,7 +1514,7 @@ def unlock_period(ym: str, db: Session = Depends(get_db),
 def run_payout(period: str, db: Session = Depends(get_db),
                current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(period)
-    result = payouts.run_payout(db, year, month)
+    result = payouts.run_payout(db, year, month, company=current.company)
     audit.record(db, current.id, "run", "payout", period,
                  after={"total": result["total"],
                         "new_entries_paid": result["new_entries_paid"]})
@@ -1392,14 +1526,14 @@ def run_payout(period: str, db: Session = Depends(get_db),
 def get_payout(ym: str, db: Session = Depends(get_db),
                current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
-    return payouts.payout_summary(db, year, month)
+    return payouts.payout_summary(db, year, month, company=current.company)
 
 
 @app.get("/payouts/{ym}/export")
 def export_payout(ym: str, format: str = "csv", lang: str = "zh-Hant", currency: str = "USD",
                   db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
     year, month = periods.parse_ym(ym)
-    payout = payouts.payout_summary(db, year, month)
+    payout = payouts.payout_summary(db, year, month, company=current.company)
     if format == "pdf":
         return _export_response(exports.payout_to_pdf(payout, lang, currency), "pdf", f"payout_{ym}")
     return _export_response(exports.payout_to_csv(payout, lang, currency), "csv", f"payout_{ym}")
@@ -1411,5 +1545,7 @@ def list_audit(limit: int = 200, db: Session = Depends(get_db),
                current: Agent = Depends(require_admin)):
     from app.models.models import AuditEntry
     return db.execute(
-        select(AuditEntry).order_by(AuditEntry.id.desc()).limit(limit)
+        select(AuditEntry).join(Agent, AuditEntry.actor_agent_id == Agent.id)
+        .where(Agent.company == current.company)
+        .order_by(AuditEntry.id.desc()).limit(limit)
     ).scalars().all()

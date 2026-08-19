@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { titleLabel } from "../lib/titles";
-import { roleLabel } from "../i18n/labels";
+import { roleLabel, companyLabel } from "../i18n/labels";
 import LanguageToggle from "./LanguageToggle";
 import CurrencyToggle from "./CurrencyToggle";
 
@@ -51,6 +51,7 @@ export default function Layout() {
         </nav>
         <div className="spacer" />
         <div className="whoami">
+          {me?.company && <><span className="badge unit">{companyLabel(me.company)}</span><br /></>}
           {me?.name}
           <br />
           <span className="badge role">{roleLabel(me?.role)}</span> · L{me?.level}

@@ -47,6 +47,7 @@ class MeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     code: str
+    company: str = "heritree"
     name: str
     email: str
     level: int
@@ -85,6 +86,7 @@ class AgentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     code: str
+    company: str = "heritree"
     name: str
     email: str
     level: int

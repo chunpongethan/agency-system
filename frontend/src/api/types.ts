@@ -11,6 +11,7 @@ export type Title =
 export interface Me {
   id: number;
   code: string;
+  company: string;
   name: string;
   email: string;
   level: number;
@@ -23,6 +24,7 @@ export interface Me {
 export interface Agent {
   id: number;
   code: string;
+  company: string;
   name: string;
   email: string;
   level: number;

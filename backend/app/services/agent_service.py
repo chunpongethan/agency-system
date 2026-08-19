@@ -33,7 +33,7 @@ def _ancestor_ids(session: Session, agent_id: int) -> set[int]:
 
 
 def validate_agent(session: Session, level: int, upline_id: int | None,
-                   agent_id: int | None = None) -> None:
+                   agent_id: int | None = None, company: str | None = None) -> None:
     """Validate a proposed agent (create or update). Raises ValidationError."""
     if level < 1:
         raise ValidationError(f"level must be >= 1, got {level}")
@@ -47,6 +47,10 @@ def validate_agent(session: Session, level: int, upline_id: int | None,
     upline = session.get(Agent, upline_id)
     if upline is None:
         raise ValidationError(f"upline_id {upline_id} does not exist")
+
+    # Hierarchies never cross companies, so the manager-subtree scoping stays safe.
+    if company is not None and upline.company != company:
+        raise ValidationError("upline must belong to the same company")
 
     if agent_id is not None and upline_id == agent_id:
         raise ValidationError("an agent cannot be its own upline")

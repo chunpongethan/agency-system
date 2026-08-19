@@ -25,11 +25,15 @@ def _entry_period(entry: CommissionEntry, txn: Transaction) -> tuple[int, int]:
     return d.year, d.month
 
 
-def _period_entries(session: Session, year: int, month: int) -> list[tuple[CommissionEntry, Transaction]]:
-    rows = session.execute(
+def _period_entries(session: Session, year: int, month: int,
+                    company: str | None = None) -> list[tuple[CommissionEntry, Transaction]]:
+    stmt = (
         select(CommissionEntry, Transaction)
         .join(Transaction, CommissionEntry.transaction_id == Transaction.id)
-    ).all()
+    )
+    if company is not None:
+        stmt = stmt.join(Agent, CommissionEntry.agent_id == Agent.id).where(Agent.company == company)
+    rows = session.execute(stmt).all()
     return [(e, t) for (e, t) in rows if _entry_period(e, t) == (year, month)]
 
 
@@ -89,19 +93,20 @@ def _payable_out(payable: list[dict]) -> list[dict]:
     ]
 
 
-def run_payout(session: Session, year: int, month: int) -> dict:
-    """Run (or re-run) the payout for a period. Idempotent."""
-    all_in_period = _period_entries(session, year, month)
+def run_payout(session: Session, year: int, month: int, company: str = "heritree") -> dict:
+    """Run (or re-run) the payout for a period, scoped to one company. Idempotent."""
+    all_in_period = _period_entries(session, year, month, company)
     unpaid = [e for (e, _t) in all_in_period if not e.paid]
 
     payout = session.execute(
-        select(Payout).where(Payout.year == year, Payout.month == month)
+        select(Payout).where(Payout.year == year, Payout.month == month,
+                             Payout.company == company)
     ).scalars().first()
 
     new_count = len(unpaid)
     if unpaid:
         if payout is None:
-            payout = Payout(year=year, month=month, total_amount=Decimal("0"))
+            payout = Payout(year=year, month=month, company=company, total_amount=Decimal("0"))
             session.add(payout); session.flush()
         for e in unpaid:
             e.paid = True
@@ -126,13 +131,14 @@ def run_payout(session: Session, year: int, month: int) -> dict:
     }
 
 
-def payout_summary(session: Session, year: int, month: int) -> dict:
+def payout_summary(session: Session, year: int, month: int, company: str = "heritree") -> dict:
     """Read-only view of a period's payout without mutating anything."""
-    all_in_period = _period_entries(session, year, month)
+    all_in_period = _period_entries(session, year, month, company)
     paid_entries = [e for (e, _t) in all_in_period if e.payout_id is not None]
     payable, total = _summarise(session, paid_entries)
     payout = session.execute(
-        select(Payout).where(Payout.year == year, Payout.month == month)
+        select(Payout).where(Payout.year == year, Payout.month == month,
+                             Payout.company == company)
     ).scalars().first()
     return {
         "period": f"{year}-{month:02d}",

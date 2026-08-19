@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
+import { useAuth } from "../../auth/AuthContext";
 import { TITLE_VALUES, titleLabel } from "../../lib/titles";
 import { roleLabel, ROLES } from "../../i18n/labels";
 import { dateTime } from "../../lib/format";
@@ -9,6 +10,8 @@ import type { Agent, Role, Title } from "../../api/types";
 
 export default function AdminAgents() {
   const { t } = useI18n();
+  const { me } = useAuth();
+  const codePrefix = me?.company === "cpm" ? "cpm" : "";  // CPM codes must start "cpm"
   const qc = useQueryClient();
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
 
@@ -201,8 +204,11 @@ export default function AdminAgents() {
         {agentMsg && <div className="success">{agentMsg}</div>}
         <div className="row">
           <div><label>{t("common.code")}</label>
-            <input value={agentForm.code} required placeholder="e.g. A009"
-              onChange={(e) => setAgentForm({ ...agentForm, code: e.target.value })} /></div>
+            <input value={agentForm.code} required
+              placeholder={codePrefix ? "e.g. cpm009" : "e.g. A009"}
+              onChange={(e) => setAgentForm({ ...agentForm, code: e.target.value })} />
+            {codePrefix && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("admin.agents.codePrefixHint")}</div>}
+          </div>
           <div><label>{t("common.name")}</label>
             <input value={agentForm.name} required
               onChange={(e) => setAgentForm({ ...agentForm, name: e.target.value })} /></div>

@@ -41,6 +41,12 @@ export function titleLabel(t: Title | null | undefined): string {
   return t ? translate(`enum.title.${t}`) : "—";
 }
 
+export function companyLabel(c: string | null | undefined): string {
+  if (!c) return "—";
+  const label = translate(`enum.company.${c}`);
+  return label === `enum.company.${c}` ? c : label;  // fall back to the raw value
+}
+
 export function productTypeLabel(type: string | null | undefined): string {
   return type ? translate(`enum.productType.${type}`) : "—";
 }

@@ -27,10 +27,28 @@ def is_admin(current: Agent) -> bool:
     return current.role == Role.ADMIN
 
 
+# --- Tenant (company) ---------------------------------------------------------
+# The two companies share one deployment. A user's company is encoded in their
+# agent code prefix; it is stored on Agent.company (set at creation / backfilled)
+# and is the source of truth thereafter.
+def company_for_code(code: str | None) -> str:
+    """Derive the company from an agent code prefix."""
+    return "cpm" if (code or "").lower().startswith("cpm") else "heritree"
+
+
+def assert_same_company(current: Agent, other: Agent | None) -> None:
+    """Raise PermissionError if `other` belongs to a different company than the
+    acting user (used to gate admin operations on a specific agent/resource)."""
+    if other is not None and other.company != current.company:
+        raise PermissionError("cross-company access is not allowed")
+
+
 def visible_agent_ids(session: Session, current: Agent) -> set[int]:
-    """The set of agent ids `current` is allowed to see."""
+    """The set of agent ids `current` is allowed to see (always within their own
+    company — hierarchies never cross companies, and an admin is company-scoped)."""
     if current.role == Role.ADMIN:
-        return {row[0] for row in session.execute(select(Agent.id))}
+        rows = session.execute(select(Agent.id).where(Agent.company == current.company))
+        return {row[0] for row in rows}
 
     if current.role == Role.AGENT:
         return {current.id}
@@ -86,15 +104,23 @@ def _case_agent_ids(case: Case) -> set[int]:
             if aid is not None}
 
 
+def _case_company(session: Session, case: Case) -> str | None:
+    """A case's company = its Lead agent's company (all its agents share one)."""
+    lead = session.get(Agent, case.lead_agent_id)
+    return lead.company if lead else None
+
+
 def assert_can_view_case(session: Session, current: Agent, case: Case) -> None:
     """
-    A case is viewable by an admin, or by anyone whose production scope
+    A case is viewable by a same-company admin, or by anyone whose production scope
     (self for an agent, self+downline subtree for a manager) includes one of the
     case's assigned agents. Uses the *visibility* layer so managers see downlines'
     cases (unlike client/transaction ownership, which is owner-only).
     """
     if is_admin(current):
-        return
+        if _case_company(session, case) == current.company:
+            return
+        raise PermissionError("cross-company access is not allowed")
     if _case_agent_ids(case) & visible_agent_ids(session, current):
         return
     raise PermissionError("only an assigned agent, their manager, or an admin may view this case")
@@ -102,13 +128,15 @@ def assert_can_view_case(session: Session, current: Agent, case: Case) -> None:
 
 def assert_can_edit_case(session: Session, current: Agent, case: Case) -> None:
     """
-    Editing a case is allowed for an admin, its assigned agents (Lead / SDR /
-    Closer), or a manager whose downline includes one of those agents. This
+    Editing a case is allowed for a same-company admin, its assigned agents (Lead /
+    SDR / Closer), or a manager whose downline includes one of those agents. This
     mirrors the visibility layer, so a manager who can *see* a downline's case
     may also edit it.
     """
     if is_admin(current):
-        return
+        if _case_company(session, case) == current.company:
+            return
+        raise PermissionError("cross-company access is not allowed")
     if _case_agent_ids(case) & visible_agent_ids(session, current):
         return
     raise PermissionError("only an assigned agent, their manager, or an admin may edit this case")

@@ -14,7 +14,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.models import Period, now_utc
+from app.models.models import Period, Agent, now_utc
 from app.services import reports
 
 
@@ -34,34 +34,39 @@ def parse_ym(ym: str) -> tuple[int, int]:
     return year, month
 
 
-def get_period(session: Session, year: int, month: int) -> Period | None:
+def get_period(session: Session, year: int, month: int,
+               company: str = "heritree") -> Period | None:
     return session.execute(
-        select(Period).where(Period.year == year, Period.month == month)
+        select(Period).where(Period.year == year, Period.month == month,
+                             Period.company == company)
     ).scalars().first()
 
 
-def get_or_create_period(session: Session, year: int, month: int) -> Period:
-    period = get_period(session, year, month)
+def get_or_create_period(session: Session, year: int, month: int,
+                         company: str = "heritree") -> Period:
+    period = get_period(session, year, month, company)
     if period is None:
-        period = Period(year=year, month=month, is_locked=False)
+        period = Period(year=year, month=month, company=company, is_locked=False)
         session.add(period)
         session.flush()
     return period
 
 
-def is_locked(session: Session, year: int, month: int) -> bool:
-    period = get_period(session, year, month)
+def is_locked(session: Session, year: int, month: int, company: str = "heritree") -> bool:
+    period = get_period(session, year, month, company)
     return bool(period and period.is_locked)
 
 
-def lock_period(session: Session, year: int, month: int) -> Period:
-    """Lock a period, snapshotting its agency summary."""
-    period = get_or_create_period(session, year, month)
+def lock_period(session: Session, year: int, month: int,
+                company: str = "heritree") -> Period:
+    """Lock a period for one company, snapshotting that company's agency summary."""
+    period = get_or_create_period(session, year, month, company)
     start = date(year, month, 1)
     end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
     # end-exclusive: use the last day of the month for the inclusive window.
     last_day = date.fromordinal(end.toordinal() - 1)
-    snapshot = reports.agency_summary(session, start, last_day)
+    ids = {row[0] for row in session.execute(select(Agent.id).where(Agent.company == company))}
+    snapshot = reports.agency_summary(session, start, last_day, agent_ids=ids)
     period.snapshot = json.dumps(snapshot)
     period.is_locked = True
     period.locked_at = now_utc()
@@ -69,8 +74,9 @@ def lock_period(session: Session, year: int, month: int) -> Period:
     return period
 
 
-def unlock_period(session: Session, year: int, month: int) -> Period:
-    period = get_or_create_period(session, year, month)
+def unlock_period(session: Session, year: int, month: int,
+                  company: str = "heritree") -> Period:
+    period = get_or_create_period(session, year, month, company)
     period.is_locked = False
     period.snapshot = None
     period.locked_at = None
@@ -78,19 +84,21 @@ def unlock_period(session: Session, year: int, month: int) -> Period:
     return period
 
 
-def period_snapshot(session: Session, year: int, month: int) -> list | None:
+def period_snapshot(session: Session, year: int, month: int,
+                    company: str = "heritree") -> list | None:
     """The frozen agency summary for a locked period, or None if open."""
-    period = get_period(session, year, month)
+    period = get_period(session, year, month, company)
     if period and period.is_locked and period.snapshot:
         return json.loads(period.snapshot)
     return None
 
 
-def next_open_month_start(session: Session, from_date: date) -> date:
+def next_open_month_start(session: Session, from_date: date,
+                          company: str = "heritree") -> date:
     """First day of the next open month at/after `from_date`'s month."""
     year, month = from_date.year, from_date.month
     for _ in range(120):  # up to 10 years ahead, defensive bound
-        if not is_locked(session, year, month):
+        if not is_locked(session, year, month, company):
             return date(year, month, 1)
         month += 1
         if month > 12:
@@ -99,16 +107,17 @@ def next_open_month_start(session: Session, from_date: date) -> date:
 
 
 def assert_open_for_trade(session: Session, trade_date: date,
-                          allow_adjust: bool = False) -> date:
+                          allow_adjust: bool = False,
+                          company: str = "heritree") -> date:
     """
-    Ensure `trade_date` lands in an open period. Returns the (possibly adjusted)
-    trade_date. If locked and allow_adjust, routes to the next open month's start;
-    otherwise raises PeriodLockedError.
+    Ensure `trade_date` lands in an open period for `company`. Returns the
+    (possibly adjusted) trade_date. If locked and allow_adjust, routes to the next
+    open month's start; otherwise raises PeriodLockedError.
     """
-    if not is_locked(session, trade_date.year, trade_date.month):
+    if not is_locked(session, trade_date.year, trade_date.month, company):
         return trade_date
     if not allow_adjust:
         raise PeriodLockedError(
             f"period {trade_date.year}-{trade_date.month:02d} is locked"
         )
-    return next_open_month_start(session, trade_date)
+    return next_open_month_start(session, trade_date, company)

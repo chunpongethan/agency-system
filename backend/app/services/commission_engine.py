@@ -75,10 +75,13 @@ def _upline_chain(session: Session, agent: Agent, max_gap: int = 4):
         yield gap, current
 
 
-def _rules_for(session: Session, product_type, on: date) -> dict[int, Decimal]:
-    """Override rates by level_gap in force on `on` (effective-dated selection)."""
+def _rules_for(session: Session, product_type, on: date,
+               company: str = "heritree") -> dict[int, Decimal]:
+    """Override rates by level_gap in force on `on` (effective-dated selection),
+    for the given company's rule set."""
     rows = session.execute(
-        select(OverrideRule).where(OverrideRule.product_type == product_type)
+        select(OverrideRule).where(OverrideRule.product_type == product_type,
+                                   OverrideRule.company == company)
     ).scalars()
     rules: dict[int, Decimal] = {}
     for r in rows:
@@ -161,7 +164,7 @@ def hierarchy_overrides(session: Session, lead_id: int, product_type,
     lead = session.get(Agent, lead_id)
     if lead is None:
         return []
-    rules = _rules_for(session, product_type, on_date)
+    rules = _rules_for(session, product_type, on_date, company=lead.company)
     out: list[dict] = []
     for gap, upline in _upline_chain(session, lead):
         rate = rules.get(gap)
@@ -224,7 +227,8 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
             ))
     elif txn.deal_type != DealType.DIRECT_CLIENT:
         lead = session.get(Agent, lead_id)
-        rules = _rules_for(session, product.type, txn.trade_date)
+        rules = _rules_for(session, product.type, txn.trade_date,
+                           company=lead.company if lead else "heritree")
         for gap, upline in _upline_chain(session, lead):
             rate = rules.get(gap)
             if rate is None or rate == 0:
@@ -288,7 +292,8 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
             })
     elif deal_type != DealType.DIRECT_CLIENT.value:
         lead = session.get(Agent, lead_id)
-        rules = _rules_for(session, product.type, trade_date)
+        rules = _rules_for(session, product.type, trade_date,
+                           company=lead.company if lead else "heritree")
         for gap, upline in _upline_chain(session, lead):
             rate = rules.get(gap)
             if rate is None or rate == 0:

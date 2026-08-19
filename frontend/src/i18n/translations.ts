@@ -95,6 +95,8 @@ export const translations: Record<string, Translation> = {
   "enum.role.admin": { "zh-Hant": "管理員", en: "admin" },
   "enum.role.manager": { "zh-Hant": "經理", en: "manager" },
   "enum.role.agent": { "zh-Hant": "代理人", en: "agent" },
+  "enum.company.heritree": { "zh-Hant": "承瑞 Heritree", en: "Heritree" },
+  "enum.company.cpm": { "zh-Hant": "CPM", en: "CPM" },
 
   "enum.status.pending": { "zh-Hant": "待核准", en: "pending" },
   "enum.status.approved": { "zh-Hant": "已核准", en: "approved" },
@@ -161,6 +163,7 @@ export const translations: Record<string, Translation> = {
   "error.rule_not_found": { "zh-Hant": "找不到該規則", en: "Override rule not found" },
   "error.email_in_use": { "zh-Hant": "此電郵已被使用", en: "Email already in use" },
   "error.code_taken": { "zh-Hant": "此代理編號已被使用", en: "Agent code already in use" },
+  "error.wrong_company_prefix": { "zh-Hant": "代理編號前綴必須符合您的公司", en: "Agent code prefix must match your company" },
   "error.duplicate": { "zh-Hant": "資料與現有記錄重複", en: "This record duplicates an existing one" },
   "error.product_has_transactions": {
     "zh-Hant": "此產品已有交易，無法刪除；請改為停用。",
@@ -412,6 +415,7 @@ export const translations: Record<string, Translation> = {
   "admin.agents.thDepth": { "zh-Hant": "層級", en: "Depth" },
   "admin.agents.thUpline": { "zh-Hant": "上線", en: "Upline" },
   "admin.agents.thLastLogin": { "zh-Hant": "最後登入", en: "Last login" },
+  "admin.agents.codePrefixHint": { "zh-Hant": "CPM 代理編號須以「cpm」開頭。", en: "CPM agent codes must start with “cpm”." },
   "admin.agents.assign": { "zh-Hant": "— 指派 —", en: "— assign —" },
   "admin.agents.active": { "zh-Hant": "在職", en: "active" },
   "admin.agents.terminated": { "zh-Hant": "已終止", en: "terminated" },
