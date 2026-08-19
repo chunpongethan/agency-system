@@ -129,3 +129,14 @@ def test_products_are_shared(client):
     hp = {p["code"] for p in client.get("/products", headers=hag).json()}
     cp = {p["code"] for p in client.get("/products", headers=cag).json()}
     assert hp == cp and "INS-WL" in hp
+
+
+def test_product_base_rate_is_per_company(client):
+    # Same shared product, but each company sets its own 基本比率.
+    hadm, cadm = auth(client, "A000"), auth(client, "cpm000")
+    pid = client.get("/products", headers=hadm).json()[0]["id"]
+    client.patch(f"/products/{pid}", headers=hadm, json={"base_commission_rate": "0.30"})
+    client.patch(f"/products/{pid}", headers=cadm, json={"base_commission_rate": "0.10"})
+    hrate = float(client.get("/products", headers=hadm).json()[0]["base_commission_rate"])
+    crate = float(client.get("/products", headers=cadm).json()[0]["base_commission_rate"])
+    assert hrate == 0.30 and crate == 0.10

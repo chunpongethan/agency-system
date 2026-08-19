@@ -24,7 +24,8 @@ from sqlalchemy.orm import Session, sessionmaker, aliased
 from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
-    TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule, now_utc,
+    TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
+    ProductRate, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -152,6 +153,29 @@ def _seed_cpm_override_rules() -> None:
 
 
 _seed_cpm_override_rules()
+
+
+def _seed_product_rates() -> None:
+    """Ensure each shared product has a per-company base-rate row for both
+    companies, copied from the product's own value. Idempotent; backfills
+    products created before per-company rates existed."""
+    with SessionLocal() as db:
+        products = db.execute(select(Product)).scalars().all()
+        made = False
+        for p in products:
+            for company in ("heritree", "cpm"):
+                has = db.execute(select(ProductRate).where(
+                    ProductRate.product_id == p.id, ProductRate.company == company)).first()
+                if not has:
+                    db.add(ProductRate(product_id=p.id, company=company,
+                                       base_commission_rate=p.base_commission_rate,
+                                       year_commissions=p.year_commissions))
+                    made = True
+        if made:
+            db.commit()
+
+
+_seed_product_rates()
 
 
 def _seed_training_categories() -> None:
@@ -547,6 +571,22 @@ def _sync_insurance_base_rate(data: dict) -> None:
         data["base_commission_rate"] = Decimal(str(yc[0]))
 
 
+def _get_product_rate(db: Session, product_id: int, company: str) -> ProductRate | None:
+    return db.execute(select(ProductRate).where(
+        ProductRate.product_id == product_id, ProductRate.company == company)).scalars().first()
+
+
+def _product_out(db: Session, product: Product, company: str) -> schemas.ProductOut:
+    """Serialise a product with its base_commission_rate + year_commissions
+    resolved to the caller's company (each company sets its own 基本比率)."""
+    out = schemas.ProductOut.model_validate(product)
+    pr = _get_product_rate(db, product.id, company)
+    if pr is not None:
+        out.base_commission_rate = pr.base_commission_rate
+        out.year_commissions = [str(x) for x in pr.year_commissions] if pr.year_commissions else None
+    return out
+
+
 @app.post("/products", response_model=schemas.ProductOut)
 def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
@@ -556,29 +596,50 @@ def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
         _sync_insurance_base_rate(data)
     product = Product(**data)
     db.add(product); db.flush()
+    # Seed both companies' base rate from the provided values; each may diverge later.
+    for company in ("heritree", "cpm"):
+        db.add(ProductRate(product_id=product.id, company=company,
+                           base_commission_rate=product.base_commission_rate,
+                           year_commissions=product.year_commissions))
     audit.record(db, current.id, "create", "product", product.id, after=data)
     db.commit(); db.refresh(product)
-    return product
+    return _product_out(db, product, current.company)
 
 
 @app.patch("/products/{product_id}", response_model=schemas.ProductOut)
 def update_product(product_id: int, payload: schemas.ProductUpdate,
                    db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
-    """Admins maintain product details (including insurance product details)."""
+    """Admins maintain product details. The commission rate (base_commission_rate
+    and, for insurance, the Yr1..Yr10 schedule) is per-company — it edits the
+    caller's company's ProductRate; all other fields are shared."""
     product = db.get(Product, product_id)
     if product is None:
         raise HTTPException(404, "product not found")
     data = payload.model_dump(exclude_unset=True)
     _encode_year_commissions(data)
-    if product.type == ProductType.INSURANCE and data.get("year_commissions"):
-        _sync_insurance_base_rate(data)
+    # Route the per-company rate config out of the shared product update.
+    rate_base = data.pop("base_commission_rate", None)
+    rate_years = data.pop("year_commissions", None)
+    if product.type == ProductType.INSURANCE and rate_years:
+        rate_base = Decimal(str(rate_years[0]))
+    if rate_base is not None or rate_years is not None:
+        pr = _get_product_rate(db, product.id, current.company)
+        if pr is None:
+            pr = ProductRate(product_id=product.id, company=current.company,
+                             base_commission_rate=product.base_commission_rate,
+                             year_commissions=product.year_commissions)
+            db.add(pr)
+        if rate_base is not None:
+            pr.base_commission_rate = rate_base
+        if rate_years is not None:
+            pr.year_commissions = rate_years
     for k, v in data.items():
         setattr(product, k, v)
     db.flush()
     audit.record(db, current.id, "update", "product", product.id, after=data)
     db.commit(); db.refresh(product)
-    return product
+    return _product_out(db, product, current.company)
 
 
 @app.delete("/products/{product_id}")
@@ -603,7 +664,8 @@ def delete_product(product_id: int, db: Session = Depends(get_db),
 @app.get("/products", response_model=list[schemas.ProductOut])
 def list_products(db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
-    return db.execute(select(Product)).scalars().all()
+    products = db.execute(select(Product)).scalars().all()
+    return [_product_out(db, p, current.company) for p in products]
 
 
 # --- Override rules (admin) --------------------------------------------------

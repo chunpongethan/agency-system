@@ -193,6 +193,21 @@ class Product(Base):
     year_commissions: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
 
+class ProductRate(Base):
+    """Per-company commission rate for a SHARED product: each company sets its own
+    基本比率 (base_commission_rate) — and, for insurance, its own Yr1..Yr10 schedule
+    whose Yr1 is that base. The rest of the product (name, type, AFYP conv, age
+    range, …) stays shared. Falls back to the Product's own values if absent."""
+    __tablename__ = "product_rates"
+    __table_args__ = (UniqueConstraint("product_id", "company", name="uq_product_rate"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    company: Mapped[str] = mapped_column(String(20), index=True)
+    base_commission_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), default=Decimal("0"))
+    year_commissions: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+
 class OverrideRule(Base):
     """
     Defines the override an upline earns on a downline's sale, keyed by the

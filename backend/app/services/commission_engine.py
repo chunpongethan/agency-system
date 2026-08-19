@@ -25,10 +25,20 @@ from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    Agent, Transaction, Product, OverrideRule,
+    Agent, Transaction, Product, OverrideRule, ProductRate,
     CommissionEntry, CommissionKind, TxnStatus,
     CommissionSchedule, TrailFrequency, Role, DealType,
 )
+
+
+def base_rate_for(session: Session, product: Product, company: str) -> Decimal:
+    """A product's base commission rate for a company (each company sets its own),
+    falling back to the product's shared default when no per-company rate exists."""
+    pr = session.execute(
+        select(ProductRate).where(ProductRate.product_id == product.id,
+                                  ProductRate.company == company)
+    ).scalars().first()
+    return pr.base_commission_rate if pr is not None else product.base_commission_rate
 
 CENTS = Decimal("0.01")
 
@@ -187,7 +197,10 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     out: list[CommissionEntry] = []
 
     # The full direct commission is the base every upline override is a % of.
-    base_direct = _money(txn.notional * product.base_commission_rate)
+    # The base rate is the closing agent's company's rate for this product.
+    closer = session.get(Agent, txn.agent_id)
+    base_rate = base_rate_for(session, product, closer.company if closer else "heritree")
+    base_direct = _money(txn.notional * base_rate)
 
     shares, lead_id = _role_shares(txn)
     # Split base_direct by percentage; quantize each and give any rounding
@@ -205,7 +218,7 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
             continue
         out.append(CommissionEntry(
             transaction_id=txn.id, agent_id=aid,
-            kind=CommissionKind.DIRECT, rate=product.base_commission_rate,
+            kind=CommissionKind.DIRECT, rate=base_rate,
             amount=amount * sign, level_gap=0,
             period_index=period_index, accrual_date=accrual_date,
             is_reversal=reversal,
@@ -254,7 +267,9 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
     among the role-agents, plus overrides (hierarchy for 代理, manual for 直客).
     """
     lines: list[dict] = []
-    base_direct = _money(notional * product.base_commission_rate)
+    closer = session.get(Agent, closing_id)
+    base_rate = base_rate_for(session, product, closer.company if closer else "heritree")
+    base_direct = _money(notional * base_rate)
 
     shares: dict[int, Decimal] = {}
     for aid, pct in ((lead_id, lead_pct), (sales_dev_id, sales_dev_pct), (closing_id, closing_pct)):
@@ -269,7 +284,7 @@ def preview(session: Session, product: Product, notional: Decimal, trade_date: d
             continue
         lines.append({
             "agent_id": aid, "kind": CommissionKind.DIRECT.value,
-            "rate": product.base_commission_rate, "amount": amount,
+            "rate": base_rate, "amount": amount,
             "level_gap": 0, "period_index": 0,
         })
 
