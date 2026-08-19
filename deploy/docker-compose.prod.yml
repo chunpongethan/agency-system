@@ -42,6 +42,11 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
       ADMIN_NAME: ${ADMIN_NAME:-Administrator}
       ADMIN_CODE: ${ADMIN_CODE:-A000}
+      # Second company (CPM) admin — created only when these are set in .env.
+      CPM_ADMIN_EMAIL: ${CPM_ADMIN_EMAIL:-}
+      CPM_ADMIN_PASSWORD: ${CPM_ADMIN_PASSWORD:-}
+      CPM_ADMIN_NAME: ${CPM_ADMIN_NAME:-CPM Administrator}
+      CPM_ADMIN_CODE: ${CPM_ADMIN_CODE:-cpm000}
       # Lock CORS to the web origin.
       CORS_ORIGINS: https://${WEB_DOMAIN}
       # Password-reset email + link base URL.
