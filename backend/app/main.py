@@ -191,7 +191,7 @@ def _seed_training_categories() -> None:
 
 _seed_training_categories()
 
-app = FastAPI(title="承瑞家辦代理系統", version="1.0.0")
+app = FastAPI(title="FOA 家辦代理系統", version="1.0.0")
 
 # CORS_ORIGINS: comma-separated list of allowed web origins, or "*" (dev default).
 # In production set it to the web app's origin, e.g. https://app.yourdomain.com.

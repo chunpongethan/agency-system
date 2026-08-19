@@ -7,8 +7,8 @@ export type Translation = { "zh-Hant": string; en: string };
 
 export const translations: Record<string, Translation> = {
   // --- App / brand -----------------------------------------------------------
-  "app.title": { "zh-Hant": "承瑞家辦代理系統", en: "Chengrui Family Office Agency System" },
-  "app.brand": { "zh-Hant": "承瑞家辦代理系統", en: "Chengrui Agency" },
+  "app.title": { "zh-Hant": "FOA 家辦代理系統", en: "FOA Family Office Agency System" },
+  "app.brand": { "zh-Hant": "FOA 家辦代理系統", en: "FOA Agency" },
 
   // --- Nav -------------------------------------------------------------------
   "nav.dashboard": { "zh-Hant": "儀表板", en: "Dashboard" },
@@ -189,7 +189,7 @@ export const translations: Record<string, Translation> = {
   "error.downloadFailed": { "zh-Hant": "下載失敗（{status}）", en: "download failed ({status})" },
 
   // --- Login -----------------------------------------------------------------
-  "login.brand": { "zh-Hant": "承瑞家辦代理系統", en: "Chengrui Family Office Agency" },
+  "login.brand": { "zh-Hant": "FOA 家辦代理系統", en: "FOA Family Office Agency" },
   "login.subtitle": { "zh-Hant": "登入以繼續", en: "Sign in to continue" },
   "login.username": { "zh-Hant": "代理編號或電郵", en: "Agent code or email" },
   "login.password": { "zh-Hant": "密碼", en: "Password" },
