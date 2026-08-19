@@ -63,6 +63,9 @@ export default function NewTransaction() {
   // may go to any active agent (defaults loaded from the hierarchy).
   const dcAgents = closerOptions.filter((a) => a.direct_client);
   const overrideAgents = isDirectClient ? dcAgents : closerOptions;
+  // For a 直客 deal only 直客-flagged agents may be assigned to the three roles;
+  // a 代理 deal may assign any active agent.
+  const roleAgents = isDirectClient ? dcAgents : closerOptions;
   const overridePayload = () =>
     overrides.filter((o) => o.agent_id && o.pct).map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }));
   // Manual override levels are honoured for both deal types; a 代理 deal with an
@@ -188,7 +191,21 @@ export default function NewTransaction() {
           <select value={form.deal_type}
             onChange={(e) => {
               const dt = e.target.value;
-              setForm({ ...form, deal_type: dt });
+              // Switching to 直客 restricts the roles to 直客-flagged agents, so drop
+              // any already-picked agent that isn't eligible (and its dependent client).
+              const keep = (id: string) => {
+                if (dt !== "direct_client" || !id) return id;
+                const a = (agents.data ?? []).find((x) => String(x.id) === id);
+                return a?.direct_client ? id : "";
+              };
+              const nextCloser = keep(form.agent_id);
+              setForm({
+                ...form, deal_type: dt,
+                lead_agent_id: keep(form.lead_agent_id),
+                sales_dev_agent_id: keep(form.sales_dev_agent_id),
+                agent_id: nextCloser,
+                client_id: nextCloser ? form.client_id : "",
+              });
               // Preselect the 4-level 直客 schedule (agents still chosen by the admin).
               if (dt === "direct_client") {
                 setOverrides(DC_DEFAULT_PCTS.map((p) => ({ agent_id: "", pct: p })));
@@ -204,7 +221,7 @@ export default function NewTransaction() {
           <select value={form.lead_agent_id} required
             onChange={(e) => setForm({ ...form, lead_agent_id: e.target.value })}>
             <option value="">{t("newTxn.selectAgent")}</option>
-            {closerOptions.map((a) => (
+            {roleAgents.map((a) => (
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
@@ -213,7 +230,7 @@ export default function NewTransaction() {
           <select value={form.sales_dev_agent_id} required
             onChange={(e) => setForm({ ...form, sales_dev_agent_id: e.target.value })}>
             <option value="">{t("newTxn.selectAgent")}</option>
-            {closerOptions.map((a) => (
+            {roleAgents.map((a) => (
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
@@ -222,7 +239,7 @@ export default function NewTransaction() {
           <select value={form.agent_id} required
             onChange={(e) => setForm({ ...form, agent_id: e.target.value, client_id: "" })}>
             <option value="">{t("newTxn.selectAgent")}</option>
-            {closerOptions.map((a) => (
+            {roleAgents.map((a) => (
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
