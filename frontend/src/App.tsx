@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Leads from "./pages/Leads";
 import Training from "./pages/Training";
+import Products from "./pages/Products";
 import NewTransaction from "./pages/NewTransaction";
 import Hierarchy from "./pages/Hierarchy";
 import Reports from "./pages/Reports";
@@ -96,6 +97,14 @@ export default function App() {
           element={
             <RequireRole roles={["agent", "manager", "admin"]}>
               <ClientDetail />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <RequireRole roles={SELLERS}>
+              <Products />
             </RequireRole>
           }
         />
