@@ -72,6 +72,30 @@ def year_rates_for(session: Session, product: Product, company: str) -> list[Dec
         rates.pop()
     return rates
 
+def effective_year_rates(session: Session, txn: Transaction, product: Product,
+                         company: str) -> list[Decimal]:
+    """The per-year rates the engine should use for THIS transaction: its locked
+    Yr1..YrN snapshot when present, else the live product/company schedule (legacy
+    rows with no lock). A flat rate lock (locked_base_rate set, no year schedule)
+    means the deal is not per-year, so this returns []."""
+    locked = getattr(txn, "locked_year_commissions", None)
+    if locked:
+        return [Decimal(str(x)) for x in locked]
+    if getattr(txn, "locked_base_rate", None) is not None:
+        return []
+    return year_rates_for(session, product, company)
+
+
+def effective_base_rate(session: Session, txn: Transaction, product: Product,
+                        company: str) -> Decimal:
+    """The flat base rate for THIS transaction: its locked snapshot when present,
+    else the live product/company rate (legacy rows)."""
+    locked = getattr(txn, "locked_base_rate", None)
+    if locked is not None:
+        return Decimal(str(locked))
+    return base_rate_for(session, product, company)
+
+
 CENTS = Decimal("0.01")
 
 _FREQ_MONTHS = {
@@ -145,7 +169,7 @@ def scheduled_periods(session: Session, product: Product, txn: Transaction) -> l
     if product.commission_schedule == CommissionSchedule.TRAIL:
         closer = session.get(Agent, txn.agent_id)
         company = closer.company if closer else "heritree"
-        year_rates = year_rates_for(session, product, company)
+        year_rates = effective_year_rates(session, txn, product, company)
         if year_rates:
             # Per-year trail (insurance): one ANNUAL installment per Yr1..YrN.
             return [(k, _add_months(txn.trade_date, 12 * k)) for k in range(len(year_rates))]
@@ -240,11 +264,11 @@ def _period_entries(session: Session, txn: Transaction, product: Product,
     # per-year rate for a per-year trail (insurance), else the flat base rate.
     closer = session.get(Agent, txn.agent_id)
     company = closer.company if closer else "heritree"
-    year_rates = year_rates_for(session, product, company)
+    year_rates = effective_year_rates(session, txn, product, company)
     if year_rates:
         base_rate = year_rates[period_index] if period_index < len(year_rates) else Decimal("0")
     else:
-        base_rate = base_rate_for(session, product, company)
+        base_rate = effective_base_rate(session, txn, product, company)
     base_direct = _money(txn.notional * base_rate)
 
     shares, lead_id = _role_shares(txn)

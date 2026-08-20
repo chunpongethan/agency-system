@@ -402,6 +402,18 @@ class TransactionOut(BaseModel):
     currency: str
     status: str
     trade_date: date
+    # Rate locked at creation (overridable at approval). year_commissions is the
+    # per-year schedule for a per-year trail; base_rate the flat rate otherwise.
+    locked_base_rate: Decimal | None = None
+    locked_year_commissions: list | None = None
+
+
+class ApproveIn(BaseModel):
+    """Optional rate override applied when the admin approves a transaction. Supply
+    year_commissions for a per-year (insurance) product, or base_commission_rate
+    for a flat product. Omit to approve at the rate locked in at creation."""
+    base_commission_rate: Decimal | None = None
+    year_commissions: list[Decimal] | None = None
 
 
 class NextRefOut(BaseModel):

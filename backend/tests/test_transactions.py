@@ -115,6 +115,54 @@ def test_admin_maintains_insurance_details_via_patch(client):
     assert body["year_commissions"] == ["0.35", "0.12"]
 
 
+def _direct_amount(client, txn_id):
+    """Sum of the DIRECT commission amount for a transaction (from the ledger)."""
+    from app.models.models import CommissionEntry, CommissionKind
+    from sqlalchemy import select
+    with client._Session() as s:
+        rows = s.execute(select(CommissionEntry).where(
+            CommissionEntry.transaction_id == txn_id,
+            CommissionEntry.kind == CommissionKind.DIRECT)).scalars().all()
+        return sum((e.amount for e in rows), __import__("decimal").Decimal("0")), rows
+
+
+def test_rate_locked_at_creation(client):
+    """A product-rate change after booking does NOT move the deal's commission."""
+    admin = auth(client, "ADM")
+    r = _book(client, admin, client._ids, client._ids["fund"])  # fund base rate 0.01
+    assert r.status_code == 200, r.text
+    tid = r.json()["id"]
+    assert float(r.json()["locked_base_rate"]) == 0.01   # locked at creation
+    client.post(f"/transactions/{tid}/approve", headers=admin)
+    amt0, _ = _direct_amount(client, tid)
+    assert amt0 == __import__("decimal").Decimal("1000.00")  # 100000 * 0.01
+
+    # Admin raises the product rate to 5% AFTER the deal was booked, then recomputes.
+    client.patch(f"/products/{client._ids['fund']}", headers=admin,
+                 json={"base_commission_rate": "0.05"})
+    client.post("/reports/recompute", headers=admin)
+    amt1, _ = _direct_amount(client, tid)
+    assert amt1 == __import__("decimal").Decimal("1000.00")  # unchanged — rate is locked
+
+
+def test_rate_override_at_approval(client):
+    """Admin can set the final rate at approval; the override sticks through recompute."""
+    admin = auth(client, "ADM")
+    tid = _book(client, admin, client._ids, client._ids["fund"]).json()["id"]
+    # approve at 8% instead of the locked 1%
+    r = client.post(f"/transactions/{tid}/approve", headers=admin,
+                    json={"base_commission_rate": "0.08"})
+    assert r.status_code == 200, r.text
+    assert float(r.json()["locked_base_rate"]) == 0.08
+    amt, rows = _direct_amount(client, tid)
+    assert amt == __import__("decimal").Decimal("8000.00")  # 100000 * 0.08
+    assert all(float(e.rate) == 0.08 for e in rows)
+    # a later recompute keeps the override
+    client.post("/reports/recompute", headers=admin)
+    amt2, _ = _direct_amount(client, tid)
+    assert amt2 == __import__("decimal").Decimal("8000.00")
+
+
 def test_only_admin_maintains_products(client):
     agent = auth(client, "AX")
     # non-admin cannot create or patch products

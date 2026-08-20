@@ -203,6 +203,9 @@ export interface AdminTxnRow {
   sales_dev_pct?: string | null;
   closing_pct?: string | null;
   direct_overrides?: { agent_id: number; pct: number | string }[] | null;
+  commission_schedule?: string;
+  locked_base_rate?: string | null;
+  locked_year_commissions?: string[] | null;
 }
 
 export interface OverrideDefault {

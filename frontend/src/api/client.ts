@@ -206,8 +206,11 @@ export const api = {
     request<OverrideDefault[]>(`/transactions/override-defaults${qs({
       lead_agent_id: String(leadAgentId), product_id: String(productId),
     })}`),
-  approveTransaction: (id: number) =>
-    request<Transaction>(`/transactions/${id}/approve`, { method: "POST" }),
+  approveTransaction: (id: number, rateOverride?: Record<string, unknown>) =>
+    request<Transaction>(`/transactions/${id}/approve`, {
+      method: "POST",
+      body: rateOverride ? JSON.stringify(rateOverride) : undefined,
+    }),
   cancelTransaction: (id: number) =>
     request<Transaction>(`/transactions/${id}/cancel`, { method: "POST" }),
   updateTransaction: (id: number, payload: Record<string, unknown>) =>

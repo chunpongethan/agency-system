@@ -266,6 +266,13 @@ class Transaction(Base):
     status: Mapped[TxnStatus] = mapped_column(Enum(TxnStatus), default=TxnStatus.PENDING)
     trade_date: Mapped[date] = mapped_column(Date, default=date.today)
     settled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    # Rate lock: the effective commission rate is snapshotted here at creation so a
+    # later product-rate edit does not move an already-booked deal. locked_base_rate
+    # is the flat rate; locked_year_commissions is the Yr1..YrN schedule for a
+    # per-year trail (insurance). An admin may override these at approval. Both NULL
+    # on legacy rows -> the engine falls back to the live ProductRate.
+    locked_base_rate: Mapped[Decimal | None] = mapped_column(Numeric(6, 4), nullable=True)
+    locked_year_commissions: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
     client: Mapped["Client"] = relationship(back_populates="transactions")
     product: Mapped["Product"] = relationship()

@@ -11,7 +11,7 @@ import os
 from datetime import date
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -70,6 +70,13 @@ def _ensure_columns() -> None:
     for table in ("agents", "override_rules", "title_targets", "payouts", "periods"):
         if "company" not in cols(table):
             ddl.append(f"ALTER TABLE {table} ADD COLUMN company VARCHAR(20) DEFAULT 'heritree'")
+    # Rate-lock snapshot columns on transactions (JSON is native on Postgres, TEXT
+    # on SQLite where SQLAlchemy's JSON type serialises to text).
+    json_type = "JSON" if engine.dialect.name == "postgresql" else "TEXT"
+    if "locked_base_rate" not in cols("transactions"):
+        ddl.append("ALTER TABLE transactions ADD COLUMN locked_base_rate NUMERIC(6,4)")
+    if "locked_year_commissions" not in cols("transactions"):
+        ddl.append(f"ALTER TABLE transactions ADD COLUMN locked_year_commissions {json_type}")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -765,7 +772,7 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
     """
     stmt = (
         select(Transaction, Client.name, Client.ref, Product.name, Product.type,
-               Agent.name, Agent.code)
+               Agent.name, Agent.code, Product.commission_schedule)
         .join(Client, Transaction.client_id == Client.id)
         .join(Product, Transaction.product_id == Product.id)
         .join(Agent, Transaction.agent_id == Agent.id)
@@ -781,7 +788,7 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
         stmt = stmt.where(Transaction.agent_id == agent_id)
     needle = (q or "").strip().lower()
     out = []
-    for txn, cname, cref, pname, ptype, aname, acode in db.execute(stmt).all():
+    for txn, cname, cref, pname, ptype, aname, acode, psched in db.execute(stmt).all():
         if needle:
             hay = " ".join(str(x or "") for x in
                            (txn.ref, cname, pname, txn.policy_no, aname, acode)).lower()
@@ -802,6 +809,9 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
             "sales_dev_agent_id": txn.sales_dev_agent_id,
             "lead_pct": txn.lead_pct, "sales_dev_pct": txn.sales_dev_pct,
             "closing_pct": txn.closing_pct,
+            "commission_schedule": (psched.value if psched else "upfront"),
+            "locked_base_rate": txn.locked_base_rate,
+            "locked_year_commissions": txn.locked_year_commissions,
         })
     return out
 
@@ -852,9 +862,24 @@ def create_transaction(payload: schemas.TransactionIn, adjust: bool = False,
 
     txn = Transaction(**data)
     db.add(txn); db.flush()
+    # Lock the effective rate at creation so a later product-rate edit does not move
+    # this booked deal. Per-year trail (insurance) snapshots the whole Yr1..YrN
+    # schedule; everything else snapshots the flat base rate.
+    closer = db.get(Agent, txn.agent_id)
+    company = closer.company if closer else current.company
+    year_rates = commission_engine.year_rates_for(db, product, company)
+    if year_rates:
+        txn.locked_year_commissions = [str(x) for x in year_rates]
+        txn.locked_base_rate = year_rates[0]
+    else:
+        txn.locked_base_rate = commission_engine.base_rate_for(db, product, company)
+        txn.locked_year_commissions = None
+    db.flush()
     audit.record(db, current.id, "create", "transaction", txn.id,
                  after={"ref": txn.ref, "notional": txn.notional, "agent_id": txn.agent_id,
-                        "product_id": txn.product_id, "trade_date": txn.trade_date})
+                        "product_id": txn.product_id, "trade_date": txn.trade_date,
+                        "locked_base_rate": str(txn.locked_base_rate),
+                        "locked_year_commissions": txn.locked_year_commissions})
     db.commit(); db.refresh(txn)
     return txn
 
@@ -959,20 +984,34 @@ def delete_transaction(txn_id: int, db: Session = Depends(get_db),
 
 
 @app.post("/transactions/{txn_id}/approve", response_model=schemas.TransactionOut)
-def approve_transaction(txn_id: int, db: Session = Depends(get_db),
+def approve_transaction(txn_id: int, payload: schemas.ApproveIn | None = Body(default=None),
+                        db: Session = Depends(get_db),
                         current: Agent = Depends(require_admin)):
-    """Admin approves a transaction -> it becomes commissionable."""
+    """Admin approves a transaction -> it becomes commissionable. Optionally
+    overrides the locked rate at this point (the 'final rate'): pass
+    year_commissions for a per-year product, or base_commission_rate for a flat
+    one. The override is stored on the transaction so recompute/accruals keep it."""
     txn = db.get(Transaction, txn_id)
     if txn is None:
         raise err(404, "not_found", "transaction not found")
     _guard_company(db, current, txn.agent_id)
-    before = {"status": txn.status.value}
+    before = {"status": txn.status.value, "locked_base_rate": str(txn.locked_base_rate),
+              "locked_year_commissions": txn.locked_year_commissions}
+    if payload is not None:
+        if payload.year_commissions is not None:
+            txn.locked_year_commissions = [str(x) for x in payload.year_commissions]
+            if payload.year_commissions:
+                txn.locked_base_rate = payload.year_commissions[0]
+        if payload.base_commission_rate is not None:
+            txn.locked_base_rate = payload.base_commission_rate
     txn.status = TxnStatus.APPROVED
     txn.settled_at = now_utc()
     db.flush()
     commission_engine.compute_for_transaction(db, txn)
     audit.record(db, current.id, "approve", "transaction", txn.id,
-                 before=before, after={"status": txn.status.value})
+                 before=before, after={"status": txn.status.value,
+                                       "locked_base_rate": str(txn.locked_base_rate),
+                                       "locked_year_commissions": txn.locked_year_commissions})
     db.commit()
     return txn
 
