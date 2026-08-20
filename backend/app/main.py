@@ -657,6 +657,10 @@ def delete_product(product_id: int, db: Session = Depends(get_db),
         raise HTTPException(409, "cannot delete a product with transactions; deactivate it instead")
     audit.record(db, current.id, "delete", "product", product_id,
                  before={"code": product.code, "name": product.name})
+    # Remove the per-company rate rows too — they have no FK cascade, so a bare
+    # product delete would orphan them (and a later product reusing this id would
+    # collide / inherit stale rates).
+    db.execute(delete(ProductRate).where(ProductRate.product_id == product_id))
     db.delete(product); db.commit()
     return {"deleted": product_id}
 

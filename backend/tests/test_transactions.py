@@ -51,6 +51,7 @@ def client():
     main.app.dependency_overrides[main.get_db] = override_get_db
     tc = TestClient(main.app)
     tc._ids = ids
+    tc._Session = Session  # tests that need to inspect the DB directly
     yield tc
     main.app.dependency_overrides.clear()
 
@@ -151,6 +152,22 @@ def test_delete_product_admin_only_and_unused(client):
     # admin can delete an unused product
     assert client.delete(f"/products/{pid}", headers=admin).status_code == 200
     assert all(p["code"] != "DEL" for p in client.get("/products", headers=agent).json())
+
+
+def test_delete_product_removes_per_company_rates(client):
+    """Deleting a product must also drop its ProductRate rows — otherwise they
+    orphan and a later product reusing the id collides / inherits stale rates."""
+    from app.models.models import ProductRate
+    admin = auth(client, "ADM")
+    pid = client.post("/products", headers=admin, json={
+        "code": "DELR", "name": "d", "type": "insurance",
+        "base_commission_rate": "0.05", "year_commissions": ["0.05", "0.01"],
+    }).json()["id"]
+    with client._Session() as s:
+        assert s.query(ProductRate).filter_by(product_id=pid).count() == 2  # heritree + cpm
+    assert client.delete(f"/products/{pid}", headers=admin).status_code == 200
+    with client._Session() as s:
+        assert s.query(ProductRate).filter_by(product_id=pid).count() == 0
 
 
 def test_delete_product_blocked_when_in_use(client):
