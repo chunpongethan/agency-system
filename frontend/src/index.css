@@ -140,6 +140,16 @@ button.ghost:hover { background: #f9fafb; }
 .year-cell .yr-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
 .year-cell input { padding: 6px 8px; font-size: 13px; }
 
+/* Product catalogue filter bar */
+.product-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.product-filters select, .product-filters input { padding: 6px 8px; font-size: 13px; }
+.product-filters .filter-search { flex: 1 1 220px; min-width: 180px; }
+.product-filters .filter-count { margin-left: auto; font-size: 12px; white-space: nowrap; }
+@media (max-width: 700px) {
+  .product-filters .filter-search { flex-basis: 100%; }
+  .product-filters .filter-count { margin-left: 0; }
+}
+
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 /* Basis of 200px: children grow to fill wide rows (desktop unchanged) but wrap to
    full width on narrow screens instead of squashing to unusable inputs. */
