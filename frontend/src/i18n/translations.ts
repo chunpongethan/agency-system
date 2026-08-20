@@ -478,6 +478,7 @@ export const translations: Record<string, Translation> = {
   "admin.products.deleteFailed": { "zh-Hant": "刪除失敗", en: "Delete failed" },
   "admin.products.failed": { "zh-Hant": "操作失敗", en: "Failed" },
   "admin.products.confirmDelete": { "zh-Hant": "確定刪除產品 {name}（{code}）？此操作無法復原。", en: "Delete product {name} ({code})? This cannot be undone." },
+  "admin.products.thName": { "zh-Hant": "產品名稱", en: "Product name" },
   "admin.products.thBaseRate": { "zh-Hant": "基本比率", en: "Base rate" },
   "admin.products.thAfypConv": { "zh-Hant": "AFYP 轉換", en: "AFYP conv." },
   "admin.products.thSchedule": { "zh-Hant": "派發方式", en: "Schedule" },

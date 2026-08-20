@@ -109,7 +109,7 @@ function ProductFields({ value, onChange, isEdit }:
         <div><label>{t("common.code")}</label>
           <input value={value.code} required readOnly={isEdit} disabled={isEdit}
             onChange={(e) => onChange({ ...value, code: e.target.value })} /></div>
-        <div><label>{t("common.name")}</label>
+        <div><label>{t("admin.products.thName")}</label>
           <input value={value.name} required onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
         <div><label>{t("admin.products.provider")}</label>
           <input value={value.provider} onChange={(e) => onChange({ ...value, provider: e.target.value })} /></div>

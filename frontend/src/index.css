@@ -150,6 +150,23 @@ button.ghost:hover { background: #f9fafb; }
   .product-filters .filter-count { margin-left: 0; }
 }
 
+/* Desktop: constrain (narrow) the 產品名稱 column so long insurance names wrap
+   instead of dominating the row. */
+@media (min-width: 769px) {
+  .product-table th.pcat-name, .product-table td.pcat-name {
+    max-width: 240px; white-space: normal; word-break: break-word;
+  }
+}
+/* H5: the product name card cell stacks label-over-name, left-aligned, so long
+   names stay readable instead of being squeezed to the right. */
+@media (max-width: 768px) {
+  .cards-on-mobile td.pcat-name {
+    flex-direction: column; align-items: flex-start; text-align: left; gap: 2px;
+    word-break: break-word;
+  }
+  .cards-on-mobile td.pcat-actions { justify-content: flex-end; }
+}
+
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 /* Basis of 200px: children grow to fill wide rows (desktop unchanged) but wrap to
    full width on narrow screens instead of squashing to unusable inputs. */

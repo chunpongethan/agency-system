@@ -89,10 +89,11 @@ export default function ProductCatalogue({ products, actions }:
         <span className="muted filter-count">{t("admin.products.showing", { n: filtered.length, total: products.length })}</span>
         {hasFilters && <button type="button" className="ghost" onClick={clearFilters}>{t("admin.products.clearFilters")}</button>}
       </div>
-      <table>
+      <div className="table-scroll">
+      <table className="product-table cards-on-mobile">
         <thead>
           <tr>
-            <th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("common.type")}</th><th className="num">{t("admin.products.thBaseRate")}</th>
+            <th>{t("common.code")}</th><th className="pcat-name">{t("admin.products.thName")}</th><th>{t("common.type")}</th><th className="num">{t("admin.products.thBaseRate")}</th>
             <th className="num">{t("admin.products.thAfypConv")}</th><th>{t("admin.products.thSchedule")}</th><th>{t("admin.products.thInsuranceDetails")}</th>
             {actions && <th></th>}
           </tr>
@@ -103,22 +104,25 @@ export default function ProductCatalogue({ products, actions }:
           )}
           {filtered.map((p) => (
             <tr key={p.id}>
-              <td>{p.code}</td><td>{p.name}</td><td>{productTypeLabel(p.type)}</td>
-              <td className="num">{pct(p.base_commission_rate)}</td>
-              <td className="num">{pct(p.afyp_conversion)}</td>
-              <td>{scheduleLabel(p.commission_schedule)}</td>
-              <td className="muted" style={{ fontSize: 12 }}>
+              <td data-label={t("common.code")}>{p.code}</td>
+              <td className="pcat-name" data-label={t("admin.products.thName")}>{p.name}</td>
+              <td data-label={t("common.type")}>{productTypeLabel(p.type)}</td>
+              <td className="num" data-label={t("admin.products.thBaseRate")}>{pct(p.base_commission_rate)}</td>
+              <td className="num" data-label={t("admin.products.thAfypConv")}>{pct(p.afyp_conversion)}</td>
+              <td data-label={t("admin.products.thSchedule")}>{scheduleLabel(p.commission_schedule)}</td>
+              <td className="muted" data-label={t("admin.products.thInsuranceDetails")} style={{ fontSize: 12 }}>
                 {p.type === "insurance"
                   ? t("admin.products.insSummary", { tenor: p.payment_tenor ?? "—", age: ageRange(p), pi: p.professional_investor ? "Y" : "N" })
                   : "—"}
               </td>
               {actions && (
-                <td className="num" style={{ whiteSpace: "nowrap" }}>{actions(p)}</td>
+                <td className="num pcat-actions" style={{ whiteSpace: "nowrap" }}>{actions(p)}</td>
               )}
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
     </>
   );
 }
