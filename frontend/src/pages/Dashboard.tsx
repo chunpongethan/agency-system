@@ -9,6 +9,7 @@ import { productTypeLabel, productDetails } from "../lib/agency";
 import { riskLabel } from "../i18n/labels";
 import { titleLabel } from "../lib/titles";
 import StatusBadge from "../components/StatusBadge";
+import LockedRate from "../components/LockedRate";
 import Scorecard from "../components/Scorecard";
 import TargetProgress from "../components/TargetProgress";
 
@@ -288,7 +289,7 @@ export default function Dashboard() {
           <table>
             <thead>
               <tr>
-                <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th><th>{t("common.status")}</th>
+                <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th><th className="num">{t("txn.lockedRate")}</th><th>{t("common.status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -307,12 +308,13 @@ export default function Dashboard() {
                       </div>
                     </td>
                     <td className="num">{money(t.notional, t.currency)}</td>
+                    <td className="num"><LockedRate base={t.locked_base_rate} years={t.locked_year_commissions} /></td>
                     <td><StatusBadge status={t.status} /></td>
                   </tr>
                 );
               })}
               {txns.data?.length === 0 && (
-                <tr><td colSpan={5} className="muted">{t("dashboard.noTxns")}</td></tr>
+                <tr><td colSpan={6} className="muted">{t("dashboard.noTxns")}</td></tr>
               )}
             </tbody>
           </table>

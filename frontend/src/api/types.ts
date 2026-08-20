@@ -177,6 +177,8 @@ export interface Transaction {
   currency: string;
   status: string;
   trade_date: string;
+  locked_base_rate?: string | null;
+  locked_year_commissions?: string[] | null;
 }
 
 export interface AdminTxnRow {

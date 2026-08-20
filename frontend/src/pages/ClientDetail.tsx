@@ -7,6 +7,7 @@ import { useI18n } from "../i18n/LanguageContext";
 import { money } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
 import StatusBadge from "../components/StatusBadge";
+import LockedRate from "../components/LockedRate";
 
 export default function ClientDetail() {
   const { id } = useParams();
@@ -129,6 +130,7 @@ export default function ClientDetail() {
             <thead>
               <tr>
                 <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th>
+                <th className="num">{t("txn.lockedRate")}</th>
                 <th>{t("common.status")}</th>{isAdmin && <th></th>}
               </tr>
             </thead>
@@ -148,6 +150,7 @@ export default function ClientDetail() {
                     </div>
                   </td>
                   <td className="num">{money(tx.notional, tx.currency)}</td>
+                  <td className="num"><LockedRate base={tx.locked_base_rate} years={tx.locked_year_commissions} /></td>
                   <td><StatusBadge status={tx.status} /></td>
                   {isAdmin && (
                     <td className="num" style={{ whiteSpace: "nowrap" }}>
@@ -167,7 +170,7 @@ export default function ClientDetail() {
                 );
               })}
               {txns.data?.length === 0 && (
-                <tr><td colSpan={isAdmin ? 6 : 5} className="muted">{t("clientDetail.noTxns")}</td></tr>
+                <tr><td colSpan={isAdmin ? 7 : 6} className="muted">{t("clientDetail.noTxns")}</td></tr>
               )}
             </tbody>
           </table>

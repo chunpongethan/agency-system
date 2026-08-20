@@ -80,6 +80,8 @@ export const translations: Record<string, Translation> = {
   "common.commissionShort": { "zh-Hant": "佣金", en: "Comm." },
   "common.override": { "zh-Hant": "管理佣金", en: "Override" },
   "common.notional": { "zh-Hant": "名義金額", en: "Notional" },
+  "txn.lockedRate": { "zh-Hant": "鎖定比率", en: "Locked rate" },
+  "txn.perYear": { "zh-Hant": "逐年", en: "per-yr" },
   "common.status": { "zh-Hant": "狀態", en: "Status" },
   "common.product": { "zh-Hant": "產品", en: "Product" },
   "common.type": { "zh-Hant": "類型", en: "Type" },
