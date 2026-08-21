@@ -243,9 +243,9 @@ export default function AdminTransactions() {
                   <td>{r.product_name}<br />
                     <span className="muted" style={{ fontSize: 12 }}>{productTypeLabel(r.product_type)}</span>
                   </td>
-                  <td><RoleAgent code={r.lead_code} pct={r.lead_pct} /></td>
-                  <td><RoleAgent code={r.sdr_code} pct={r.sales_dev_pct} /></td>
-                  <td><RoleAgent code={r.closing_code ?? r.agent_code} pct={r.closing_pct} /></td>
+                  <td><RoleAgent name={r.lead_name} code={r.lead_code} pct={r.lead_pct} /></td>
+                  <td><RoleAgent name={r.sdr_name} code={r.sdr_code} pct={r.sales_dev_pct} /></td>
+                  <td><RoleAgent name={r.closing_name ?? r.agent_name} code={r.closing_code ?? r.agent_code} pct={r.closing_pct} /></td>
                   <td className="num"><LockedRate base={r.locked_base_rate} years={r.locked_year_commissions} /></td>
                   <td className="num">{money(r.notional, r.currency)}</td>
                   <td>

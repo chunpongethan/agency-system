@@ -71,9 +71,9 @@ export default function Transactions() {
                 <tr key={tx.id}>
                   <td data-label={t("common.ref")}>{tx.ref}</td>
                   <td className="muted" data-label={t("common.date")}>{tx.trade_date}</td>
-                  <td data-label={t("txn.roleLead")}><RoleAgent code={tx.lead_code} pct={tx.lead_pct} /></td>
-                  <td data-label={t("txn.roleSdr")}><RoleAgent code={tx.sdr_code} pct={tx.sales_dev_pct} /></td>
-                  <td data-label={t("txn.roleClosing")}><RoleAgent code={tx.closing_code ?? tx.agent_code} pct={tx.closing_pct} /></td>
+                  <td data-label={t("txn.roleLead")}><RoleAgent name={tx.lead_name} code={tx.lead_code} pct={tx.lead_pct} /></td>
+                  <td data-label={t("txn.roleSdr")}><RoleAgent name={tx.sdr_name} code={tx.sdr_code} pct={tx.sales_dev_pct} /></td>
+                  <td data-label={t("txn.roleClosing")}><RoleAgent name={tx.closing_name ?? tx.agent_name} code={tx.closing_code ?? tx.agent_code} pct={tx.closing_pct} /></td>
                   <td data-label={t("common.client")}>{tx.client_name ?? `#${tx.client_id}`}</td>
                   <td data-label={t("common.product")}>
                     <div>{tx.product_name ?? (p ? p.name : `#${tx.product_id}`)}</div>
