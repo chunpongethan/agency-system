@@ -178,6 +178,21 @@ def test_agent_transactions_review_list_is_enriched(client):
     assert float(row["locked_base_rate"]) == 0.01  # locked at creation
 
 
+def test_review_transactions_mine_scoped_and_enriched(client):
+    """GET /transactions/mine returns the caller's own (closing) deals, enriched
+    with client/product/agent names + the locked rate. An agent sees only their
+    own (visible set == {self})."""
+    admin = auth(client, "ADM")
+    ids = client._ids
+    tid = _book(client, admin, ids, ids["fund"]).json()["id"]
+    client.post(f"/transactions/{tid}/approve", headers=admin)
+    rows = client.get("/transactions/mine", headers=auth(client, "AX")).json()
+    assert [r["id"] for r in rows] == [tid]          # only AX's own deal
+    r = rows[0]
+    assert r["agent_code"] == "AX" and r["client_name"] == "X" and r["product_name"] == "Fund"
+    assert float(r["locked_base_rate"]) == 0.01
+
+
 def test_only_admin_maintains_products(client):
     agent = auth(client, "AX")
     # non-admin cannot create or patch products

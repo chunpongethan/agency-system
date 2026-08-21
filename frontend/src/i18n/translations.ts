@@ -22,8 +22,8 @@ export const translations: Record<string, Translation> = {
   "nav.myTxns": { "zh-Hant": "交易記錄", en: "Transactions" },
   "myTxns.title": { "zh-Hant": "交易記錄", en: "Transactions" },
   "myTxns.subtitle": {
-    "zh-Hant": "檢視你的交易與已鎖定的佣金比率（只供檢視，交易由管理員維護）。",
-    en: "Review your transactions and their locked commission rates (read-only; transactions are maintained by an admin).",
+    "zh-Hant": "檢視交易與已鎖定的佣金比率（只供檢視，交易由管理員維護）。經理可檢視整個團隊的交易。",
+    en: "Review transactions and their locked commission rates (read-only; transactions are maintained by an admin). Managers see their whole team.",
   },
   "myTxns.searchPlaceholder": { "zh-Hant": "搜尋編號、客戶、產品或保單號", en: "Search ref, client, product or policy no." },
   "myTxns.count": { "zh-Hant": "顯示 {n} / {total}", en: "Showing {n} of {total}" },

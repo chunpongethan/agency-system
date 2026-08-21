@@ -179,11 +179,13 @@ export interface Transaction {
   trade_date: string;
   locked_base_rate?: string | null;
   locked_year_commissions?: string[] | null;
-  // Present on the agent review list (/agents/{id}/transactions); enrichment names.
+  // Present on the review lists (/agents/{id}/transactions, /transactions/mine).
   client_name?: string;
   client_ref?: string;
   product_name?: string;
   product_type?: string;
+  agent_name?: string;
+  agent_code?: string;
 }
 
 export interface AdminTxnRow {

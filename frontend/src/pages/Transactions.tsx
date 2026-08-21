@@ -15,9 +15,11 @@ const STATUSES = ["pending", "approved", "cancelled"];
 export default function Transactions() {
   const { me } = useAuth();
   const { t } = useI18n();
-  const agentId = me!.id;
+  const isManager = me!.role === "manager";
 
-  const txns = useQuery({ queryKey: ["agentTxns", agentId], queryFn: () => api.agentTransactions(agentId) });
+  // Scoped to the caller's visible line: own deals for an agent, whole subtree
+  // for a manager.
+  const txns = useQuery({ queryKey: ["reviewTxns"], queryFn: () => api.reviewTransactions() });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const productsById = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
 
@@ -28,10 +30,12 @@ export default function Transactions() {
     return (txns.data ?? []).filter((tx) => {
       if (status && tx.status !== status) return false;
       if (!needle) return true;
-      return [tx.ref, tx.policy_no, tx.product_name, tx.client_name, tx.client_ref]
+      return [tx.ref, tx.policy_no, tx.product_name, tx.client_name, tx.client_ref,
+              tx.agent_name, tx.agent_code]
         .some((v) => (v ?? "").toString().toLowerCase().includes(needle));
     });
   }, [txns.data, q, status]);
+  const colCount = isManager ? 8 : 7;
 
   return (
     <div>
@@ -52,14 +56,16 @@ export default function Transactions() {
         <table className="cards-on-mobile">
           <thead>
             <tr>
-              <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.client")}</th>
+              <th>{t("common.ref")}</th><th>{t("common.date")}</th>
+              {isManager && <th>{t("common.agent")}</th>}
+              <th>{t("common.client")}</th>
               <th>{t("common.product")}</th><th className="num">{t("common.notional")}</th>
               <th className="num">{t("txn.lockedRate")}</th><th>{t("common.status")}</th>
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 && !txns.isLoading && (
-              <tr><td colSpan={7} className="muted" style={{ textAlign: "center", padding: "18px 0" }}>{t("myTxns.empty")}</td></tr>
+              <tr><td colSpan={colCount} className="muted" style={{ textAlign: "center", padding: "18px 0" }}>{t("myTxns.empty")}</td></tr>
             )}
             {rows.map((tx) => {
               const p = productsById.get(tx.product_id);
@@ -67,6 +73,12 @@ export default function Transactions() {
                 <tr key={tx.id}>
                   <td data-label={t("common.ref")}>{tx.ref}</td>
                   <td className="muted" data-label={t("common.date")}>{tx.trade_date}</td>
+                  {isManager && (
+                    <td data-label={t("common.agent")}>
+                      {tx.agent_name}
+                      <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>{tx.agent_code}</span>
+                    </td>
+                  )}
                   <td data-label={t("common.client")}>{tx.client_name ?? `#${tx.client_id}`}</td>
                   <td data-label={t("common.product")}>
                     <div>{tx.product_name ?? (p ? p.name : `#${tx.product_id}`)}</div>

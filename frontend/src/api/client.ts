@@ -126,6 +126,8 @@ export const api = {
     request<Transaction[]>(`/clients/${id}/transactions`),
   agentTransactions: (id: number) =>
     request<Transaction[]>(`/agents/${id}/transactions`),
+  // Scoped review list: own deals for an agent, the whole subtree for a manager.
+  reviewTransactions: () => request<Transaction[]>(`/transactions/mine`),
 
   // Cases (sales pipeline)
   listCases: (params?: { stage?: string; outcome?: string; agent_id?: number; q?: string }) =>

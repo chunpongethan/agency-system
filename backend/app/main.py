@@ -786,6 +786,47 @@ def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db
     return schemas.NextRefOut(ref=_next_ref(db, d))
 
 
+@app.get("/transactions/mine")
+def review_transactions(status: str | None = None, db: Session = Depends(get_db),
+                        current: Agent = Depends(get_current_agent)):
+    """Read-only review list scoped to the caller's visible line: an agent sees
+    their own (closing) deals; a manager sees their whole subtree; an admin the
+    company. Enriched with client/product/agent names + the locked rate."""
+    ids = scoping.visible_agent_ids(db, current)
+    if not ids:
+        return []
+    stmt = (
+        select(Transaction, Client.name, Client.ref, Product.name, Product.type,
+               Agent.name, Agent.code)
+        .join(Client, Transaction.client_id == Client.id)
+        .join(Product, Transaction.product_id == Product.id)
+        .join(Agent, Transaction.agent_id == Agent.id)
+        .where(Transaction.agent_id.in_(ids))
+        .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
+    )
+    if status:
+        try:
+            stmt = stmt.where(Transaction.status == TxnStatus(status))
+        except ValueError:
+            raise err(422, "validation", f"invalid status: {status}")
+    out = []
+    for txn, cname, cref, pname, ptype, aname, acode in db.execute(stmt).all():
+        out.append({
+            "id": txn.id, "ref": txn.ref, "trade_date": txn.trade_date,
+            "status": txn.status.value,
+            "deal_type": (txn.deal_type.value if txn.deal_type else "agent"),
+            "notional": txn.notional, "currency": txn.currency,
+            "policy_no": txn.policy_no,
+            "client_id": txn.client_id, "client_name": cname, "client_ref": cref,
+            "product_id": txn.product_id, "product_name": pname,
+            "product_type": ptype.value,
+            "agent_id": txn.agent_id, "agent_name": aname, "agent_code": acode,
+            "locked_base_rate": txn.locked_base_rate,
+            "locked_year_commissions": txn.locked_year_commissions,
+        })
+    return out
+
+
 @app.get("/transactions")
 def list_transactions(status: str | None = None, agent_id: int | None = None,
                       q: str | None = None, db: Session = Depends(get_db),
