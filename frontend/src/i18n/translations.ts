@@ -268,6 +268,7 @@ export const translations: Record<string, Translation> = {
   "clients.new": { "zh-Hant": "＋ 新增客戶", en: "+ New client" },
   "clients.newTitle": { "zh-Hant": "新增客戶", en: "New client" },
   "clients.reference": { "zh-Hant": "參考編號", en: "Reference" },
+  "clients.refAuto": { "zh-Hant": "客戶編號（自動）", en: "Client code (auto)" },
   "clients.riskProfile": { "zh-Hant": "風險取向", en: "Risk profile" },
   "clients.create": { "zh-Hant": "建立客戶", en: "Create client" },
   "clients.createFailed": { "zh-Hant": "建立客戶失敗", en: "Failed to create client" },

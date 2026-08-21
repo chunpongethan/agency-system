@@ -486,6 +486,28 @@ def downlines(agent_id: int, db: Session = Depends(get_db),
 # --- Clients (owner-only) ----------------------------------------------------
 # Client details and their transactions are strictly owner-only. Admins are not
 # sellers and cannot own or read clients.
+def _next_client_ref(db: Session) -> str:
+    """Auto client code: C<YY><NNN> — 'C' + 2-digit year + a per-year, zero-padded
+    (min 3-digit) sequence, e.g. C26001 for the first 2026 client."""
+    prefix = f"C{date.today().year % 100:02d}"
+    existing = db.execute(
+        select(Client.ref).where(Client.ref.like(prefix + "%"))
+    ).scalars().all()
+    max_seq = 0
+    for r in existing:
+        tail = (r or "")[len(prefix):]
+        if tail.isdigit():
+            max_seq = max(max_seq, int(tail))
+    return f"{prefix}{max_seq + 1:03d}"
+
+
+@app.get("/clients/next-ref", response_model=schemas.NextRefOut)
+def next_client_ref(db: Session = Depends(get_db),
+                    current: Agent = Depends(get_current_agent)):
+    """Preview the next auto-generated client code (C<YY><NNN>)."""
+    return schemas.NextRefOut(ref=_next_client_ref(db))
+
+
 @app.post("/clients", response_model=schemas.ClientOut)
 def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
                   current: Agent = Depends(get_current_agent)):
@@ -497,7 +519,10 @@ def create_client(payload: schemas.ClientIn, db: Session = Depends(get_db),
         _guard_company(db, current, payload.agent_id)
     elif payload.agent_id != current.id:
         raise HTTPException(403, "you may only create clients you own")
-    client = Client(**payload.model_dump())
+    data = payload.model_dump()
+    if not (data.get("ref") or "").strip():
+        data["ref"] = _next_client_ref(db)   # auto-assign C<YY><NNN>
+    client = Client(**data)
     db.add(client); db.commit(); db.refresh(client)
     return client
 

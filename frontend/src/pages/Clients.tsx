@@ -16,7 +16,6 @@ export default function Clients() {
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    ref: "",
     name: "",
     email: "",
     phone: "",
@@ -27,6 +26,8 @@ export default function Clients() {
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
   const agents = useQuery({ queryKey: ["agents"], queryFn: () => api.agents() });
   const agentsById = new Map((agents.data ?? []).map((a) => [a.id, a]));
+  // The client code is auto-assigned (C<YY><NNN>); preview the next one.
+  const nextRef = useQuery({ queryKey: ["clientNextRef"], queryFn: () => api.clientNextRef(), enabled: showForm });
 
   const create = useMutation({
     mutationFn: () =>
@@ -38,8 +39,9 @@ export default function Clients() {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["clientNextRef"] });
       setShowForm(false);
-      setForm({ ...form, ref: "", name: "", email: "", phone: "" });
+      setForm({ ...form, name: "", email: "", phone: "" });
       setError(null);
     },
     onError: (e) => setError(errorText(e, t) || t("clients.createFailed")),
@@ -70,9 +72,8 @@ export default function Clients() {
           {error && <div className="error">{error}</div>}
           <div className="row">
             <div>
-              <label>{t("clients.reference")}</label>
-              <input value={form.ref} required
-                onChange={(e) => setForm({ ...form, ref: e.target.value })} />
+              <label>{t("clients.refAuto")}</label>
+              <input value={nextRef.data?.ref ?? "…"} readOnly disabled />
             </div>
             <div>
               <label>{t("common.name")}</label>

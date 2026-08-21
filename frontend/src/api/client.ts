@@ -116,6 +116,7 @@ export const api = {
 
   // Clients
   clients: () => request<Client[]>("/clients"),
+  clientNextRef: () => request<{ ref: string }>("/clients/next-ref"),
   agentClients: (id: number) => request<Client[]>(`/agents/${id}/clients`),
   client: (id: number) => request<Client>(`/clients/${id}`),
   createClient: (payload: Partial<Client>) =>

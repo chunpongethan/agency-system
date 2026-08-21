@@ -101,7 +101,7 @@ class AgentOut(BaseModel):
 
 # --- Clients ----------------------------------------------------------------
 class ClientIn(BaseModel):
-    ref: str
+    ref: str | None = None   # auto-generated (C<YY><NNN>) when omitted
     name: str
     email: str | None = None
     phone: str | None = None
