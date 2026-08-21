@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
 from app.models.models import (
@@ -24,6 +24,44 @@ def _window(query, start: date | None, end: date | None):
     if end:
         query = query.where(Transaction.trade_date <= end)
     return query
+
+
+def _role_shares_for_txn(txn) -> dict[int, Decimal]:
+    """{agent_id: percentage} of a deal each role agent holds — Lead / SDR /
+    Closing, with lead & sales-dev falling back to the closer when unset, and
+    combining an agent that holds more than one role. Mirrors the commission
+    engine's split so AFYP is credited the same way the commission is."""
+    closing = txn.agent_id
+    lead = txn.lead_agent_id or closing
+    sdr = txn.sales_dev_agent_id or closing
+    shares: dict[int, Decimal] = {}
+    for aid, pct in ((lead, txn.lead_pct), (sdr, txn.sales_dev_pct), (closing, txn.closing_pct)):
+        shares[aid] = shares.get(aid, Decimal("0")) + Decimal(pct or 0)
+    return shares
+
+
+def _afyp_by_agent(session: Session, start: date | None, end: date | None,
+                   agent_ids: set[int] | None = None) -> dict[int, Decimal]:
+    """Per-agent AFYP for settled sales, split across the deal's Lead/SDR/Closing
+    role agents by their share % — so a lead/sales-dev is credited AFYP too, not
+    only the closer. Restricted to `agent_ids` when given (a deal counts if any of
+    its role agents is in the set, but only those agents' shares accumulate)."""
+    q = (select(Transaction, Product.afyp_conversion)
+         .join(Product, Transaction.product_id == Product.id)
+         .where(Transaction.status == TxnStatus.APPROVED))
+    if agent_ids is not None:
+        q = q.where(or_(Transaction.agent_id.in_(agent_ids),
+                        Transaction.lead_agent_id.in_(agent_ids),
+                        Transaction.sales_dev_agent_id.in_(agent_ids)))
+    q = _window(q, start, end)
+    out: dict[int, Decimal] = {}
+    for txn, conv in session.execute(q):
+        afyp = Decimal(txn.notional) * Decimal(conv)
+        for aid, pct in _role_shares_for_txn(txn).items():
+            if agent_ids is not None and aid not in agent_ids:
+                continue
+            out[aid] = out.get(aid, Decimal("0")) + afyp * pct / Decimal("100")
+    return out
 
 
 def agent_statement(session: Session, agent_id: int,
@@ -210,20 +248,10 @@ def agency_summary(session: Session,
         else:
             r["override"] += Decimal(amount)
 
-    # AFYP per agent (own settled sales).
-    aq = (
-        select(Transaction.agent_id,
-               func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
-        .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.APPROVED)
-        .group_by(Transaction.agent_id)
-    )
-    if agent_ids is not None:
-        aq = aq.where(Transaction.agent_id.in_(agent_ids))
-    aq = _window(aq, start, end)
-    for aid, afyp in session.execute(aq):
+    # AFYP per agent, split across each deal's Lead/SDR/Closing role agents.
+    for aid, afyp in _afyp_by_agent(session, start, end, agent_ids).items():
         if aid in rows:
-            rows[aid]["afyp"] = Decimal(afyp)
+            rows[aid]["afyp"] = afyp
 
     out = []
     for r in rows.values():
@@ -325,18 +353,11 @@ def production_by_agent(session: Session, agent_ids: set[int],
     if not agent_ids:
         return out
 
-    # AFYP = notional × product.afyp_conversion, for settled sales the agent closed.
-    aq = (
-        select(Transaction.agent_id,
-               func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
-        .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.APPROVED)
-        .where(Transaction.agent_id.in_(agent_ids))
-        .group_by(Transaction.agent_id)
-    )
-    aq = _window(aq, start, end)
-    for aid, afyp in session.execute(aq):
-        out[aid]["afyp"] = Decimal(afyp)
+    # AFYP = notional × afyp_conversion, split across each deal's role agents
+    # (Lead/SDR/Closing) so a lead/sales-dev is credited too, not only the closer.
+    for aid, afyp in _afyp_by_agent(session, start, end, agent_ids).items():
+        if aid in out:
+            out[aid]["afyp"] = afyp
 
     # Commission earned by the agent, split into direct vs override.
     cq = (
@@ -360,14 +381,7 @@ def production_by_agent(session: Session, agent_ids: set[int],
 def _production_split(session: Session, agent_id: int,
                       start: date, end: date) -> dict:
     """AFYP plus commission split into direct vs override for one agent/window."""
-    aq = _window(
-        select(func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0))
-        .join(Product, Transaction.product_id == Product.id)
-        .where(Transaction.status == TxnStatus.APPROVED)
-        .where(Transaction.agent_id == agent_id),
-        start, end,
-    )
-    afyp = Decimal(session.execute(aq).scalar_one())
+    afyp = _afyp_by_agent(session, start, end, {agent_id}).get(agent_id, Decimal("0"))
 
     cq = _window(
         select(CommissionEntry.kind,

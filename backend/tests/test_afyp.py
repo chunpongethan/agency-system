@@ -59,6 +59,28 @@ def test_afyp_is_notional_times_conversion(db):
     assert prod[db._ids["ag"]]["commission"] == Decimal("50000.00")
 
 
+def test_afyp_split_across_role_agents(db):
+    """AFYP is split across a deal's Lead/SDR/Closing agents by their share %."""
+    from app.models.models import Agent, Role
+    today = date.today()
+    ag2 = Agent(code="A2", name="Ag2", email="a2@x.com", level=2, role=Role.AGENT,
+                upline_id=db._ids["mgr"])
+    db.add(ag2); db.flush()
+    # closer = ag (60%), lead = ag2 (40%)
+    t = Transaction(ref="TSPLIT", client_id=db._ids["client"], product_id=db._ids["prod"],
+                    agent_id=db._ids["ag"], lead_agent_id=ag2.id,
+                    lead_pct=Decimal("40"), sales_dev_pct=Decimal("0"), closing_pct=Decimal("60"),
+                    notional=Decimal("1000000"), status=TxnStatus.APPROVED,
+                    trade_date=today, settled_at=now_utc())
+    db.add(t); db.flush()
+    commission_engine.compute_for_transaction(db, t, as_of=today)
+    db.commit()
+    prod = reports.production_by_agent(db, {db._ids["ag"], ag2.id}, date(today.year, 1, 1), today)
+    # full AFYP 100,000 split 60 / 40 (sums back to the whole)
+    assert prod[db._ids["ag"]]["afyp"] == Decimal("60000")
+    assert prod[ag2.id]["afyp"] == Decimal("40000")
+
+
 def test_team_production_three_periods(db):
     today = date.today()
     _settle(db, "1000000", today)  # falls in YTD + current month
