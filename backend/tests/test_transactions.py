@@ -213,6 +213,10 @@ def test_review_transactions_include_lead_and_sales_dev_roles(client):
     row = next((r for r in rows if r["id"] == tid), None)
     assert row is not None                     # visible via the lead role
     assert row["agent_code"] == "BX"           # Agent column shows the closer
+    # Lead / SDR / Closing role columns are resolved server-side
+    assert row["lead_code"] == "AX" and float(row["lead_pct"]) == 50
+    assert row["closing_code"] == "BX" and float(row["closing_pct"]) == 50
+    assert row["sdr_code"] == "BX"             # sales-dev unset -> falls back to closer
     # ...and BX also sees it (as closer)
     assert any(r["id"] == tid for r in client.get("/transactions/mine", headers=auth(client, "BX")).json())
 

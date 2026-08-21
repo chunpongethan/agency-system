@@ -786,6 +786,26 @@ def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db
     return schemas.NextRefOut(ref=_next_ref(db, d))
 
 
+def _agents_by_id(db: Session, company: str) -> dict[int, tuple[str, str]]:
+    """{agent_id: (name, code)} for one company — used to resolve the Lead/SDR/
+    Closing role agents on a transaction row."""
+    return {r[0]: (r[1], r[2]) for r in db.execute(
+        select(Agent.id, Agent.name, Agent.code).where(Agent.company == company)).all()}
+
+
+def _role_fields(txn: Transaction, by_id: dict[int, tuple[str, str]]) -> dict:
+    """Lead / SDR / Closing agent names + codes + split percentages. Lead and
+    sales-dev fall back to the closing agent when unset (mirrors the engine)."""
+    closer = by_id.get(txn.agent_id, ("", ""))
+    lead = by_id.get(txn.lead_agent_id or txn.agent_id, closer)
+    sdr = by_id.get(txn.sales_dev_agent_id or txn.agent_id, closer)
+    return {
+        "lead_name": lead[0], "lead_code": lead[1], "lead_pct": txn.lead_pct,
+        "sdr_name": sdr[0], "sdr_code": sdr[1], "sales_dev_pct": txn.sales_dev_pct,
+        "closing_name": closer[0], "closing_code": closer[1], "closing_pct": txn.closing_pct,
+    }
+
+
 @app.get("/transactions/mine")
 def review_transactions(status: str | None = None, db: Session = Depends(get_db),
                         current: Agent = Depends(get_current_agent)):
@@ -812,6 +832,7 @@ def review_transactions(status: str | None = None, db: Session = Depends(get_db)
             stmt = stmt.where(Transaction.status == TxnStatus(status))
         except ValueError:
             raise err(422, "validation", f"invalid status: {status}")
+    by_id = _agents_by_id(db, current.company)
     out = []
     for txn, cname, cref, pname, ptype, aname, acode in db.execute(stmt).all():
         out.append({
@@ -826,6 +847,7 @@ def review_transactions(status: str | None = None, db: Session = Depends(get_db)
             "agent_id": txn.agent_id, "agent_name": aname, "agent_code": acode,
             "locked_base_rate": txn.locked_base_rate,
             "locked_year_commissions": txn.locked_year_commissions,
+            **_role_fields(txn, by_id),
         })
     return out
 
@@ -856,6 +878,7 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
     if agent_id:
         stmt = stmt.where(Transaction.agent_id == agent_id)
     needle = (q or "").strip().lower()
+    by_id = _agents_by_id(db, current.company)
     out = []
     for txn, cname, cref, pname, ptype, aname, acode, psched in db.execute(stmt).all():
         if needle:
@@ -876,11 +899,10 @@ def list_transactions(status: str | None = None, agent_id: int | None = None,
             "agent_id": txn.agent_id, "agent_name": aname, "agent_code": acode,
             "lead_agent_id": txn.lead_agent_id,
             "sales_dev_agent_id": txn.sales_dev_agent_id,
-            "lead_pct": txn.lead_pct, "sales_dev_pct": txn.sales_dev_pct,
-            "closing_pct": txn.closing_pct,
             "commission_schedule": (psched.value if psched else "upfront"),
             "locked_base_rate": txn.locked_base_rate,
             "locked_year_commissions": txn.locked_year_commissions,
+            **_role_fields(txn, by_id),
         })
     return out
 

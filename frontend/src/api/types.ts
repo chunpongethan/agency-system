@@ -186,6 +186,13 @@ export interface Transaction {
   product_type?: string;
   agent_name?: string;
   agent_code?: string;
+  // Resolved Lead / SDR / Closing role agents + split percentages.
+  lead_name?: string;
+  lead_code?: string;
+  sdr_name?: string;
+  sdr_code?: string;
+  closing_name?: string;
+  closing_code?: string;
 }
 
 export interface AdminTxnRow {
@@ -215,6 +222,13 @@ export interface AdminTxnRow {
   commission_schedule?: string;
   locked_base_rate?: string | null;
   locked_year_commissions?: string[] | null;
+  // Resolved Lead / SDR / Closing role agents (codes/names) — pcts above.
+  lead_name?: string;
+  lead_code?: string;
+  sdr_name?: string;
+  sdr_code?: string;
+  closing_name?: string;
+  closing_code?: string;
 }
 
 export interface OverrideDefault {

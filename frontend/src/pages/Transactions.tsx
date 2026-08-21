@@ -6,6 +6,7 @@ import { money } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
 import StatusBadge from "../components/StatusBadge";
 import LockedRate from "../components/LockedRate";
+import RoleAgent from "../components/RoleAgent";
 
 const STATUSES = ["pending", "approved", "cancelled"];
 
@@ -28,11 +29,11 @@ export default function Transactions() {
       if (status && tx.status !== status) return false;
       if (!needle) return true;
       return [tx.ref, tx.policy_no, tx.product_name, tx.client_name, tx.client_ref,
-              tx.agent_name, tx.agent_code]
+              tx.agent_name, tx.agent_code, tx.lead_code, tx.sdr_code]
         .some((v) => (v ?? "").toString().toLowerCase().includes(needle));
     });
   }, [txns.data, q, status]);
-  const colCount = 8;
+  const colCount = 10;
 
   return (
     <div>
@@ -54,7 +55,7 @@ export default function Transactions() {
           <thead>
             <tr>
               <th>{t("common.ref")}</th><th>{t("common.date")}</th>
-              <th>{t("myTxns.closer")}</th>
+              <th>{t("txn.roleLead")}</th><th>{t("txn.roleSdr")}</th><th>{t("txn.roleClosing")}</th>
               <th>{t("common.client")}</th>
               <th>{t("common.product")}</th><th className="num">{t("common.notional")}</th>
               <th className="num">{t("txn.lockedRate")}</th><th>{t("common.status")}</th>
@@ -70,10 +71,9 @@ export default function Transactions() {
                 <tr key={tx.id}>
                   <td data-label={t("common.ref")}>{tx.ref}</td>
                   <td className="muted" data-label={t("common.date")}>{tx.trade_date}</td>
-                  <td data-label={t("myTxns.closer")}>
-                    {tx.agent_name}
-                    <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>{tx.agent_code}</span>
-                  </td>
+                  <td data-label={t("txn.roleLead")}><RoleAgent code={tx.lead_code} pct={tx.lead_pct} /></td>
+                  <td data-label={t("txn.roleSdr")}><RoleAgent code={tx.sdr_code} pct={tx.sales_dev_pct} /></td>
+                  <td data-label={t("txn.roleClosing")}><RoleAgent code={tx.closing_code ?? tx.agent_code} pct={tx.closing_pct} /></td>
                   <td data-label={t("common.client")}>{tx.client_name ?? `#${tx.client_id}`}</td>
                   <td data-label={t("common.product")}>
                     <div>{tx.product_name ?? (p ? p.name : `#${tx.product_id}`)}</div>

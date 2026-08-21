@@ -6,6 +6,8 @@ import { useI18n } from "../../i18n/LanguageContext";
 import { money } from "../../lib/format";
 import { productTypeLabel } from "../../i18n/labels";
 import StatusBadge from "../../components/StatusBadge";
+import LockedRate from "../../components/LockedRate";
+import RoleAgent from "../../components/RoleAgent";
 import type { AdminTxnRow } from "../../api/types";
 
 const STATUSES = ["pending", "approved", "cancelled"];
@@ -219,7 +221,10 @@ export default function AdminTransactions() {
                 <th>{t("common.date")}</th>
                 <th>{t("common.client")}</th>
                 <th>{t("common.product")}</th>
-                <th>{t("adminTxn.thAgent")}</th>
+                <th>{t("txn.roleLead")}</th>
+                <th>{t("txn.roleSdr")}</th>
+                <th>{t("txn.roleClosing")}</th>
+                <th className="num">{t("txn.commRate")}</th>
                 <th className="num">{t("common.notional")}</th>
                 <th>{t("adminTxn.thType")}</th>
                 <th>{t("common.status")}</th>
@@ -238,9 +243,10 @@ export default function AdminTransactions() {
                   <td>{r.product_name}<br />
                     <span className="muted" style={{ fontSize: 12 }}>{productTypeLabel(r.product_type)}</span>
                   </td>
-                  <td>{r.agent_name}<br />
-                    <span className="muted" style={{ fontSize: 12 }}>{r.agent_code}</span>
-                  </td>
+                  <td><RoleAgent code={r.lead_code} pct={r.lead_pct} /></td>
+                  <td><RoleAgent code={r.sdr_code} pct={r.sales_dev_pct} /></td>
+                  <td><RoleAgent code={r.closing_code ?? r.agent_code} pct={r.closing_pct} /></td>
+                  <td className="num"><LockedRate base={r.locked_base_rate} years={r.locked_year_commissions} /></td>
                   <td className="num">{money(r.notional, r.currency)}</td>
                   <td>
                     <span className="badge">
@@ -267,7 +273,7 @@ export default function AdminTransactions() {
                 </tr>
               ))}
               {rows.length === 0 && (
-                <tr><td colSpan={9} className="muted">{t("adminTxn.empty")}</td></tr>
+                <tr><td colSpan={12} className="muted">{t("adminTxn.empty")}</td></tr>
               )}
             </tbody>
           </table>
