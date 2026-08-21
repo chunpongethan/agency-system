@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { money } from "../lib/format";
 import { productTypeLabel, productDetails } from "../lib/agency";
@@ -13,12 +12,10 @@ const STATUSES = ["pending", "approved", "cancelled"];
 // Read-only transaction review list for sellers: their own (closing) deals, with
 // the locked commission rate. Transactions are created/maintained by an admin.
 export default function Transactions() {
-  const { me } = useAuth();
   const { t } = useI18n();
-  const isManager = me!.role === "manager";
 
-  // Scoped to the caller's visible line: own deals for an agent, whole subtree
-  // for a manager.
+  // Scoped to the caller's visible line: an agent sees every deal they take part
+  // in (lead / sales-dev / closer); a manager sees the same across the subtree.
   const txns = useQuery({ queryKey: ["reviewTxns"], queryFn: () => api.reviewTransactions() });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const productsById = useMemo(() => new Map((products.data ?? []).map((p) => [p.id, p])), [products.data]);
@@ -35,7 +32,7 @@ export default function Transactions() {
         .some((v) => (v ?? "").toString().toLowerCase().includes(needle));
     });
   }, [txns.data, q, status]);
-  const colCount = isManager ? 8 : 7;
+  const colCount = 8;
 
   return (
     <div>
@@ -57,7 +54,7 @@ export default function Transactions() {
           <thead>
             <tr>
               <th>{t("common.ref")}</th><th>{t("common.date")}</th>
-              {isManager && <th>{t("common.agent")}</th>}
+              <th>{t("myTxns.closer")}</th>
               <th>{t("common.client")}</th>
               <th>{t("common.product")}</th><th className="num">{t("common.notional")}</th>
               <th className="num">{t("txn.lockedRate")}</th><th>{t("common.status")}</th>
@@ -73,12 +70,10 @@ export default function Transactions() {
                 <tr key={tx.id}>
                   <td data-label={t("common.ref")}>{tx.ref}</td>
                   <td className="muted" data-label={t("common.date")}>{tx.trade_date}</td>
-                  {isManager && (
-                    <td data-label={t("common.agent")}>
-                      {tx.agent_name}
-                      <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>{tx.agent_code}</span>
-                    </td>
-                  )}
+                  <td data-label={t("myTxns.closer")}>
+                    {tx.agent_name}
+                    <span className="muted" style={{ fontSize: 11, marginLeft: 4 }}>{tx.agent_code}</span>
+                  </td>
                   <td data-label={t("common.client")}>{tx.client_name ?? `#${tx.client_id}`}</td>
                   <td data-label={t("common.product")}>
                     <div>{tx.product_name ?? (p ? p.name : `#${tx.product_id}`)}</div>

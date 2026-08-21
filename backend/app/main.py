@@ -790,8 +790,9 @@ def next_transaction_ref(period: str | None = None, db: Session = Depends(get_db
 def review_transactions(status: str | None = None, db: Session = Depends(get_db),
                         current: Agent = Depends(get_current_agent)):
     """Read-only review list scoped to the caller's visible line: an agent sees
-    their own (closing) deals; a manager sees their whole subtree; an admin the
-    company. Enriched with client/product/agent names + the locked rate."""
+    every deal they take part in (as lead, sales-dev OR closer); a manager sees
+    the same across their whole subtree; an admin across the company. Enriched
+    with client/product/agent (closer) names + the locked rate."""
     ids = scoping.visible_agent_ids(db, current)
     if not ids:
         return []
@@ -800,8 +801,10 @@ def review_transactions(status: str | None = None, db: Session = Depends(get_db)
                Agent.name, Agent.code)
         .join(Client, Transaction.client_id == Client.id)
         .join(Product, Transaction.product_id == Product.id)
-        .join(Agent, Transaction.agent_id == Agent.id)
-        .where(Transaction.agent_id.in_(ids))
+        .join(Agent, Transaction.agent_id == Agent.id)  # closer, for the Agent column
+        .where(or_(Transaction.agent_id.in_(ids),
+                   Transaction.lead_agent_id.in_(ids),
+                   Transaction.sales_dev_agent_id.in_(ids)))
         .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
     )
     if status:

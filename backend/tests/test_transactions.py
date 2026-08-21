@@ -193,6 +193,30 @@ def test_review_transactions_mine_scoped_and_enriched(client):
     assert float(r["locked_base_rate"]) == 0.01
 
 
+def test_review_transactions_include_lead_and_sales_dev_roles(client):
+    """生意記錄 shows deals where the agent is lead/sales-dev, not only closer."""
+    from app.models.models import Agent, Role
+    from app.security import hash_password
+    ids = client._ids
+    # a second seller who will be the CLOSER
+    with client._Session() as s:
+        bx = Agent(code="BX", name="BX", email="bx@x.com", level=1, role=Role.AGENT,
+                   password_hash=hash_password("pw"))
+        s.add(bx); s.commit(); bx_id = bx.id
+    admin = auth(client, "ADM")
+    # BX closes; AX is the lead (AX did not close it)
+    tid = _book(client, admin, ids, ids["fund"], agent_id=bx_id,
+                lead_agent_id=ids["ax"], lead_pct="50", closing_pct="50").json()["id"]
+    client.post(f"/transactions/{tid}/approve", headers=admin)
+    # AX sees it in their review list even though BX is the closer
+    rows = client.get("/transactions/mine", headers=auth(client, "AX")).json()
+    row = next((r for r in rows if r["id"] == tid), None)
+    assert row is not None                     # visible via the lead role
+    assert row["agent_code"] == "BX"           # Agent column shows the closer
+    # ...and BX also sees it (as closer)
+    assert any(r["id"] == tid for r in client.get("/transactions/mine", headers=auth(client, "BX")).json())
+
+
 def test_only_admin_maintains_products(client):
     agent = auth(client, "AX")
     # non-admin cannot create or patch products

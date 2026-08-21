@@ -25,6 +25,7 @@ export const translations: Record<string, Translation> = {
     "zh-Hant": "檢視交易與已鎖定的佣金比率（只供檢視，交易由管理員維護）。經理可檢視整個團隊的交易。",
     en: "Review transactions and their locked commission rates (read-only; transactions are maintained by an admin). Managers see their whole team.",
   },
+  "myTxns.closer": { "zh-Hant": "成交代理", en: "Closed by" },
   "myTxns.searchPlaceholder": { "zh-Hant": "搜尋編號、客戶、產品或保單號", en: "Search ref, client, product or policy no." },
   "myTxns.count": { "zh-Hant": "顯示 {n} / {total}", en: "Showing {n} of {total}" },
   "myTxns.empty": { "zh-Hant": "沒有符合條件的交易。", en: "No transactions match." },
