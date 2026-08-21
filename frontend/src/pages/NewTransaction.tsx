@@ -25,6 +25,7 @@ export default function NewTransaction() {
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
   const nextRef = useQuery({ queryKey: ["nextRef"], queryFn: () => api.nextTransactionRef() });
+  const clientNextRef = useQuery({ queryKey: ["clientNextRef"], queryFn: () => api.clientNextRef() });
 
   const [form, setForm] = useState({
     lead_agent_id: "",
@@ -46,7 +47,7 @@ export default function NewTransaction() {
   const DC_DEFAULT_PCTS = ["25", "20", "5", "1"];
   // "新客戶": create a new client inline and assign it to the Lead agent.
   const [newClient, setNewClient] = useState(false);
-  const [clientForm, setClientForm] = useState({ ref: "", name: "", email: "", phone: "", risk_profile: "Balanced" });
+  const [clientForm, setClientForm] = useState({ name: "", email: "", phone: "", risk_profile: "Balanced" });
   const leadAgentId = Number(form.lead_agent_id) || 0;
   const leadName = agents.data?.find((a) => a.id === leadAgentId)?.name ?? "";
 
@@ -128,8 +129,7 @@ export default function NewTransaction() {
       // Create the new client first, owned by the Lead agent.
       if (newClient) {
         const c = await api.createClient({
-          ref: clientForm.ref,
-          name: clientForm.name,
+          name: clientForm.name,             // code auto-assigned (C<YY><NNN>)
           email: clientForm.email || undefined,
           phone: clientForm.phone || undefined,
           risk_profile: clientForm.risk_profile,
@@ -153,6 +153,7 @@ export default function NewTransaction() {
       setError(null);
       qc.invalidateQueries({ queryKey: ["nextRef"] });
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["clientNextRef"] });
     },
     onError: (e) => setError(errorText(e, t) || t("newTxn.createFailed")),
   });
@@ -166,7 +167,7 @@ export default function NewTransaction() {
     e.preventDefault();
     if (newClient) {
       if (!leadAgentId) { setError(t("newTxn.newClientNeedsLead")); return; }
-      if (!clientForm.ref.trim() || !clientForm.name.trim()) { setError(t("newTxn.newClientNeedsFields")); return; }
+      if (!clientForm.name.trim()) { setError(t("newTxn.newClientNeedsFields")); return; }
     } else if (!form.client_id) {
       setError(t("newTxn.selectClient")); return;
     }
@@ -324,9 +325,8 @@ export default function NewTransaction() {
                 {t("newTxn.newClientNote", { name: leadName || "—" })}
               </p>
               <div className="row">
-                <div><label>{t("clients.reference")}</label>
-                  <input value={clientForm.ref} required
-                    onChange={(e) => setClientForm({ ...clientForm, ref: e.target.value })} /></div>
+                <div><label>{t("clients.refAuto")}</label>
+                  <input value={clientNextRef.data?.ref ?? "…"} readOnly disabled /></div>
                 <div><label>{t("common.name")}</label>
                   <input value={clientForm.name} required
                     onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })} /></div>
