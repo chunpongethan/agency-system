@@ -5,11 +5,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { money, moneyFixed, convertCurrency, currentPeriod, yearToDate } from "../lib/format";
-import { productTypeLabel, productDetails } from "../lib/agency";
-import { riskLabel } from "../i18n/labels";
 import { titleLabel } from "../lib/titles";
-import StatusBadge from "../components/StatusBadge";
-import LockedRate from "../components/LockedRate";
 import Scorecard from "../components/Scorecard";
 import TargetProgress from "../components/TargetProgress";
 
@@ -58,16 +54,6 @@ export default function Dashboard() {
     queryFn: () => api.teamScorecards(),
     enabled: isManager,
   });
-  const clients = useQuery({
-    queryKey: ["agentClients", agentId],
-    queryFn: () => api.agentClients(agentId),
-  });
-  const txns = useQuery({
-    queryKey: ["agentTxns", agentId],
-    queryFn: () => api.agentTransactions(agentId),
-  });
-  const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
-  const productsById = new Map((products.data ?? []).map((p) => [p.id, p]));
 
   // Annual AFYP target progress for the agent's 職級, in HKD. Agents are scored
   // on their own YTD AFYP; managers on their whole team's YTD AFYP.
@@ -263,63 +249,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid cols-2" style={{ marginTop: 18 }}>
-        <div className="card">
-          <h2>{t("dashboard.myClients", { count: clients.data?.length ?? 0 })}</h2>
-          {clients.isLoading && <div className="spinner">{t("common.loading")}</div>}
-          <table>
-            <tbody>
-              {clients.data?.map((c) => (
-                <tr key={c.id}>
-                  <td><Link to={`/clients/${c.id}`}>{c.name}</Link></td>
-                  <td className="muted">{c.ref}</td>
-                  <td className="muted">{riskLabel(c.risk_profile)}</td>
-                </tr>
-              ))}
-              {clients.data?.length === 0 && (
-                <tr><td className="muted">{t("dashboard.noClients")}</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="card">
-          <h2>{t("dashboard.recentTxns")}</h2>
-          {txns.isLoading && <div className="spinner">{t("common.loading")}</div>}
-          <table>
-            <thead>
-              <tr>
-                <th>{t("common.ref")}</th><th>{t("common.date")}</th><th>{t("common.product")}</th><th className="num">{t("common.notional")}</th><th className="num">{t("txn.lockedRate")}</th><th>{t("common.status")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {txns.data?.slice(0, 8).map((t) => {
-                const p = productsById.get(t.product_id);
-                const details = productDetails(p);
-                return (
-                  <tr key={t.id}>
-                    <td>{t.ref}</td>
-                    <td className="muted">{t.trade_date}</td>
-                    <td>
-                      <div>{p ? p.name : `#${t.product_id}`}</div>
-                      <div className="muted" style={{ fontSize: 11 }}>
-                        {p && <span className="badge role" style={{ marginRight: 6 }}>{productTypeLabel(p.type)}</span>}
-                        {details}
-                      </div>
-                    </td>
-                    <td className="num">{money(t.notional, t.currency)}</td>
-                    <td className="num"><LockedRate base={t.locked_base_rate} years={t.locked_year_commissions} /></td>
-                    <td><StatusBadge status={t.status} /></td>
-                  </tr>
-                );
-              })}
-              {txns.data?.length === 0 && (
-                <tr><td colSpan={6} className="muted">{t("dashboard.noTxns")}</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   );
 }
