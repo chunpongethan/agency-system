@@ -552,16 +552,41 @@ def agent_clients(agent_id: int, db: Session = Depends(get_db),
     return db.execute(select(Client).where(Client.agent_id == agent_id)).scalars().all()
 
 
-@app.get("/agents/{agent_id}/transactions", response_model=list[schemas.TransactionOut])
+@app.get("/agents/{agent_id}/transactions")
 def agent_transactions(agent_id: int, db: Session = Depends(get_db),
                        current: Agent = Depends(get_current_agent)):
-    # Own transactions, or any same-company agent's if admin.
+    """An agent's own (closing) transactions, enriched with client/product names
+    for a read-only review list (includes the locked commission rate). Own
+    transactions, or any same-company agent's if admin."""
     scoping.assert_can_access_txn(current, agent_id)
     _guard_company(db, current, agent_id)
-    return db.execute(
-        select(Transaction).where(Transaction.agent_id == agent_id)
+    rows = db.execute(
+        select(Transaction, Client.name, Client.ref, Product.name, Product.type)
+        .join(Client, Transaction.client_id == Client.id)
+        .join(Product, Transaction.product_id == Product.id)
+        .where(Transaction.agent_id == agent_id)
         .order_by(Transaction.trade_date.desc(), Transaction.id.desc())
-    ).scalars().all()
+    ).all()
+    out = []
+    for txn, cname, cref, pname, ptype in rows:
+        out.append({
+            "id": txn.id, "ref": txn.ref, "trade_date": txn.trade_date,
+            "status": txn.status.value,
+            "deal_type": (txn.deal_type.value if txn.deal_type else "agent"),
+            "notional": txn.notional, "currency": txn.currency,
+            "policy_no": txn.policy_no,
+            "client_id": txn.client_id, "client_name": cname, "client_ref": cref,
+            "product_id": txn.product_id, "product_name": pname,
+            "product_type": ptype.value,
+            "agent_id": txn.agent_id,
+            "lead_agent_id": txn.lead_agent_id,
+            "sales_dev_agent_id": txn.sales_dev_agent_id,
+            "lead_pct": txn.lead_pct, "sales_dev_pct": txn.sales_dev_pct,
+            "closing_pct": txn.closing_pct,
+            "locked_base_rate": txn.locked_base_rate,
+            "locked_year_commissions": txn.locked_year_commissions,
+        })
+    return out
 
 
 # --- Products ----------------------------------------------------------------

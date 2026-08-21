@@ -34,6 +34,7 @@ export default function Layout() {
           {(isSeller || isAdmin) && <NavLink to="/leads">{t("nav.leads")}</NavLink>}
           {(isSeller || isAdmin) && <NavLink to="/training">{t("nav.training")}</NavLink>}
           {isSeller && <NavLink to="/products">{t("nav.products")}</NavLink>}
+          {isSeller && <NavLink to="/my-transactions">{t("nav.myTxns")}</NavLink>}
           {isAdmin && <NavLink to="/transactions/new">{t("nav.newTransaction")}</NavLink>}
           {(isManager || isAdmin) && <NavLink to="/hierarchy">{t("nav.hierarchy")}</NavLink>}
           <NavLink to="/reports">{t("nav.reports")}</NavLink>

@@ -12,6 +12,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Leads from "./pages/Leads";
 import Training from "./pages/Training";
 import Products from "./pages/Products";
+import Transactions from "./pages/Transactions";
 import NewTransaction from "./pages/NewTransaction";
 import Hierarchy from "./pages/Hierarchy";
 import Reports from "./pages/Reports";
@@ -105,6 +106,14 @@ export default function App() {
           element={
             <RequireRole roles={SELLERS}>
               <Products />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/my-transactions"
+          element={
+            <RequireRole roles={SELLERS}>
+              <Transactions />
             </RequireRole>
           }
         />

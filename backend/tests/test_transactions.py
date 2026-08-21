@@ -163,6 +163,21 @@ def test_rate_override_at_approval(client):
     assert amt2 == __import__("decimal").Decimal("8000.00")
 
 
+def test_agent_transactions_review_list_is_enriched(client):
+    """The agent review endpoint returns client/product names + the locked rate."""
+    admin = auth(client, "ADM")
+    ids = client._ids
+    tid = _book(client, admin, ids, ids["fund"]).json()["id"]
+    client.post(f"/transactions/{tid}/approve", headers=admin)
+    # AX is the closing agent; fetch their own review list
+    rows = client.get(f"/agents/{ids['ax']}/transactions", headers=auth(client, "AX")).json()
+    row = next(r for r in rows if r["id"] == tid)
+    assert row["client_name"] == "X"          # CX client name, resolved server-side
+    assert row["product_name"] == "Fund"
+    assert row["product_type"] == "fund"
+    assert float(row["locked_base_rate"]) == 0.01  # locked at creation
+
+
 def test_only_admin_maintains_products(client):
     agent = auth(client, "AX")
     # non-admin cannot create or patch products
