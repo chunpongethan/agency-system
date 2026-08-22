@@ -74,28 +74,35 @@ function NodeRow({
         ) : <span className="caret spacer" />}
         <button className={`node-main ${selectedId === node.id ? "selected" : ""}`}
           onClick={() => onSelect(node.id)}>
-          <span className="lvl">L{node.level}</span>
-          <strong>{node.name}</strong>
-          <span className="muted">({node.code})</span>
-          <span className="badge role">{roleLabel(node.role)}</span>
-          {node.title && <span className="badge title">{titleLabel(node.title)}</span>}
-          {isManager && node.unit_code && <span className="badge unit">{node.unit_code}</span>}
-          {node.direct_client && <span className="badge dc">{t("admin.agents.thDirectClient")}</span>}
-          <span className="node-metric">
-            <span className="metric-label">{t("hierarchy.teamAfyp")}</span> {money(node.teamAfyp)}
+          <span className="node-id">
+            <span className="lvl">L{node.level}</span>
+            <strong className="node-name">{node.name}</strong>
+            <span className="muted node-code">({node.code})</span>
+            <span className="badge role">{roleLabel(node.role)}</span>
+            {node.title && <span className="badge title">{titleLabel(node.title)}</span>}
+            {isManager && node.unit_code && <span className="badge unit">{node.unit_code}</span>}
+            {node.direct_client && <span className="badge dc">{t("admin.agents.thDirectClient")}</span>}
           </span>
-          <span className="node-metric">
-            <span className="metric-label">{t("hierarchy.teamComm")}</span> {money(node.teamComm)}
-          </span>
-          <span className="node-metric">
-            <span className="metric-label">{t("hierarchy.teamOverride")}</span> {money(node.teamOverride)}
-          </span>
-          {nodeTarget > 0 && (
-            <span className="node-metric" onClick={(e) => e.stopPropagation()}>
-              <span className="metric-label">{t("hierarchy.targetProgress")}</span>
-              <TargetProgress afypUsd={nodeAchievedAfyp} targetHkd={nodeTarget} width={80} />
+          <span className="node-metrics">
+            <span className="node-metric">
+              <span className="metric-label">{t("hierarchy.teamAfyp")}</span>
+              <span className="metric-value">{money(node.teamAfyp)}</span>
             </span>
-          )}
+            <span className="node-metric">
+              <span className="metric-label">{t("hierarchy.teamComm")}</span>
+              <span className="metric-value">{money(node.teamComm)}</span>
+            </span>
+            <span className="node-metric">
+              <span className="metric-label">{t("hierarchy.teamOverride")}</span>
+              <span className="metric-value">{money(node.teamOverride)}</span>
+            </span>
+            <span className="node-metric node-metric-target" onClick={(e) => e.stopPropagation()}>
+              <span className="metric-label">{t("hierarchy.targetProgress")}</span>
+              {nodeTarget > 0
+                ? <TargetProgress afypUsd={nodeAchievedAfyp} targetHkd={nodeTarget} width={90} />
+                : <span className="metric-value muted">—</span>}
+            </span>
+          </span>
         </button>
       </div>
       {hasChildren && !isCollapsed && (

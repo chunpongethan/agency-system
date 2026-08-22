@@ -213,17 +213,30 @@ button.ghost:hover { background: #f9fafb; }
 .node .caret:hover { color: var(--accent); }
 .node .caret.spacer { cursor: default; }
 .node-main {
-  display: inline-flex; gap: 10px; align-items: center; padding: 6px 10px;
+  display: flex; flex: 1 1 auto; min-width: 0; gap: 12px; align-items: center; padding: 6px 10px;
   border: 1px solid var(--line); border-radius: 8px; background: #fff;
   cursor: pointer; font: inherit; text-align: left; color: var(--ink);
 }
 .node-main:hover { background: #f9fafb; }
 .node-main.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
 .node .lvl { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-.node .prod { font-weight: 700; font-variant-numeric: tabular-nums; }
-.node .node-meta { font-size: 11px; }
-.node-metric { font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; margin-left: 4px; }
-.node-metric .metric-label { font-size: 10px; color: var(--muted); font-weight: 400; text-transform: uppercase; letter-spacing: .03em; margin-right: 3px; }
+/* Identity column flexes to absorb the tree indentation, so the fixed-width
+   metric columns on the right line up across every level card. */
+.node-id { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 120px; }
+.node-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.node-code { flex-shrink: 0; }
+.node-metrics { display: flex; gap: 8px; flex: 0 0 auto; align-items: flex-start; }
+.node-metric {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 1px;
+  width: 130px; flex: 0 0 130px;
+}
+.node-metric .metric-label {
+  font-size: 10px; color: var(--muted); font-weight: 400;
+  text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+}
+.node-metric .metric-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.node-metric-target { width: 160px; flex: 0 0 160px; align-items: flex-start; }
+@media (max-width: 900px) { .card.tree { overflow-x: auto; } }
 
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
