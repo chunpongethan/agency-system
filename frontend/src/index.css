@@ -285,4 +285,18 @@ button.ghost:hover { background: #f9fafb; }
     text-align: left; white-space: nowrap;
   }
   .cards-on-mobile tbody tr:hover { background: #fff; }
+
+  /* Hierarchy (H5): stack each level card — identity on top, metrics wrap below
+     as inline label/value chips instead of fixed columns (no room for those on a
+     phone). Tighter indentation leaves more width for the card. */
+  .tree ul { padding-left: 12px; }
+  .node-main { flex-direction: column; align-items: stretch; gap: 6px; }
+  .node-id { flex-wrap: wrap; }
+  .node-name { max-width: none; }
+  .node-metrics { flex-wrap: wrap; gap: 4px 16px; width: 100%; }
+  .node-metric {
+    flex-direction: row; align-items: baseline; gap: 5px;
+    width: auto; flex: 0 0 auto;
+  }
+  .node-metric-target { flex-direction: row; align-items: center; }
 }
