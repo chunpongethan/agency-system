@@ -81,6 +81,30 @@ def test_afyp_split_across_role_agents(db):
     assert prod[ag2.id]["afyp"] == Decimal("40000")
 
 
+def test_product_mix_split_by_role(db):
+    """產品組合 credits notional/AFYP by role share, so a lead/SDR's deals appear."""
+    from app.models.models import Agent, Role
+    today = date.today()
+    ag2 = Agent(code="A2", name="Ag2", email="a2@x.com", level=2, role=Role.AGENT,
+                upline_id=db._ids["mgr"])
+    db.add(ag2); db.flush()
+    t = Transaction(ref="TPM", client_id=db._ids["client"], product_id=db._ids["prod"],
+                    agent_id=db._ids["ag"], lead_agent_id=ag2.id,
+                    lead_pct=Decimal("40"), sales_dev_pct=Decimal("0"), closing_pct=Decimal("60"),
+                    notional=Decimal("1000000"), status=TxnStatus.APPROVED,
+                    trade_date=today, settled_at=now_utc())
+    db.add(t); db.flush()
+    commission_engine.compute_for_transaction(db, t, as_of=today)
+    db.commit()
+    # ag2 is only the lead (40%) — their product mix shows their share
+    pm = reports.product_mix(db, agent_ids={ag2.id})
+    assert len(pm["rows"]) == 1
+    assert pm["rows"][0]["notional"] == 400000.0   # 40% of 1,000,000
+    assert pm["rows"][0]["afyp"] == 40000.0        # 40% of 100,000
+    # company-wide (no scope) counts the whole deal
+    assert reports.product_mix(db)["rows"][0]["notional"] == 1000000.0
+
+
 def test_team_production_three_periods(db):
     today = date.today()
     _settle(db, "1000000", today)  # falls in YTD + current month

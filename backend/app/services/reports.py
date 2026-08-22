@@ -274,22 +274,39 @@ def product_mix(session: Session,
                 start: date | None = None, end: date | None = None,
                 agent_ids: set[int] | None = None) -> dict:
     """Settled production broken down by product: transaction count, notional,
-    AFYP, and commission earned in scope. Sorted by AFYP descending."""
-    # Notional / AFYP / count come from the settled transactions themselves.
+    AFYP, and commission earned in scope. Sorted by AFYP descending.
+
+    Notional / AFYP are attributed to the in-scope agents by their Lead/SDR/
+    Closing share % (so a lead/sales-dev's deals appear, not only the closer's),
+    matching how per-agent AFYP and commission are credited elsewhere."""
     tq = (
-        select(
-            Product.id, Product.code, Product.name, Product.type,
-            func.count(Transaction.id),
-            func.coalesce(func.sum(Transaction.notional), 0),
-            func.coalesce(func.sum(Transaction.notional * Product.afyp_conversion), 0),
-        )
-        .join(Transaction, Transaction.product_id == Product.id)
+        select(Transaction, Product.id, Product.code, Product.name,
+               Product.type, Product.afyp_conversion)
+        .join(Product, Transaction.product_id == Product.id)
         .where(Transaction.status == TxnStatus.APPROVED)
-        .group_by(Product.id)
     )
     if agent_ids is not None:
-        tq = tq.where(Transaction.agent_id.in_(agent_ids))
+        tq = tq.where(or_(Transaction.agent_id.in_(agent_ids),
+                          Transaction.lead_agent_id.in_(agent_ids),
+                          Transaction.sales_dev_agent_id.in_(agent_ids)))
     tq = _window(tq, start, end)
+
+    agg: dict[int, dict] = {}
+    for txn, pid, code, name, ptype, conv in session.execute(tq):
+        if agent_ids is None:
+            frac = Decimal("1")               # company-wide: the whole deal
+        else:
+            pct = sum((p for a, p in _role_shares_for_txn(txn).items() if a in agent_ids),
+                      Decimal("0"))
+            if pct == 0:
+                continue
+            frac = pct / Decimal("100")
+        a = agg.setdefault(pid, {"product_id": pid, "code": code, "name": name,
+                                 "type": ptype.value, "count": 0,
+                                 "notional": Decimal("0"), "afyp": Decimal("0")})
+        a["count"] += 1
+        a["notional"] += Decimal(txn.notional) * frac
+        a["afyp"] += Decimal(txn.notional) * Decimal(conv) * frac
 
     # Commission earned in scope, attributed to each product via its transaction.
     cq = (
@@ -304,12 +321,12 @@ def product_mix(session: Session,
     comm_by_product = {pid: Decimal(amt) for pid, amt in session.execute(cq)}
 
     rows = []
-    for pid, code, name, ptype, count, notional, afyp in session.execute(tq):
+    for pid, a in agg.items():
         rows.append({
-            "product_id": pid, "code": code, "name": name, "type": ptype.value,
-            "count": count,
-            "notional": float(Decimal(notional)),
-            "afyp": float(Decimal(afyp)),
+            "product_id": pid, "code": a["code"], "name": a["name"], "type": a["type"],
+            "count": a["count"],
+            "notional": float(a["notional"]),
+            "afyp": float(a["afyp"]),
             "commission": float(comm_by_product.get(pid, Decimal("0"))),
         })
     rows.sort(key=lambda r: r["afyp"], reverse=True)
