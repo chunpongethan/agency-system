@@ -36,9 +36,9 @@ export default function NewTransaction() {
     notional: "100000",
     policy_no: "",
     currency: "USD",
-    lead_pct: "34",
-    sales_dev_pct: "33",
-    closing_pct: "33",
+    lead_pct: "33.4",
+    sales_dev_pct: "33.3",
+    closing_pct: "33.3",
     deal_type: "agent",      // "agent" (代理) | "direct_client" (直客)
   });
   // Manual override levels (up to 4): agent + rate %. Defaults to 4 blank rows.
@@ -253,17 +253,17 @@ export default function NewTransaction() {
             <div className="row">
               <div>
                 <label>{t("newTxn.pctLead")}</label>
-                <input type="number" min="0" max="100" step="1" value={form.lead_pct}
+                <input type="number" min="0" max="100" step="0.1" value={form.lead_pct}
                   onChange={(e) => setForm({ ...form, lead_pct: e.target.value })} />
               </div>
               <div>
                 <label>{t("newTxn.pctSalesDev")}</label>
-                <input type="number" min="0" max="100" step="1" value={form.sales_dev_pct}
+                <input type="number" min="0" max="100" step="0.1" value={form.sales_dev_pct}
                   onChange={(e) => setForm({ ...form, sales_dev_pct: e.target.value })} />
               </div>
               <div>
                 <label>{t("newTxn.pctClosing")}</label>
-                <input type="number" min="0" max="100" step="1" value={form.closing_pct}
+                <input type="number" min="0" max="100" step="0.1" value={form.closing_pct}
                   onChange={(e) => setForm({ ...form, closing_pct: e.target.value })} />
               </div>
             </div>

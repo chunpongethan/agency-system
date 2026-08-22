@@ -359,13 +359,13 @@ export default function AdminTransactions() {
           </div>
           <div className="row">
             <div><label>{t("newTxn.pctLead")}</label>
-              <input type="number" min="0" max="100" step="1" value={editForm.lead_pct}
+              <input type="number" min="0" max="100" step="0.1" value={editForm.lead_pct}
                 onChange={(e) => setEditForm({ ...editForm, lead_pct: e.target.value })} /></div>
             <div><label>{t("newTxn.pctSalesDev")}</label>
-              <input type="number" min="0" max="100" step="1" value={editForm.sales_dev_pct}
+              <input type="number" min="0" max="100" step="0.1" value={editForm.sales_dev_pct}
                 onChange={(e) => setEditForm({ ...editForm, sales_dev_pct: e.target.value })} /></div>
             <div><label>{t("newTxn.pctClosing")}</label>
-              <input type="number" min="0" max="100" step="1" value={editForm.closing_pct}
+              <input type="number" min="0" max="100" step="0.1" value={editForm.closing_pct}
                 onChange={(e) => setEditForm({ ...editForm, closing_pct: e.target.value })} /></div>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>{t("newTxn.splitNote")}</p>
