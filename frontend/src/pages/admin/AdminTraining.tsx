@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
+import { dateShort } from "../../lib/format";
 import type { TrainingMaterial } from "../../api/types";
 
 const BLANK = { title: "", category: "", description: "", link_url: "" };
@@ -219,6 +220,7 @@ export default function AdminTraining() {
             <tr>
               <th>{t("training.thTitle")}</th>
               <th>{t("training.thCategory")}</th>
+              <th>{t("training.thDate")}</th>
               <th>{t("training.thAttachments")}</th>
               <th></th>
             </tr>
@@ -228,6 +230,7 @@ export default function AdminTraining() {
               <tr key={m.id}>
                 <td>{m.title}</td>
                 <td><span className="badge dc">{m.category}</span></td>
+                <td className="muted" style={{ whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {m.link_url && (
@@ -253,7 +256,7 @@ export default function AdminTraining() {
               </tr>
             ))}
             {!materials.isLoading && rows.length === 0 && (
-              <tr><td colSpan={4} className="muted">{t("training.empty")}</td></tr>
+              <tr><td colSpan={5} className="muted">{t("training.empty")}</td></tr>
             )}
           </tbody>
         </table>

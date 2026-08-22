@@ -51,6 +51,14 @@ export function dateTime(iso: string | null | undefined): string {
   return d.toLocaleString(numberLocale(), { dateStyle: "medium", timeStyle: "short" });
 }
 
+export function dateShort(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const hasZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
+  const d = new Date(hasZone ? iso : `${iso}Z`);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString(numberLocale(), { dateStyle: "medium" });
+}
+
 export function pct(rate: number | string): string {
   const v = typeof rate === "string" ? Number(rate) : rate;
   if (v == null || !Number.isFinite(v)) return "—";

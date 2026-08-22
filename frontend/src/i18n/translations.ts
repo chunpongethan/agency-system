@@ -689,6 +689,7 @@ export const translations: Record<string, Translation> = {
   "training.removeFile": { "zh-Hant": "移除檔案", en: "Remove file" },
   "training.thTitle": { "zh-Hant": "標題", en: "Title" },
   "training.thCategory": { "zh-Hant": "類別", en: "Category" },
+  "training.thDate": { "zh-Hant": "日期", en: "Date" },
   "training.thAttachments": { "zh-Hant": "附件", en: "Attachments" },
   "training.hasLink": { "zh-Hant": "連結", en: "Link" },
   "training.hasFile": { "zh-Hant": "檔案", en: "File" },

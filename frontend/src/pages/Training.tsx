@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
+import { dateShort } from "../lib/format";
 import type { TrainingMaterial } from "../api/types";
 
 // Agent-facing training portal: browse materials grouped by category, filter by
@@ -83,7 +84,10 @@ export default function Training() {
             <div className="grid cols-2">
               {groups.get(cat)!.map((m) => (
                 <div key={m.id} className="card" style={{ margin: 0 }}>
-                  <strong>{m.title}</strong>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                    <strong>{m.title}</strong>
+                    <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</span>
+                  </div>
                   {m.description && (
                     <p className="muted" style={{ fontSize: 13, margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{m.description}</p>
                   )}
