@@ -99,6 +99,7 @@ export interface TrainingMaterial {
   description: string | null;
   link_url: string | null;
   companies: string[] | null;   // which companies see it; null = all
+  inline_preview: boolean;      // preview embedded in the card, no popup
   files: TrainingFile[];
   has_file: boolean;
   created_at: string;

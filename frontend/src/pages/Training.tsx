@@ -23,24 +23,43 @@ export default function Training() {
   const [category, setCategory] = useState<string>("");
   const [dlError, setDlError] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ url: string; name: string; type: string } | null>(null);
+  // Embedded (no-popup) preview: at most one open at a time, keyed by file id.
+  const [inline, setInline] = useState<{ fid: number; url: string; type: string } | null>(null);
 
   function closePreview() {
     if (preview) URL.revokeObjectURL(preview.url);
     setPreview(null);
   }
-  async function onPreview(mid: number, f: TrainingFile) {
+  function closeInline() {
+    if (inline) URL.revokeObjectURL(inline.url);
+    setInline(null);
+  }
+  async function onPreview(m: TrainingMaterial, f: TrainingFile) {
     setDlError(null);
     try {
       if (!canPreview(f)) {
-        await downloadFile(api.trainingFilePath(mid, f.id, true), f.file_name);
+        await downloadFile(api.trainingFilePath(m.id, f.id, true), f.file_name);
         return;
       }
-      const url = await fetchBlobUrl(api.trainingFilePath(mid, f.id));
+      if (m.inline_preview) {
+        if (inline?.fid === f.id) { closeInline(); return; }   // toggle off
+        const url = await fetchBlobUrl(api.trainingFilePath(m.id, f.id));
+        closeInline();
+        setInline({ fid: f.id, url, type: previewType(f) });
+        return;
+      }
+      const url = await fetchBlobUrl(api.trainingFilePath(m.id, f.id));
       closePreview();
       setPreview({ url, name: f.file_name, type: previewType(f) });
     } catch (e) {
       setDlError(errorText(e, t));
     }
+  }
+
+  function embed(url: string, type: string, name: string) {
+    if (type.startsWith("image/")) return <img src={url} alt={name} style={{ maxWidth: "100%", maxHeight: 480 }} />;
+    if (type.startsWith("video/")) return <video src={url} controls style={{ maxWidth: "100%", maxHeight: 480 }} />;
+    return <iframe title={name} src={url} style={{ width: "100%", height: 480, border: "none" }} />;
   }
 
   const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
@@ -121,12 +140,17 @@ export default function Training() {
                     )}
                     {m.files.map((f) => (
                       <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
-                        onClick={() => onPreview(m.id, f)}
+                        onClick={() => onPreview(m, f)}
                         title={f.file_name}>
-                        {canPreview(f) ? "👁 " : "↓ "}{f.file_name}
+                        {canPreview(f) ? (m.inline_preview && inline?.fid === f.id ? "▾ " : "👁 ") : "↓ "}{f.file_name}
                       </button>
                     ))}
                   </div>
+                  {m.inline_preview && inline && m.files.some((f) => f.id === inline.fid) && (
+                    <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
+                      {embed(inline.url, inline.type, m.files.find((f) => f.id === inline.fid)!.file_name)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

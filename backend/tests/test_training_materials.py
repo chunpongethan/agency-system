@@ -75,6 +75,17 @@ def test_admin_creates_and_agent_reads(client):
     assert rows[0]["has_file"] is False and rows[0]["files"] == []
 
 
+def test_inline_preview_flag_roundtrips(client):
+    adm = auth(client, "ADM")
+    r = mk_material(client, adm, inline_preview=True)
+    assert r.status_code == 200 and r.json()["inline_preview"] is True
+    mid = r.json()["id"]
+    upd = client.patch(f"/training-materials/{mid}", headers=adm, json={"inline_preview": False})
+    assert upd.json()["inline_preview"] is False
+    # default is False when omitted
+    assert mk_material(client, adm).json()["inline_preview"] is False
+
+
 def test_agent_cannot_write(client):
     ax = auth(client, "AX")
     assert mk_material(client, ax).status_code == 403

@@ -195,6 +195,7 @@ class TrainingMaterialIn(BaseModel):
     description: str | None = None
     link_url: str | None = None
     companies: list[str] | None = None   # which companies see it; None/[] = all
+    inline_preview: bool = False          # preview embedded in the card, no popup
 
 
 class TrainingMaterialUpdate(BaseModel):
@@ -203,6 +204,7 @@ class TrainingMaterialUpdate(BaseModel):
     description: str | None = None
     link_url: str | None = None
     companies: list[str] | None = None
+    inline_preview: bool | None = None
 
 
 class TrainingFileOut(BaseModel):
@@ -221,6 +223,7 @@ class TrainingMaterialOut(BaseModel):
     description: str | None = None
     link_url: str | None = None
     companies: list[str] | None = None
+    inline_preview: bool = False
     files: list[TrainingFileOut] = []
     has_file: bool = False
     created_at: datetime

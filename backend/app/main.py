@@ -80,6 +80,8 @@ def _ensure_columns() -> None:
     # Training: per-company visibility + per-file metadata (multi-file support).
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
+    if "inline_preview" not in cols("training_materials"):
+        ddl.append("ALTER TABLE training_materials ADD COLUMN inline_preview BOOLEAN DEFAULT 0")
     tf_cols = cols("training_files")
     if tf_cols and "file_name" not in tf_cols:
         ddl.append("ALTER TABLE training_files ADD COLUMN file_name VARCHAR(255) DEFAULT 'file'")
@@ -1502,6 +1504,7 @@ def _training_out(db: Session, m: TrainingMaterial) -> dict:
         "id": m.id, "title": m.title, "category": m.category,
         "description": m.description, "link_url": m.link_url,
         "companies": m.companies or None,
+        "inline_preview": bool(m.inline_preview),
         "files": [{"id": f.id, "file_name": f.file_name,
                    "content_type": f.content_type, "file_size": f.file_size,
                    "preview_content_type": f.preview_content_type}
@@ -1552,7 +1555,8 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
     m = TrainingMaterial(
         title=payload.title, category=payload.category,
         description=payload.description, link_url=payload.link_url,
-        companies=_clean_companies(payload.companies), created_by=current.id,
+        companies=_clean_companies(payload.companies),
+        inline_preview=payload.inline_preview, created_by=current.id,
     )
     db.add(m); db.flush()
     audit.record(db, current.id, "create", "training_material", m.id,

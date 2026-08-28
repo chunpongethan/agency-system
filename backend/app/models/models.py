@@ -435,6 +435,8 @@ class TrainingMaterial(Base):
     # Which companies see this material in the agent portal, e.g. ["heritree",
     # "cpm"]. NULL/empty is treated as "all companies" (legacy rows).
     companies: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # When true, agents preview the files embedded in the card instead of a popup.
+    inline_preview: Mapped[bool] = mapped_column(Boolean, default=False)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)

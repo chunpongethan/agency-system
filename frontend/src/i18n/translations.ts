@@ -690,6 +690,8 @@ export const translations: Record<string, Translation> = {
   "training.currentFiles": { "zh-Hant": "目前檔案", en: "Current files" },
   "training.fCompanies": { "zh-Hant": "顯示於公司", en: "Show to companies" },
   "training.companiesHint": { "zh-Hant": "選擇哪些公司的代理可看到此資料。", en: "Which companies' agents can see this material." },
+  "training.fInlinePreview": { "zh-Hant": "免彈窗預覽（於卡片內顯示）", en: "Preview without popup (show in the card)" },
+  "training.inlinePreviewHint": { "zh-Hant": "開啟後，代理點擊檔案時會在卡片內直接展開預覽，而非彈出視窗。", en: "When on, agents see the preview expanded inside the card instead of a popup." },
   "training.thCompanies": { "zh-Hant": "公司", en: "Companies" },
   "training.removeFile": { "zh-Hant": "移除檔案", en: "Remove file" },
   "training.thTitle": { "zh-Hant": "標題", en: "Title" },
