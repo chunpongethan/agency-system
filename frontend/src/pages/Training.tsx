@@ -1,17 +1,41 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { api, downloadFile, errorText } from "../api/client";
+import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
 import { dateShort } from "../lib/format";
-import type { TrainingMaterial } from "../api/types";
+import type { TrainingMaterial, TrainingFile } from "../api/types";
+
+const PREVIEWABLE = ["application/pdf", "image/png", "image/jpeg", "image/jpg",
+                     "image/gif", "image/webp", "text/plain"];
+const canPreview = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCase());
 
 // Agent-facing training portal: browse materials grouped by category, filter by
-// category, search by title/description, open external links or download files.
+// category, search by title/description, open links, and preview files on screen.
 export default function Training() {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
   const [dlError, setDlError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ url: string; name: string; type: string } | null>(null);
+
+  function closePreview() {
+    if (preview) URL.revokeObjectURL(preview.url);
+    setPreview(null);
+  }
+  async function onPreview(mid: number, f: TrainingFile) {
+    setDlError(null);
+    try {
+      if (!canPreview(f.content_type)) {
+        await downloadFile(api.trainingFilePath(mid, f.id, true), f.file_name);
+        return;
+      }
+      const url = await fetchBlobUrl(api.trainingFilePath(mid, f.id));
+      closePreview();
+      setPreview({ url, name: f.file_name, type: f.content_type });
+    } catch (e) {
+      setDlError(errorText(e, t));
+    }
+  }
 
   const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
   const rows = materials.data ?? [];
@@ -33,15 +57,6 @@ export default function Training() {
     else groups.set(key, [m]);
   }
   const groupKeys = Array.from(groups.keys()).sort();
-
-  async function onDownload(m: TrainingMaterial) {
-    setDlError(null);
-    try {
-      await downloadFile(`/training-materials/${m.id}/file`, m.file_name || "file");
-    } catch (e) {
-      setDlError(errorText(e, t));
-    }
-  }
 
   return (
     <div>
@@ -98,11 +113,13 @@ export default function Training() {
                         {t("training.openLink")} ↗
                       </a>
                     )}
-                    {m.has_file && (
-                      <button className="ghost" style={{ padding: "3px 10px" }} onClick={() => onDownload(m)}>
-                        {t("training.download")}{m.file_name ? ` · ${m.file_name}` : ""}
+                    {m.files.map((f) => (
+                      <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
+                        onClick={() => onPreview(m.id, f)}
+                        title={f.file_name}>
+                        {canPreview(f.content_type) ? "👁 " : "↓ "}{f.file_name}
                       </button>
-                    )}
+                    ))}
                   </div>
                 </div>
               ))}
@@ -110,6 +127,26 @@ export default function Training() {
           </div>
         ))}
       </div>
+
+      {preview && (
+        <div className="modal-backdrop" onClick={closePreview}>
+          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <strong style={{ fontSize: 14 }}>{preview.name}</strong>
+              <div style={{ display: "flex", gap: 8 }}>
+                <a className="ghost" style={{ padding: "3px 10px" }} href={preview.url}
+                  download={preview.name}>{t("training.download")}</a>
+                <button className="ghost" style={{ padding: "3px 10px" }} onClick={closePreview}>✕</button>
+              </div>
+            </div>
+            <div className="modal-body">
+              {preview.type.startsWith("image/")
+                ? <img src={preview.url} alt={preview.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                : <iframe title={preview.name} src={preview.url} style={{ width: "100%", height: "100%", border: "none" }} />}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -77,6 +77,15 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE transactions ADD COLUMN locked_base_rate NUMERIC(6,4)")
     if "locked_year_commissions" not in cols("transactions"):
         ddl.append(f"ALTER TABLE transactions ADD COLUMN locked_year_commissions {json_type}")
+    # Training: per-company visibility + per-file metadata (multi-file support).
+    if "companies" not in cols("training_materials"):
+        ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
+    tf_cols = cols("training_files")
+    if tf_cols and "file_name" not in tf_cols:
+        ddl.append("ALTER TABLE training_files ADD COLUMN file_name VARCHAR(255) DEFAULT 'file'")
+        ddl.append("ALTER TABLE training_files ADD COLUMN content_type VARCHAR(120) DEFAULT 'application/octet-stream'")
+        ddl.append("ALTER TABLE training_files ADD COLUMN file_size INTEGER DEFAULT 0")
+        ddl.append("ALTER TABLE training_files ADD COLUMN created_at TIMESTAMP")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -89,6 +98,67 @@ def _ensure_columns() -> None:
                 "THEN 'cpm' ELSE 'heritree' END"
             ))
     _drop_legacy_title_unique(insp)
+    _migrate_training_files(insp)
+
+
+def _migrate_training_files(insp) -> None:
+    """Backfill each training file's name/type/size from its parent material's
+    (legacy single-file) columns, and drop the UNIQUE(material_id) constraint so a
+    material can hold many files."""
+    from sqlalchemy import text
+    tf_cols = {c["name"] for c in insp.get_columns("training_files")} if "training_files" in insp.get_table_names() else set()
+    if not tf_cols:
+        return
+    with engine.begin() as conn:
+        # Backfill file metadata from the parent material for pre-multi-file rows.
+        conn.execute(text(
+            "UPDATE training_files SET file_name = COALESCE((SELECT m.file_name "
+            "FROM training_materials m WHERE m.id = training_files.material_id), 'file') "
+            "WHERE file_name IS NULL OR file_name = 'file'"))
+        conn.execute(text(
+            "UPDATE training_files SET content_type = COALESCE((SELECT m.content_type "
+            "FROM training_materials m WHERE m.id = training_files.material_id), 'application/octet-stream') "
+            "WHERE content_type IS NULL OR content_type = 'application/octet-stream'"))
+        conn.execute(text(
+            "UPDATE training_files SET file_size = COALESCE((SELECT m.file_size "
+            "FROM training_materials m WHERE m.id = training_files.material_id), 0) "
+            "WHERE file_size IS NULL OR file_size = 0"))
+    if engine.dialect.name == "sqlite":
+        # SQLite can't drop an inline UNIQUE (auto-index) — rebuild the table if the
+        # legacy unique index over [material_id] is present.
+        with engine.begin() as conn:
+            legacy = False
+            for row in conn.execute(text("PRAGMA index_list(training_files)")):
+                if row[2] and [r[2] for r in conn.execute(text(f"PRAGMA index_info('{row[1]}')"))] == ["material_id"]:
+                    legacy = True
+                    break
+            if not legacy:
+                return
+            conn.execute(text("ALTER TABLE training_files RENAME TO _training_files_old"))
+        TrainingFile.__table__.create(engine)
+        with engine.begin() as conn:
+            conn.execute(text(
+                "INSERT INTO training_files (id, material_id, file_name, content_type, file_size, created_at, data) "
+                "SELECT id, material_id, file_name, content_type, file_size, created_at, data FROM _training_files_old"))
+            conn.execute(text("DROP TABLE _training_files_old"))
+        return
+    # Postgres: drop the unique constraint / index on material_id if present.
+    try:
+        uniques = [u for u in insp.get_unique_constraints("training_files")
+                   if u.get("column_names") == ["material_id"] and u.get("name")]
+        uniques += [i for i in insp.get_indexes("training_files")
+                    if i.get("unique") and i.get("column_names") == ["material_id"] and i.get("name")]
+    except Exception:
+        return
+    with engine.begin() as conn:
+        for u in uniques:
+            try:
+                conn.execute(text(f'ALTER TABLE training_files DROP CONSTRAINT IF EXISTS "{u["name"]}"'))
+            except Exception:
+                try:
+                    conn.execute(text(f'DROP INDEX IF EXISTS "{u["name"]}"'))
+                except Exception:
+                    pass
 
 
 def _drop_legacy_title_unique(insp) -> None:
@@ -1366,23 +1436,43 @@ def set_title_target(title: str, payload: schemas.TitleTargetIn,
 TRAINING_MAX_UPLOAD_MB = int(os.getenv("TRAINING_MAX_UPLOAD_MB", "25"))
 
 
-def _training_out(m: TrainingMaterial) -> dict:
+TRAINING_COMPANIES = ("heritree", "cpm")
+# Types safe to render inline in the browser for on-screen preview. SVG/HTML are
+# deliberately excluded (they can execute script from the app origin).
+_PREVIEW_TYPES = {"application/pdf", "image/png", "image/jpeg", "image/jpg",
+                  "image/gif", "image/webp", "text/plain"}
+
+
+def _training_out(db: Session, m: TrainingMaterial) -> dict:
     """Serialise a material for the API (file bytes never included)."""
+    files = db.execute(
+        select(TrainingFile).where(TrainingFile.material_id == m.id)
+        .order_by(TrainingFile.id)
+    ).scalars().all()
     return {
         "id": m.id, "title": m.title, "category": m.category,
         "description": m.description, "link_url": m.link_url,
-        "file_name": m.file_name, "content_type": m.content_type,
-        "file_size": m.file_size, "has_file": m.file_name is not None,
+        "companies": m.companies or None,
+        "files": [{"id": f.id, "file_name": f.file_name,
+                   "content_type": f.content_type, "file_size": f.file_size}
+                  for f in files],
+        "has_file": len(files) > 0,
         "created_at": m.created_at, "updated_at": m.updated_at,
     }
+
+
+def _visible_to_company(m: TrainingMaterial, company: str) -> bool:
+    """A material with no companies set is visible to all; otherwise only to the
+    companies it lists."""
+    return not m.companies or company in m.companies
 
 
 @app.get("/training-materials", response_model=list[schemas.TrainingMaterialOut])
 def list_training_materials(category: str | None = None, q: str | None = None,
                             db: Session = Depends(get_db),
                             current: Agent = Depends(get_current_agent)):
-    """All training materials (newest first), browsable by any authenticated
-    agent. Optional `category` and free-text `q` filters."""
+    """Training materials (newest first). Admins see all (to manage per-company
+    visibility); agents/managers see only those shown to their company."""
     stmt = select(TrainingMaterial)
     if category:
         stmt = stmt.where(TrainingMaterial.category == category)
@@ -1391,7 +1481,18 @@ def list_training_materials(category: str | None = None, q: str | None = None,
         stmt = stmt.where(or_(TrainingMaterial.title.ilike(like),
                               TrainingMaterial.description.ilike(like)))
     stmt = stmt.order_by(TrainingMaterial.created_at.desc())
-    return [_training_out(m) for m in db.execute(stmt).scalars()]
+    rows = db.execute(stmt).scalars().all()
+    if not scoping.is_admin(current):
+        rows = [m for m in rows if _visible_to_company(m, current.company)]
+    return [_training_out(db, m) for m in rows]
+
+
+def _clean_companies(companies: list[str] | None) -> list[str] | None:
+    """Keep only known company keys; None/empty -> None (visible to all)."""
+    if not companies:
+        return None
+    out = [c for c in companies if c in TRAINING_COMPANIES]
+    return out or None
 
 
 @app.post("/training-materials", response_model=schemas.TrainingMaterialOut)
@@ -1401,13 +1502,13 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
     m = TrainingMaterial(
         title=payload.title, category=payload.category,
         description=payload.description, link_url=payload.link_url,
-        created_by=current.id,
+        companies=_clean_companies(payload.companies), created_by=current.id,
     )
     db.add(m); db.flush()
     audit.record(db, current.id, "create", "training_material", m.id,
                  after={"title": m.title, "category": m.category})
     db.commit(); db.refresh(m)
-    return _training_out(m)
+    return _training_out(db, m)
 
 
 @app.patch("/training-materials/{material_id}", response_model=schemas.TrainingMaterialOut)
@@ -1418,6 +1519,8 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     if m is None:
         raise HTTPException(404, "training material not found")
     data = payload.model_dump(exclude_unset=True)
+    if "companies" in data:
+        data["companies"] = _clean_companies(data["companies"])
     before = {"title": m.title, "category": m.category, "link_url": m.link_url}
     for k, v in data.items():
         setattr(m, k, v)
@@ -1425,7 +1528,7 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     audit.record(db, current.id, "update", "training_material", m.id,
                  before=before, after=data)
     db.commit(); db.refresh(m)
-    return _training_out(m)
+    return _training_out(db, m)
 
 
 @app.delete("/training-materials/{material_id}")
@@ -1441,75 +1544,77 @@ def delete_training_material(material_id: int, db: Session = Depends(get_db),
     return {"deleted": material_id}
 
 
-@app.post("/training-materials/{material_id}/file", response_model=schemas.TrainingMaterialOut)
-async def upload_training_file(material_id: int, file: UploadFile = File(...),
-                               db: Session = Depends(get_db),
-                               current: Agent = Depends(require_admin)):
+@app.post("/training-materials/{material_id}/files", response_model=schemas.TrainingMaterialOut)
+async def upload_training_files(material_id: int, files: list[UploadFile] = File(...),
+                                db: Session = Depends(get_db),
+                                current: Agent = Depends(require_admin)):
+    """Append one or more files to a material (multi-file upload)."""
     m = db.get(TrainingMaterial, material_id)
     if m is None:
         raise HTTPException(404, "training material not found")
-    data = await file.read()
-    if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
-        raise err(400, "file_too_large",
-                  f"file exceeds the {TRAINING_MAX_UPLOAD_MB} MB limit")
-    if not data:
-        raise err(400, "empty_file", "uploaded file is empty")
-    row = db.execute(
-        select(TrainingFile).where(TrainingFile.material_id == material_id)
-    ).scalars().first()
-    if row is None:
-        row = TrainingFile(material_id=material_id, data=data)
-        db.add(row)
-    else:
-        row.data = data
-    m.file_name = file.filename or "file"
-    m.content_type = file.content_type or "application/octet-stream"
-    m.file_size = len(data)
+    added = []
+    for file in files:
+        data = await file.read()
+        if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
+            raise err(400, "file_too_large",
+                      f"{file.filename or 'file'} exceeds the {TRAINING_MAX_UPLOAD_MB} MB limit")
+        if not data:
+            continue
+        db.add(TrainingFile(
+            material_id=material_id, data=data,
+            file_name=file.filename or "file",
+            content_type=file.content_type or "application/octet-stream",
+            file_size=len(data)))
+        added.append(file.filename or "file")
+    if not added:
+        raise err(400, "empty_file", "no non-empty file uploaded")
+    m.updated_at = now_utc()
     db.flush()
     audit.record(db, current.id, "update", "training_material", m.id,
-                 after={"file_name": m.file_name, "file_size": m.file_size})
+                 after={"files_added": added})
     db.commit(); db.refresh(m)
-    return _training_out(m)
+    return _training_out(db, m)
 
 
-@app.get("/training-materials/{material_id}/file")
-def download_training_file(material_id: int, db: Session = Depends(get_db),
-                           current: Agent = Depends(get_current_agent)):
+@app.get("/training-materials/{material_id}/files/{file_id}")
+def get_training_file(material_id: int, file_id: int, download: bool = False,
+                      db: Session = Depends(get_db),
+                      current: Agent = Depends(get_current_agent)):
+    """Serve one file. Safe types render inline for on-screen preview (add
+    ?download=1 to force a download); other types always download."""
     m = db.get(TrainingMaterial, material_id)
-    if m is None or m.file_name is None:
+    if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
         raise HTTPException(404, "file not found")
-    row = db.execute(
-        select(TrainingFile).where(TrainingFile.material_id == material_id)
-    ).scalars().first()
-    if row is None:
+    row = db.get(TrainingFile, file_id)
+    if row is None or row.material_id != material_id:
         raise HTTPException(404, "file not found")
-    # Always attachment (never inline) so uploaded content can't execute in-page.
-    # Encode the filename per RFC 5987 so non-ASCII names (e.g. Chinese) survive
-    # the latin-1-only HTTP header: an ASCII fallback plus a UTF-8 filename*.
+    ctype = row.content_type or "application/octet-stream"
+    inline = (not download) and ctype.lower() in _PREVIEW_TYPES
     from urllib.parse import quote
-    name = m.file_name.replace('"', "")
+    name = (row.file_name or "file").replace('"', "")
     ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "file"
-    disposition = f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}"
+    disposition = (f"{'inline' if inline else 'attachment'}; "
+                   f"filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}")
     return Response(
-        content=row.data,
-        media_type=m.content_type or "application/octet-stream",
-        headers={"Content-Disposition": disposition},
+        content=row.data, media_type=ctype,
+        headers={"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff"},
     )
 
 
-@app.delete("/training-materials/{material_id}/file", response_model=schemas.TrainingMaterialOut)
-def delete_training_file(material_id: int, db: Session = Depends(get_db),
+@app.delete("/training-materials/{material_id}/files/{file_id}", response_model=schemas.TrainingMaterialOut)
+def delete_training_file(material_id: int, file_id: int, db: Session = Depends(get_db),
                          current: Agent = Depends(require_admin)):
     m = db.get(TrainingMaterial, material_id)
     if m is None:
         raise HTTPException(404, "training material not found")
-    db.execute(delete(TrainingFile).where(TrainingFile.material_id == material_id))
-    m.file_name = None; m.content_type = None; m.file_size = None
-    db.flush()
+    row = db.get(TrainingFile, file_id)
+    if row is None or row.material_id != material_id:
+        raise HTTPException(404, "file not found")
+    db.delete(row); m.updated_at = now_utc(); db.flush()
     audit.record(db, current.id, "delete", "training_material", m.id,
-                 before={"file": "removed"})
+                 before={"file_removed": row.file_name})
     db.commit(); db.refresh(m)
-    return _training_out(m)
+    return _training_out(db, m)
 
 
 # --- Training categories (培訓類別; the maintained list of training types) -----

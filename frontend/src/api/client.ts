@@ -163,9 +163,12 @@ export const api = {
     request<TrainingMaterial>(`/training-materials/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteTraining: (id: number) =>
     request<{ deleted: number }>(`/training-materials/${id}`, { method: "DELETE" }),
-  uploadTrainingFile: (id: number, file: File) => uploadFile<TrainingMaterial>(`/training-materials/${id}/file`, file),
-  deleteTrainingFile: (id: number) =>
-    request<TrainingMaterial>(`/training-materials/${id}/file`, { method: "DELETE" }),
+  uploadTrainingFiles: (id: number, files: File[]) =>
+    uploadFiles<TrainingMaterial>(`/training-materials/${id}/files`, files),
+  deleteTrainingFile: (id: number, fileId: number) =>
+    request<TrainingMaterial>(`/training-materials/${id}/files/${fileId}`, { method: "DELETE" }),
+  trainingFilePath: (id: number, fileId: number, download = false) =>
+    `/training-materials/${id}/files/${fileId}${download ? "?download=1" : ""}`,
   // Training categories (培訓類別)
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),
   createTrainingCategory: (payload: { name: string; sort_order?: number }) =>
@@ -258,10 +261,21 @@ function qs(params: Record<string, string | undefined>): string {
 
 // Upload a single file as multipart/form-data with the bearer token attached.
 // The browser sets the multipart boundary, so we must NOT set Content-Type.
-async function uploadFile<T>(path: string, file: File): Promise<T> {
+// Fetch a (auth-protected) file as an object URL for on-screen preview. The
+// caller must URL.revokeObjectURL it when done.
+export async function fetchBlobUrl(path: string): Promise<string> {
+  const token = getToken();
+  const res = await fetch(`${BASE}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(res.status, translate("error.downloadFailed", { status: res.status }));
+  return URL.createObjectURL(await res.blob());
+}
+
+async function uploadFiles<T>(path: string, files: File[]): Promise<T> {
   const token = getToken();
   const form = new FormData();
-  form.append("file", file);
+  files.forEach((f) => form.append("files", f));
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},

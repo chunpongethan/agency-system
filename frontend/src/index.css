@@ -238,6 +238,23 @@ button.ghost:hover { background: #f9fafb; }
 .node-metric-target { width: 160px; flex: 0 0 160px; align-items: flex-start; }
 @media (max-width: 900px) { .card.tree { overflow-x: auto; } }
 
+/* File-preview modal (training portal) */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.modal-panel {
+  background: var(--card, #fff); border-radius: 10px; width: min(960px, 96vw);
+  height: min(88vh, 900px); display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,.35);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+}
+.modal-body { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #f3f4f6; }
+@media (max-width: 768px) { .modal-backdrop { padding: 8px; } .modal-panel { height: 92vh; } }
+
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
   .app { flex-direction: column; }

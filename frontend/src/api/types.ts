@@ -84,15 +84,21 @@ export interface TitleTarget {
   target_afyp: number;
 }
 
+export interface TrainingFile {
+  id: number;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+}
+
 export interface TrainingMaterial {
   id: number;
   title: string;
   category: string;
   description: string | null;
   link_url: string | null;
-  file_name: string | null;
-  content_type: string | null;
-  file_size: number | null;
+  companies: string[] | null;   // which companies see it; null = all
+  files: TrainingFile[];
   has_file: boolean;
   created_at: string;
   updated_at: string;

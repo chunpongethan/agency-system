@@ -194,6 +194,7 @@ class TrainingMaterialIn(BaseModel):
     category: str
     description: str | None = None
     link_url: str | None = None
+    companies: list[str] | None = None   # which companies see it; None/[] = all
 
 
 class TrainingMaterialUpdate(BaseModel):
@@ -201,6 +202,14 @@ class TrainingMaterialUpdate(BaseModel):
     category: str | None = None
     description: str | None = None
     link_url: str | None = None
+    companies: list[str] | None = None
+
+
+class TrainingFileOut(BaseModel):
+    id: int
+    file_name: str
+    content_type: str
+    file_size: int
 
 
 class TrainingMaterialOut(BaseModel):
@@ -210,9 +219,8 @@ class TrainingMaterialOut(BaseModel):
     category: str
     description: str | None = None
     link_url: str | None = None
-    file_name: str | None = None
-    content_type: str | None = None
-    file_size: int | None = None
+    companies: list[str] | None = None
+    files: list[TrainingFileOut] = []
     has_file: bool = False
     created_at: datetime
     updated_at: datetime

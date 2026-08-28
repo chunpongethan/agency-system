@@ -432,19 +432,27 @@ class TrainingMaterial(Base):
     content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     file_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
+    # Which companies see this material in the agent portal, e.g. ["heritree",
+    # "cpm"]. NULL/empty is treated as "all companies" (legacy rows).
+    companies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
 
 
 class TrainingFile(Base):
-    """Blob storage for a training material's uploaded file, kept in its own table
-    so listing materials never loads file bytes. One row per material."""
+    """Blob storage for a training material's uploaded files, kept in its own
+    table so listing materials never loads file bytes. A material may have many
+    files; each row carries its own name/type/size next to the bytes."""
     __tablename__ = "training_files"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     material_id: Mapped[int] = mapped_column(
-        ForeignKey("training_materials.id"), unique=True, index=True)
+        ForeignKey("training_materials.id"), index=True)
+    file_name: Mapped[str] = mapped_column(String(255), default="file")
+    content_type: Mapped[str] = mapped_column(String(120), default="application/octet-stream")
+    file_size: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     data: Mapped[bytes] = mapped_column(LargeBinary)
 
 

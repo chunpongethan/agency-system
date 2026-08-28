@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { dateShort } from "../../lib/format";
+import { companyLabel } from "../../i18n/labels";
 import type { TrainingMaterial } from "../../api/types";
 
-const BLANK = { title: "", category: "", description: "", link_url: "" };
+const COMPANIES = ["heritree", "cpm"];
+const BLANK = { title: "", category: "", description: "", link_url: "", companies: [...COMPANIES] };
 
 export default function AdminTraining() {
   const { t } = useI18n();
@@ -17,18 +19,25 @@ export default function AdminTraining() {
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
-  const [form, setForm] = useState({ ...BLANK });
-  const [file, setFile] = useState<File | null>(null);
+  const [form, setForm] = useState<typeof BLANK>({ ...BLANK });
+  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [listError, setListError] = useState<string | null>(null);
 
-  async function onDownload(m: TrainingMaterial) {
+  async function onDownload(mid: number, fileId: number, name: string) {
     setListError(null);
     try {
-      await downloadFile(`/training-materials/${m.id}/file`, m.file_name || "file");
+      await downloadFile(api.trainingFilePath(mid, fileId, true), name);
     } catch (e) {
       setListError(errorText(e, t));
     }
+  }
+  function toggleCompany(ckey: string) {
+    setForm((f) => ({
+      ...f,
+      companies: f.companies.includes(ckey)
+        ? f.companies.filter((x) => x !== ckey) : [...f.companies, ckey],
+    }));
   }
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
@@ -75,11 +84,12 @@ export default function AdminTraining() {
         category: form.category,
         description: form.description || null,
         link_url: form.link_url || null,
+        companies: form.companies,
       };
       const saved = editId
         ? await api.updateTraining(editId, payload)
         : await api.createTraining(payload);
-      if (file) await api.uploadTrainingFile(saved.id, file);
+      if (files.length) await api.uploadTrainingFiles(saved.id, files);
       return saved;
     },
     onSuccess: () => { invalidate(); closeForm(); },
@@ -93,20 +103,21 @@ export default function AdminTraining() {
   });
 
   const removeFile = useMutation({
-    mutationFn: (id: number) => api.deleteTrainingFile(id),
+    mutationFn: (v: { mid: number; fid: number }) => api.deleteTrainingFile(v.mid, v.fid),
     onSuccess: invalidate,
     onError: onErr,
   });
 
   function openCreate() {
-    setEditId(null); setForm({ ...BLANK }); setFile(null); setError(null); setShowForm(true);
+    setEditId(null); setForm({ ...BLANK }); setFiles([]); setError(null); setShowForm(true);
   }
   function openEdit(m: TrainingMaterial) {
     setEditId(m.id);
-    setForm({ title: m.title, category: m.category, description: m.description ?? "", link_url: m.link_url ?? "" });
-    setFile(null); setError(null); setShowForm(true);
+    setForm({ title: m.title, category: m.category, description: m.description ?? "",
+              link_url: m.link_url ?? "", companies: m.companies ?? [...COMPANIES] });
+    setFiles([]); setError(null); setShowForm(true);
   }
-  function closeForm() { setShowForm(false); setEditId(null); setFile(null); }
+  function closeForm() { setShowForm(false); setEditId(null); setFiles([]); }
 
   function onSubmit(e: FormEvent) { e.preventDefault(); save.mutate(); }
 
@@ -155,24 +166,44 @@ export default function AdminTraining() {
                 onChange={(e) => setForm({ ...form, link_url: e.target.value })} />
             </div>
             <div>
-              <label>{t("training.fFile")}</label>
-              <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("training.fileHint", { mb: 25 })}</div>
+              <label>{t("training.fFiles")}</label>
+              <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                {t("training.fileHint", { mb: 25 })}{files.length ? ` · ${files.length}` : ""}
+              </div>
             </div>
           </div>
-          {editing?.has_file && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 6 }}>
-              <span className="muted" style={{ fontSize: 13 }}>
-                {t("training.currentFile")}: {editing.file_name}
-              </span>
-              <button type="button" className="ghost" style={{ color: "var(--bad)", padding: "2px 8px" }}
-                disabled={removeFile.isPending}
-                onClick={() => removeFile.mutate(editing.id)}>{t("training.removeFile")}</button>
+          <div style={{ marginTop: 6 }}>
+            <label>{t("training.fCompanies")}</label>
+            <div style={{ display: "flex", gap: 16 }}>
+              {COMPANIES.map((ckey) => (
+                <label key={ckey} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
+                  <input type="checkbox" style={{ width: "auto" }} checked={form.companies.includes(ckey)}
+                    onChange={() => toggleCompany(ckey)} />
+                  {companyLabel(ckey)}
+                </label>
+              ))}
+            </div>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("training.companiesHint")}</div>
+          </div>
+          {editing && editing.files.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <label>{t("training.currentFiles")}</label>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {editing.files.map((f) => (
+                  <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span className="muted" style={{ fontSize: 13 }}>{f.file_name}</span>
+                    <button type="button" className="ghost" style={{ color: "var(--bad)", padding: "2px 8px" }}
+                      disabled={removeFile.isPending}
+                      onClick={() => removeFile.mutate({ mid: editing.id, fid: f.id })}>{t("training.removeFile")}</button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
           <div style={{ marginTop: 14 }}>
-            <button className="primary" type="submit" disabled={save.isPending}>
-              {save.isPending ? (file ? t("training.uploading") : t("training.saving")) : t("training.save")}
+            <button className="primary" type="submit" disabled={save.isPending || form.companies.length === 0}>
+              {save.isPending ? (files.length ? t("training.uploading") : t("training.saving")) : t("training.save")}
             </button>
           </div>
         </form>
@@ -220,6 +251,7 @@ export default function AdminTraining() {
             <tr>
               <th>{t("training.thTitle")}</th>
               <th>{t("training.thCategory")}</th>
+              <th>{t("training.thCompanies")}</th>
               <th>{t("training.thDate")}</th>
               <th>{t("training.thAttachments")}</th>
               <th></th>
@@ -230,6 +262,13 @@ export default function AdminTraining() {
               <tr key={m.id}>
                 <td>{m.title}</td>
                 <td><span className="badge dc">{m.category}</span></td>
+                <td>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {(m.companies ?? COMPANIES).map((ckey) => (
+                      <span key={ckey} className="badge unit" style={{ fontSize: 11 }}>{companyLabel(ckey)}</span>
+                    ))}
+                  </div>
+                </td>
                 <td className="muted" style={{ whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -237,13 +276,13 @@ export default function AdminTraining() {
                       <a className="badge role" href={m.link_url} target="_blank" rel="noopener noreferrer"
                         style={{ textDecoration: "none" }}>{t("training.hasLink")} ↗</a>
                     )}
-                    {m.has_file && (
-                      <button type="button" onClick={() => onDownload(m)}
-                        title={m.file_name ?? undefined}
+                    {m.files.map((f) => (
+                      <button key={f.id} type="button" onClick={() => onDownload(m.id, f.id, f.file_name)}
+                        title={f.file_name}
                         style={{ width: "auto", padding: "2px 8px", cursor: "pointer", fontSize: 12 }}
-                        className="ghost">↓ {m.file_name ?? t("training.hasFile")}</button>
-                    )}
-                    {!m.link_url && !m.has_file && <span className="muted">—</span>}
+                        className="ghost">↓ {f.file_name}</button>
+                    ))}
+                    {!m.link_url && m.files.length === 0 && <span className="muted">—</span>}
                   </div>
                 </td>
                 <td className="num" style={{ whiteSpace: "nowrap" }}>
@@ -256,7 +295,7 @@ export default function AdminTraining() {
               </tr>
             ))}
             {!materials.isLoading && rows.length === 0 && (
-              <tr><td colSpan={5} className="muted">{t("training.empty")}</td></tr>
+              <tr><td colSpan={6} className="muted">{t("training.empty")}</td></tr>
             )}
           </tbody>
         </table>

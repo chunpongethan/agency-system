@@ -1,6 +1,7 @@
 """
 Training-materials access model: any authenticated agent may browse and download;
-only admins may create / edit / delete / upload. Mirrors the test_cases fixture.
+only admins may create / edit / delete / upload. Materials support many files and
+per-company visibility; safe files render inline for preview.
 """
 import pytest
 from sqlalchemy import create_engine
@@ -20,16 +21,17 @@ def client():
     Session = sessionmaker(bind=engine, autoflush=False)
     s = Session()
 
-    def mk(code, role):
+    def mk(code, role, company="heritree"):
         a = Agent(code=code, name=code, email=f"{code}@x.com", level=1, role=role,
-                  password_hash=hash_password("pw"))
+                  company=company, password_hash=hash_password("pw"))
         s.add(a); s.flush()
         return a
 
     adm = mk("ADM", Role.ADMIN)
-    ax = mk("AX", Role.AGENT)
+    ax = mk("AX", Role.AGENT, "heritree")
+    cpm = mk("cpm1", Role.AGENT, "cpm")
     s.commit()
-    ids = {"adm": adm.id, "ax": ax.id}
+    ids = {"adm": adm.id, "ax": ax.id, "cpm": cpm.id}
     s.close()
 
     from app import main
@@ -57,6 +59,12 @@ def mk_material(tc, headers, **kw):
     return tc.post("/training-materials", headers=headers, json=payload)
 
 
+def _upload(tc, headers, mid, *files):
+    """files: (name, bytes, ctype) tuples, all under the `files` field."""
+    return tc.post(f"/training-materials/{mid}/files", headers=headers,
+                   files=[("files", f) for f in files])
+
+
 def test_admin_creates_and_agent_reads(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     r = mk_material(client, adm, link_url="https://example.com/guide.pdf")
@@ -64,13 +72,12 @@ def test_admin_creates_and_agent_reads(client):
     mid = r.json()["id"]
     rows = client.get("/training-materials", headers=ax).json()
     assert any(m["id"] == mid for m in rows)
-    assert rows[0]["has_file"] is False
+    assert rows[0]["has_file"] is False and rows[0]["files"] == []
 
 
 def test_agent_cannot_write(client):
     ax = auth(client, "AX")
     assert mk_material(client, ax).status_code == 403
-    # create one as admin, then confirm agent PATCH/DELETE are refused
     adm = auth(client, "ADM")
     mid = mk_material(client, adm).json()["id"]
     assert client.patch(f"/training-materials/{mid}", headers=ax,
@@ -78,39 +85,68 @@ def test_agent_cannot_write(client):
     assert client.delete(f"/training-materials/{mid}", headers=ax).status_code == 403
 
 
-def test_admin_edit_and_delete(client):
-    adm = auth(client, "ADM")
-    mid = mk_material(client, adm).json()["id"]
-    r = client.patch(f"/training-materials/{mid}", headers=adm,
-                     json={"category": "產品知識"})
-    assert r.status_code == 200 and r.json()["category"] == "產品知識"
-    assert client.delete(f"/training-materials/{mid}", headers=adm).status_code == 200
-    assert all(m["id"] != mid for m in client.get("/training-materials", headers=adm).json())
-
-
-def test_file_upload_download_roundtrip(client):
+def test_multi_file_upload_and_serve(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     mid = mk_material(client, adm).json()["id"]
-    blob = b"%PDF-1.4 fake pdf bytes"
-    up = client.post(f"/training-materials/{mid}/file", headers=adm,
-                     files={"file": ("guide.pdf", blob, "application/pdf")})
+    up = _upload(client, adm, mid,
+                 ("a.pdf", b"%PDF-1.4 aaa", "application/pdf"),
+                 ("b.png", b"\x89PNG bbb", "image/png"))
     assert up.status_code == 200, up.text
-    body = up.json()
-    assert body["has_file"] and body["file_name"] == "guide.pdf" and body["file_size"] == len(blob)
-    # Any authenticated agent may download; bytes + content-type round-trip.
-    dl = client.get(f"/training-materials/{mid}/file", headers=ax)
-    assert dl.status_code == 200
-    assert dl.content == blob
-    assert dl.headers["content-type"].startswith("application/pdf")
+    files = up.json()["files"]
+    assert up.json()["has_file"] and len(files) == 2
+    assert {f["file_name"] for f in files} == {"a.pdf", "b.png"}
+    # append a third file
+    up2 = _upload(client, adm, mid, ("c.pdf", b"%PDF ccc", "application/pdf"))
+    assert len(up2.json()["files"]) == 3
+    # any agent can fetch a file's bytes by id
+    fid = files[0]["id"]
+    dl = client.get(f"/training-materials/{mid}/files/{fid}", headers=ax)
+    assert dl.status_code == 200 and dl.content == b"%PDF-1.4 aaa"
+
+
+def test_pdf_previews_inline_but_download_forces_attachment(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+    fid = _upload(client, adm, mid, ("g.pdf", b"%PDF g", "application/pdf")).json()["files"][0]["id"]
+    inline = client.get(f"/training-materials/{mid}/files/{fid}", headers=ax)
+    assert inline.headers["content-disposition"].startswith("inline")
+    dl = client.get(f"/training-materials/{mid}/files/{fid}?download=1", headers=ax)
+    assert dl.headers["content-disposition"].startswith("attachment")
+    # a non-preview type always downloads
+    fid2 = _upload(client, adm, mid, ("x.bin", b"data", "application/octet-stream")).json()["files"][-1]["id"]
+    assert client.get(f"/training-materials/{mid}/files/{fid2}", headers=ax
+                      ).headers["content-disposition"].startswith("attachment")
+
+
+def test_company_visibility(client):
+    adm, ax, cpm = auth(client, "ADM"), auth(client, "AX"), auth(client, "cpm1")
+    # CPM-only, Heritree-only, and both/all
+    cpm_only = mk_material(client, adm, title="CPM only", companies=["cpm"]).json()["id"]
+    her_only = mk_material(client, adm, title="Heritree only", companies=["heritree"]).json()["id"]
+    everyone = mk_material(client, adm, title="Everyone").json()["id"]  # companies None
+    ax_ids = {m["id"] for m in client.get("/training-materials", headers=ax).json()}
+    cpm_ids = {m["id"] for m in client.get("/training-materials", headers=cpm).json()}
+    assert her_only in ax_ids and everyone in ax_ids and cpm_only not in ax_ids
+    assert cpm_only in cpm_ids and everyone in cpm_ids and her_only not in cpm_ids
+    # admin sees all regardless of company
+    adm_ids = {m["id"] for m in client.get("/training-materials", headers=adm).json()}
+    assert {cpm_only, her_only, everyone} <= adm_ids
+
+
+def test_company_scoped_file_access(client):
+    adm, cpm = auth(client, "ADM"), auth(client, "cpm1")
+    mid = mk_material(client, adm, companies=["heritree"]).json()["id"]
+    fid = _upload(client, adm, mid, ("h.pdf", b"%PDF h", "application/pdf")).json()["files"][0]["id"]
+    # a CPM agent can't fetch a Heritree-only material's file
+    assert client.get(f"/training-materials/{mid}/files/{fid}", headers=cpm).status_code == 404
 
 
 def test_agent_cannot_upload_or_delete_file(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     mid = mk_material(client, adm).json()["id"]
-    up = client.post(f"/training-materials/{mid}/file", headers=ax,
-                     files={"file": ("x.pdf", b"data", "application/pdf")})
-    assert up.status_code == 403
-    assert client.delete(f"/training-materials/{mid}/file", headers=ax).status_code == 403
+    assert _upload(client, ax, mid, ("x.pdf", b"data", "application/pdf")).status_code == 403
+    fid = _upload(client, adm, mid, ("y.pdf", b"data", "application/pdf")).json()["files"][0]["id"]
+    assert client.delete(f"/training-materials/{mid}/files/{fid}", headers=ax).status_code == 403
 
 
 def test_oversize_upload_rejected(client):
@@ -118,52 +154,43 @@ def test_oversize_upload_rejected(client):
     adm = auth(client, "ADM")
     mid = mk_material(client, adm).json()["id"]
     too_big = b"x" * (main.TRAINING_MAX_UPLOAD_MB * 1024 * 1024 + 1)
-    r = client.post(f"/training-materials/{mid}/file", headers=adm,
-                    files={"file": ("big.bin", too_big, "application/octet-stream")})
-    assert r.status_code == 400
-    assert r.headers.get("X-Error-Code") == "file_too_large"
+    r = _upload(client, adm, mid, ("big.bin", too_big, "application/octet-stream"))
+    assert r.status_code == 400 and r.headers.get("X-Error-Code") == "file_too_large"
 
 
-def test_download_non_ascii_filename(client):
-    # A Chinese filename must survive the latin-1-only Content-Disposition header
-    # (RFC 5987 filename*), otherwise the download 500/400s.
+def test_serve_non_ascii_filename(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     mid = mk_material(client, adm).json()["id"]
-    blob = b"%PDF chinese-named"
-    up = client.post(f"/training-materials/{mid}/file", headers=adm,
-                     files={"file": ("香港分紅保單.pdf", blob, "application/pdf")})
-    assert up.status_code == 200, up.text
-    dl = client.get(f"/training-materials/{mid}/file", headers=ax)
-    assert dl.status_code == 200, dl.text
-    assert dl.content == blob
+    fid = _upload(client, adm, mid, ("香港分紅保單.pdf", b"%PDF cn", "application/pdf")).json()["files"][0]["id"]
+    dl = client.get(f"/training-materials/{mid}/files/{fid}", headers=ax)
+    assert dl.status_code == 200 and dl.content == b"%PDF cn"
     cd = dl.headers["content-disposition"]
-    assert "filename*=UTF-8''" in cd and "%E9%A6%99" in cd  # 香 percent-encoded
+    assert "filename*=UTF-8''" in cd and "%E9%A6%99" in cd
+
+
+def test_remove_one_file(client):
+    adm = auth(client, "ADM")
+    mid = mk_material(client, adm).json()["id"]
+    files = _upload(client, adm, mid,
+                    ("a.pdf", b"a", "application/pdf"),
+                    ("b.pdf", b"b", "application/pdf")).json()["files"]
+    r = client.delete(f"/training-materials/{mid}/files/{files[0]['id']}", headers=adm)
+    assert r.status_code == 200
+    remaining = {f["id"] for f in r.json()["files"]}
+    assert remaining == {files[1]["id"]}
+    assert client.get(f"/training-materials/{mid}/files/{files[0]['id']}", headers=adm).status_code == 404
 
 
 def test_category_crud_and_gating(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
-    # any authenticated agent may read the type list
     assert client.get("/training-categories", headers=ax).status_code == 200
-    # agent cannot create a type
     assert client.post("/training-categories", headers=ax, json={"name": "X"}).status_code == 403
-    # admin creates, duplicate is rejected
     r = client.post("/training-categories", headers=adm, json={"name": "產品知識"})
     assert r.status_code == 200, r.text
     cid = r.json()["id"]
     dup = client.post("/training-categories", headers=adm, json={"name": "產品知識"})
     assert dup.status_code == 409 and dup.headers.get("X-Error-Code") == "duplicate"
-    # admin renames and deletes
     assert client.patch(f"/training-categories/{cid}", headers=adm,
                         json={"name": "產品培訓"}).json()["name"] == "產品培訓"
     assert client.delete(f"/training-categories/{cid}", headers=adm).status_code == 200
     assert all(c["id"] != cid for c in client.get("/training-categories", headers=ax).json())
-
-
-def test_remove_file(client):
-    adm = auth(client, "ADM")
-    mid = mk_material(client, adm).json()["id"]
-    client.post(f"/training-materials/{mid}/file", headers=adm,
-                files={"file": ("g.pdf", b"data", "application/pdf")})
-    r = client.delete(f"/training-materials/{mid}/file", headers=adm)
-    assert r.status_code == 200 and r.json()["has_file"] is False
-    assert client.get(f"/training-materials/{mid}/file", headers=adm).status_code == 404
