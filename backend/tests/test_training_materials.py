@@ -112,6 +112,11 @@ def test_pdf_previews_inline_but_download_forces_attachment(client):
     assert inline.headers["content-disposition"].startswith("inline")
     dl = client.get(f"/training-materials/{mid}/files/{fid}?download=1", headers=ax)
     assert dl.headers["content-disposition"].startswith("attachment")
+    # video previews inline too
+    vfid = _upload(client, adm, mid, ("c.mp4", b"\x00\x00\x00\x18ftypmp42", "video/mp4")).json()["files"][-1]["id"]
+    vr = client.get(f"/training-materials/{mid}/files/{vfid}", headers=ax)
+    assert vr.headers["content-disposition"].startswith("inline")
+    assert vr.headers["content-type"].startswith("video/mp4")
     # a non-preview type always downloads
     fid2 = _upload(client, adm, mid, ("x.bin", b"data", "application/octet-stream")).json()["files"][-1]["id"]
     assert client.get(f"/training-materials/{mid}/files/{fid2}", headers=ax

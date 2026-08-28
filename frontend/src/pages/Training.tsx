@@ -6,7 +6,8 @@ import { dateShort } from "../lib/format";
 import type { TrainingMaterial, TrainingFile } from "../api/types";
 
 const PREVIEWABLE = ["application/pdf", "image/png", "image/jpeg", "image/jpg",
-                     "image/gif", "image/webp", "text/plain"];
+                     "image/gif", "image/webp", "text/plain",
+                     "video/mp4", "video/webm", "video/ogg", "video/quicktime"];
 const canPreview = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCase());
 
 // Agent-facing training portal: browse materials grouped by category, filter by
@@ -142,6 +143,8 @@ export default function Training() {
             <div className="modal-body">
               {preview.type.startsWith("image/")
                 ? <img src={preview.url} alt={preview.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                : preview.type.startsWith("video/")
+                ? <video src={preview.url} controls autoPlay style={{ maxWidth: "100%", maxHeight: "100%" }} />
                 : <iframe title={preview.name} src={preview.url} style={{ width: "100%", height: "100%", border: "none" }} />}
             </div>
           </div>

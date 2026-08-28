@@ -1440,7 +1440,8 @@ TRAINING_COMPANIES = ("heritree", "cpm")
 # Types safe to render inline in the browser for on-screen preview. SVG/HTML are
 # deliberately excluded (they can execute script from the app origin).
 _PREVIEW_TYPES = {"application/pdf", "image/png", "image/jpeg", "image/jpg",
-                  "image/gif", "image/webp", "text/plain"}
+                  "image/gif", "image/webp", "text/plain",
+                  "video/mp4", "video/webm", "video/ogg", "video/quicktime"}
 
 
 def _training_out(db: Session, m: TrainingMaterial) -> dict:
