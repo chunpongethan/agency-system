@@ -36,6 +36,7 @@ from app.services import (
     commission_engine, reports, agent_service, scoping,
     periods, payouts, exports, audit, mailer,
 )
+from app.services.sanitize import sanitize_html
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
 # Base URL of the web app, used to build password-reset links in emails.
@@ -1554,7 +1555,7 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
                              current: Agent = Depends(require_admin)):
     m = TrainingMaterial(
         title=payload.title, category=payload.category,
-        description=payload.description, link_url=payload.link_url,
+        description=sanitize_html(payload.description), link_url=payload.link_url,
         companies=_clean_companies(payload.companies),
         inline_preview=payload.inline_preview, created_by=current.id,
     )
@@ -1575,6 +1576,8 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     data = payload.model_dump(exclude_unset=True)
     if "companies" in data:
         data["companies"] = _clean_companies(data["companies"])
+    if "description" in data:
+        data["description"] = sanitize_html(data["description"])
     before = {"title": m.title, "category": m.category, "link_url": m.link_url}
     for k, v in data.items():
         setattr(m, k, v)

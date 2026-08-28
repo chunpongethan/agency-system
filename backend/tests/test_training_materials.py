@@ -86,6 +86,22 @@ def test_inline_preview_flag_roundtrips(client):
     assert mk_material(client, adm).json()["inline_preview"] is False
 
 
+def test_remark_html_is_sanitized(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    dirty = ('<p>Read <strong>this</strong></p><script>alert(1)</script>'
+             '<img src=x onerror=alert(1)><a href="javascript:alert(1)">x</a>')
+    mid = mk_material(client, adm, description=dirty).json()["id"]
+    html = next(m for m in client.get("/training-materials", headers=ax).json()
+                if m["id"] == mid)["description"]
+    assert "<strong>this</strong>" in html          # formatting kept
+    assert "<script" not in html and "onerror" not in html   # scripts/handlers gone
+    assert "javascript:" not in html                # dangerous href stripped
+    # sanitised again on PATCH
+    upd = client.patch(f"/training-materials/{mid}", headers=adm,
+                       json={"description": "<b onclick=\"e()\">hi</b>"}).json()
+    assert upd["description"] == "<b>hi</b>"
+
+
 def test_agent_cannot_write(client):
     ax = auth(client, "AX")
     assert mk_material(client, ax).status_code == 403

@@ -129,7 +129,8 @@ export default function Training() {
                     <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</span>
                   </div>
                   {m.description && (
-                    <p className="muted" style={{ fontSize: 13, margin: "6px 0 0", whiteSpace: "pre-wrap" }}>{m.description}</p>
+                    <div className="training-remark" style={{ fontSize: 13, margin: "6px 0 0" }}
+                      dangerouslySetInnerHTML={{ __html: m.description }} />
                   )}
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                     {m.link_url && (

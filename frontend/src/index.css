@@ -238,6 +238,26 @@ button.ghost:hover { background: #f9fafb; }
 .node-metric-target { width: 160px; flex: 0 0 160px; align-items: flex-start; }
 @media (max-width: 900px) { .card.tree { overflow-x: auto; } }
 
+/* Lightweight rich-text (HTML) editor */
+.html-editor { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+.he-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--line); background: #f9fafb; flex-wrap: wrap; }
+.he-btn {
+  min-width: 30px; height: 28px; padding: 0 8px; border: 1px solid transparent; border-radius: 6px;
+  background: none; cursor: pointer; font-size: 13px; color: var(--ink); line-height: 1;
+}
+.he-btn:hover { background: #eef2f7; border-color: var(--line); }
+.he-sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
+.he-content { min-height: 90px; max-height: 320px; overflow-y: auto; padding: 8px 10px; font-size: 14px; outline: none; }
+.he-content:empty::before { content: attr(data-placeholder); color: var(--muted); }
+.he-content ul, .he-content ol { margin: 4px 0; padding-left: 22px; }
+.he-content a { color: var(--accent); }
+
+/* Rendered rich-text remark (agent portal) */
+.training-remark { color: var(--ink); }
+.training-remark p { margin: 4px 0; }
+.training-remark ul, .training-remark ol { margin: 4px 0; padding-left: 20px; }
+.training-remark a { color: var(--accent); }
+
 /* File-preview modal (training portal) */
 .modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60;

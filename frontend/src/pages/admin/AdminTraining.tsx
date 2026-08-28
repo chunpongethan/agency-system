@@ -4,6 +4,7 @@ import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { dateShort } from "../../lib/format";
 import { companyLabel } from "../../i18n/labels";
+import HtmlEditor from "../../components/HtmlEditor";
 import type { TrainingMaterial } from "../../api/types";
 
 const COMPANIES = ["heritree", "cpm"];
@@ -159,8 +160,8 @@ export default function AdminTraining() {
           </div>
           <div>
             <label>{t("training.fDescription")}</label>
-            <textarea rows={3} value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <HtmlEditor value={form.description}
+              onChange={(html) => setForm({ ...form, description: html })} />
           </div>
           <div className="row">
             <div>
