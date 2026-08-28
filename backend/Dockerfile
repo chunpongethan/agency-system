@@ -12,8 +12,14 @@ WORKDIR /app
 # WenQuanYi Zen Hei installs at /usr/share/fonts/truetype/wqy/wqy-zenhei.ttc,
 # which app/services/exports.py already looks for (glyf-based; loadable by
 # ReportLab's TTFont, unlike Noto CJK's CFF outlines). Override with CJK_FONT_PATH.
+#
+# LibreOffice (headless) renders uploaded Office docs (PPTX/DOCX/XLSX) to a PDF
+# so agents can preview them on screen; fonts-noto-cjk keeps Chinese text intact
+# in the generated PDF. Impress/Writer/Calc cover the three Office formats.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends fonts-wqy-zenhei \
+    && apt-get install -y --no-install-recommends \
+        fonts-wqy-zenhei fonts-noto-cjk \
+        libreoffice-impress libreoffice-writer libreoffice-calc \
     && rm -rf /var/lib/apt/lists/*
 
 # System deps for bcrypt/psycopg2 wheels are already provided; keep image slim.

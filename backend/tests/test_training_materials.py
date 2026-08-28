@@ -123,6 +123,40 @@ def test_pdf_previews_inline_but_download_forces_attachment(client):
                       ).headers["content-disposition"].startswith("attachment")
 
 
+PPTX = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+
+
+def test_office_doc_previews_as_rendered_pdf(client, monkeypatch):
+    """An uploaded PPTX gets a rendered-PDF preview; preview serves the PDF inline,
+    download serves the original PPTX."""
+    import app.main as main
+    monkeypatch.setattr(main, "_office_to_pdf", lambda data, name: b"%PDF-1.4 rendered")
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+    f = _upload(client, adm, mid, ("deck.pptx", b"PK fake pptx", PPTX)).json()["files"][0]
+    assert f["preview_content_type"] == "application/pdf"
+    pv = client.get(f"/training-materials/{mid}/files/{f['id']}", headers=ax)
+    assert pv.headers["content-disposition"].startswith("inline")
+    assert pv.headers["content-type"].startswith("application/pdf")
+    assert pv.content == b"%PDF-1.4 rendered"
+    dl = client.get(f"/training-materials/{mid}/files/{f['id']}?download=1", headers=ax)
+    assert dl.headers["content-disposition"].startswith("attachment")
+    assert dl.content == b"PK fake pptx"
+
+
+def test_office_doc_without_libreoffice_downloads(client, monkeypatch):
+    """When conversion is unavailable (no LibreOffice), the doc has no preview and
+    is served as a download."""
+    import app.main as main
+    monkeypatch.setattr(main, "_office_to_pdf", lambda data, name: None)
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+    f = _upload(client, adm, mid, ("d.pptx", b"PK", PPTX)).json()["files"][0]
+    assert f["preview_content_type"] is None
+    assert client.get(f"/training-materials/{mid}/files/{f['id']}", headers=ax
+                      ).headers["content-disposition"].startswith("attachment")
+
+
 def test_company_visibility(client):
     adm, ax, cpm = auth(client, "ADM"), auth(client, "AX"), auth(client, "cpm1")
     # CPM-only, Heritree-only, and both/all

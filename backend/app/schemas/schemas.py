@@ -210,6 +210,7 @@ class TrainingFileOut(BaseModel):
     file_name: str
     content_type: str
     file_size: int
+    preview_content_type: str | None = None   # set when a rendered PDF preview exists
 
 
 class TrainingMaterialOut(BaseModel):

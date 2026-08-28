@@ -8,7 +8,12 @@ import type { TrainingMaterial, TrainingFile } from "../api/types";
 const PREVIEWABLE = ["application/pdf", "image/png", "image/jpeg", "image/jpg",
                      "image/gif", "image/webp", "text/plain",
                      "video/mp4", "video/webm", "video/ogg", "video/quicktime"];
-const canPreview = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCase());
+const isNative = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCase());
+// A file previews on screen if it's a natively-viewable type, or the server has
+// a rendered PDF preview for it (e.g. from an uploaded PPTX/DOCX).
+const canPreview = (f: TrainingFile) => isNative(f.content_type) || !!f.preview_content_type;
+// The content type of the bytes the preview endpoint will serve.
+const previewType = (f: TrainingFile) => f.preview_content_type || f.content_type;
 
 // Agent-facing training portal: browse materials grouped by category, filter by
 // category, search by title/description, open links, and preview files on screen.
@@ -26,13 +31,13 @@ export default function Training() {
   async function onPreview(mid: number, f: TrainingFile) {
     setDlError(null);
     try {
-      if (!canPreview(f.content_type)) {
+      if (!canPreview(f)) {
         await downloadFile(api.trainingFilePath(mid, f.id, true), f.file_name);
         return;
       }
       const url = await fetchBlobUrl(api.trainingFilePath(mid, f.id));
       closePreview();
-      setPreview({ url, name: f.file_name, type: f.content_type });
+      setPreview({ url, name: f.file_name, type: previewType(f) });
     } catch (e) {
       setDlError(errorText(e, t));
     }
@@ -118,7 +123,7 @@ export default function Training() {
                       <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
                         onClick={() => onPreview(m.id, f)}
                         title={f.file_name}>
-                        {canPreview(f.content_type) ? "👁 " : "↓ "}{f.file_name}
+                        {canPreview(f) ? "👁 " : "↓ "}{f.file_name}
                       </button>
                     ))}
                   </div>

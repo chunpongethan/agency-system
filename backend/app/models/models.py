@@ -454,6 +454,10 @@ class TrainingFile(Base):
     file_size: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     data: Mapped[bytes] = mapped_column(LargeBinary)
+    # Optional rendered preview (e.g. a PDF generated from an uploaded PPTX/DOCX)
+    # so non-natively-viewable Office docs can still preview on screen.
+    preview_content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    preview_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
 
 class TrainingCategory(Base):

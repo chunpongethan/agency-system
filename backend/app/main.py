@@ -86,6 +86,10 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE training_files ADD COLUMN content_type VARCHAR(120) DEFAULT 'application/octet-stream'")
         ddl.append("ALTER TABLE training_files ADD COLUMN file_size INTEGER DEFAULT 0")
         ddl.append("ALTER TABLE training_files ADD COLUMN created_at TIMESTAMP")
+    if tf_cols and "preview_content_type" not in tf_cols:
+        blob_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
+        ddl.append("ALTER TABLE training_files ADD COLUMN preview_content_type VARCHAR(120)")
+        ddl.append(f"ALTER TABLE training_files ADD COLUMN preview_data {blob_type}")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -1443,6 +1447,50 @@ _PREVIEW_TYPES = {"application/pdf", "image/png", "image/jpeg", "image/jpg",
                   "image/gif", "image/webp", "text/plain",
                   "video/mp4", "video/webm", "video/ogg", "video/quicktime"}
 
+# Office document types that LibreOffice can render to a PDF for on-screen
+# preview (browsers have no native viewer for these).
+_CONVERTIBLE_TO_PDF = {
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",  # pptx
+    "application/vnd.ms-powerpoint",                                              # ppt
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",    # docx
+    "application/msword",                                                         # doc
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",          # xlsx
+    "application/vnd.ms-excel",                                                   # xls
+}
+
+
+def _soffice_exe() -> str | None:
+    import shutil
+    return shutil.which("soffice") or shutil.which("libreoffice")
+
+
+def _office_to_pdf(data: bytes, filename: str) -> bytes | None:
+    """Render an Office doc to PDF via headless LibreOffice. Best-effort: returns
+    None if LibreOffice is absent (e.g. dev) or the conversion fails, in which
+    case the file simply has no on-screen preview and is downloaded instead."""
+    exe = _soffice_exe()
+    if not exe:
+        return None
+    import os, tempfile, subprocess
+    safe = os.path.basename(filename) or "file"
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, safe)
+        with open(src, "wb") as fh:
+            fh.write(data)
+        # A unique user-profile dir avoids the single-instance lock under load.
+        prof = "file://" + os.path.join(tmp, "profile").replace("\\", "/")
+        try:
+            subprocess.run([exe, "--headless", f"-env:UserInstallation={prof}",
+                            "--convert-to", "pdf", "--outdir", tmp, src],
+                           check=True, timeout=120, capture_output=True)
+        except Exception:
+            return None
+        out = os.path.join(tmp, os.path.splitext(safe)[0] + ".pdf")
+        if os.path.exists(out):
+            with open(out, "rb") as fh:
+                return fh.read()
+    return None
+
 
 def _training_out(db: Session, m: TrainingMaterial) -> dict:
     """Serialise a material for the API (file bytes never included)."""
@@ -1455,7 +1503,8 @@ def _training_out(db: Session, m: TrainingMaterial) -> dict:
         "description": m.description, "link_url": m.link_url,
         "companies": m.companies or None,
         "files": [{"id": f.id, "file_name": f.file_name,
-                   "content_type": f.content_type, "file_size": f.file_size}
+                   "content_type": f.content_type, "file_size": f.file_size,
+                   "preview_content_type": f.preview_content_type}
                   for f in files],
         "has_file": len(files) > 0,
         "created_at": m.created_at, "updated_at": m.updated_at,
@@ -1561,11 +1610,17 @@ async def upload_training_files(material_id: int, files: list[UploadFile] = File
                       f"{file.filename or 'file'} exceeds the {TRAINING_MAX_UPLOAD_MB} MB limit")
         if not data:
             continue
-        db.add(TrainingFile(
+        ctype = file.content_type or "application/octet-stream"
+        tf = TrainingFile(
             material_id=material_id, data=data,
-            file_name=file.filename or "file",
-            content_type=file.content_type or "application/octet-stream",
-            file_size=len(data)))
+            file_name=file.filename or "file", content_type=ctype, file_size=len(data))
+        # Render Office docs to a PDF so they can preview on screen (best-effort).
+        if ctype in _CONVERTIBLE_TO_PDF:
+            pdf = _office_to_pdf(data, tf.file_name)
+            if pdf:
+                tf.preview_data = pdf
+                tf.preview_content_type = "application/pdf"
+        db.add(tf)
         added.append(file.filename or "file")
     if not added:
         raise err(400, "empty_file", "no non-empty file uploaded")
@@ -1590,14 +1645,22 @@ def get_training_file(material_id: int, file_id: int, download: bool = False,
     if row is None or row.material_id != material_id:
         raise HTTPException(404, "file not found")
     ctype = row.content_type or "application/octet-stream"
-    inline = (not download) and ctype.lower() in _PREVIEW_TYPES
-    from urllib.parse import quote
     name = (row.file_name or "file").replace('"', "")
+    content, media = row.data, ctype
+    if not download and ctype.lower() in _PREVIEW_TYPES:
+        inline = True                                    # natively viewable
+    elif not download and row.preview_data is not None:
+        inline = True                                    # serve the rendered preview
+        content, media = row.preview_data, row.preview_content_type or "application/pdf"
+        name = os.path.splitext(name)[0] + ".pdf"
+    else:
+        inline = False                                   # download the original
+    from urllib.parse import quote
     ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "file"
     disposition = (f"{'inline' if inline else 'attachment'}; "
                    f"filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}")
     return Response(
-        content=row.data, media_type=ctype,
+        content=content, media_type=media,
         headers={"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff"},
     )
 

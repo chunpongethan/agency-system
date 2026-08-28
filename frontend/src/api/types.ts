@@ -89,6 +89,7 @@ export interface TrainingFile {
   file_name: string;
   content_type: string;
   file_size: number;
+  preview_content_type?: string | null;   // set when a rendered PDF preview exists
 }
 
 export interface TrainingMaterial {
