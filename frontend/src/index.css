@@ -251,12 +251,14 @@ button.ghost:hover { background: #f9fafb; }
 .he-content:empty::before { content: attr(data-placeholder); color: var(--muted); }
 .he-content ul, .he-content ol { margin: 4px 0; padding-left: 22px; }
 .he-content a { color: var(--accent); }
+.he-content img { max-width: 100%; height: auto; border-radius: 4px; }
 
 /* Rendered rich-text remark (agent portal) */
 .training-remark { color: var(--ink); }
 .training-remark p { margin: 4px 0; }
 .training-remark ul, .training-remark ol { margin: 4px 0; padding-left: 20px; }
 .training-remark a { color: var(--accent); }
+.training-remark img { max-width: 100%; height: auto; border-radius: 4px; }
 
 /* File-preview modal (training portal) */
 .modal-backdrop {

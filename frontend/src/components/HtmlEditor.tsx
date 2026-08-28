@@ -27,6 +27,28 @@ export default function HtmlEditor({ value, onChange, placeholder }:
     const url = window.prompt("URL (https://…)");
     if (url) exec("createLink", url);
   };
+  const insertImageUrl = () => {
+    const url = window.prompt("Image URL (https://…)");
+    if (url) exec("insertHTML", `<img src="${url.replace(/"/g, "")}" alt="" />`);
+  };
+  // Paste an image straight from the clipboard (e.g. a screenshot) — embed it as
+  // a data URL. Other paste content falls through to the default handler and is
+  // sanitised server-side on save.
+  const onPaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith("image/")) {
+        const file = items[i].getAsFile();
+        if (!file) continue;
+        e.preventDefault();
+        const reader = new FileReader();
+        reader.onload = () => exec("insertHTML", `<img src="${reader.result}" alt="" />`);
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  };
   const Btn = ({ on, title, children }: { on: () => void; title: string; children: React.ReactNode }) => (
     <button type="button" className="he-btn" title={title}
       onMouseDown={(e) => e.preventDefault()} onClick={on}>{children}</button>
@@ -42,11 +64,13 @@ export default function HtmlEditor({ value, onChange, placeholder }:
         <Btn on={() => exec("insertUnorderedList")} title="Bulleted list">• —</Btn>
         <Btn on={() => exec("insertOrderedList")} title="Numbered list">1.</Btn>
         <Btn on={addLink} title="Link">🔗</Btn>
+        <Btn on={insertImageUrl} title="Insert image by URL">🖼</Btn>
         <span className="he-sep" />
         <Btn on={() => exec("removeFormat")} title="Clear formatting">✕</Btn>
       </div>
       <div ref={ref} className="he-content" contentEditable suppressContentEditableWarning
         data-placeholder={placeholder ?? ""}
+        onPaste={onPaste}
         onInput={() => onChange(ref.current?.innerHTML ?? "")} />
     </div>
   );

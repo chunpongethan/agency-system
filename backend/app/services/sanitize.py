@@ -6,21 +6,30 @@ frontend, so this is the trust boundary — keep the allowlist tight.
 """
 from __future__ import annotations
 
+import re
 from html import escape
 from html.parser import HTMLParser
 
 _ALLOWED_TAGS = {
     "p", "br", "b", "strong", "i", "em", "u", "s", "strike",
-    "ul", "ol", "li", "a", "h3", "h4", "blockquote", "span", "div",
+    "ul", "ol", "li", "a", "h3", "h4", "blockquote", "span", "div", "img",
 }
-_VOID = {"br"}
+_VOID = {"br", "img"}
 _SKIP_CONTENT = {"script", "style"}      # drop these tags AND their text
-_ALLOWED_ATTRS = {"a": {"href", "title"}}
+_ALLOWED_ATTRS = {"a": {"href", "title"}, "img": {"src", "alt", "title"}}
+
+# Raster image data URLs only — SVG can carry script, so it's excluded.
+_DATA_IMG = re.compile(r"^data:image/(png|jpe?g|gif|webp);base64,", re.I)
 
 
 def _safe_href(v: str | None) -> bool:
     s = (v or "").strip().lower()
     return not s.startswith(("javascript:", "data:", "vbscript:"))
+
+
+def _safe_img_src(v: str | None) -> bool:
+    s = (v or "").strip()
+    return s.lower().startswith(("http://", "https://")) or bool(_DATA_IMG.match(s))
 
 
 class _Sanitizer(HTMLParser):
@@ -40,6 +49,10 @@ class _Sanitizer(HTMLParser):
         if tag == "a":
             kept = [(k, v) for k, v in kept if k != "href" or _safe_href(v)]
             kept += [("target", "_blank"), ("rel", "noopener noreferrer")]
+        if tag == "img":
+            kept = [(k, v) for k, v in kept if k != "src" or _safe_img_src(v)]
+            if not any(k == "src" for k, _ in kept):
+                return                              # drop an img with no safe src
         attr_str = "".join(f' {k}="{escape(v or "", quote=True)}"' for k, v in kept)
         self.out.append(f"<{tag}{attr_str}>")
 

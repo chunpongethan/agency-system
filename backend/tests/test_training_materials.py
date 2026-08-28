@@ -102,6 +102,21 @@ def test_remark_html_is_sanitized(client):
     assert upd["description"] == "<b>hi</b>"
 
 
+def test_remark_images_allowed_but_scoped(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    body = ('<img src="https://x.com/a.png" alt="ok">'
+            '<img src="data:image/png;base64,iVBOR">'
+            '<img src="data:image/svg+xml;base64,PHN2Zz4=">'   # svg dropped
+            '<img src="javascript:alert(1)">')                 # unsafe dropped
+    mid = mk_material(client, adm, description=body).json()["id"]
+    html = next(m for m in client.get("/training-materials", headers=ax).json()
+                if m["id"] == mid)["description"]
+    assert 'src="https://x.com/a.png"' in html
+    assert "data:image/png;base64,iVBOR" in html
+    assert "svg" not in html and "javascript:" not in html
+    assert html.count("<img") == 2
+
+
 def test_agent_cannot_write(client):
     ax = auth(client, "AX")
     assert mk_material(client, ax).status_code == 403
