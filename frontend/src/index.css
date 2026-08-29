@@ -165,6 +165,23 @@ button.ghost:hover { background: #f9fafb; }
     word-break: break-word;
   }
   .cards-on-mobile td.pcat-actions { justify-content: flex-end; }
+  /* Stack the label over the year-rate chips so a long list wraps across the
+     full card width instead of being crammed against the right edge. */
+  .cards-on-mobile td.pcat-yearrates {
+    flex-direction: column; align-items: flex-start; text-align: left; gap: 4px;
+  }
+}
+
+/* Per-year commission rates shown as compact wrapping chips. */
+.year-rates { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.year-rates .yr-chip {
+  display: inline-flex; align-items: baseline; gap: 3px; white-space: nowrap;
+  padding: 1px 6px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--bg); font-size: 12px; font-variant-numeric: tabular-nums;
+}
+.year-rates .yr-chip .yr-n { color: var(--muted); font-size: 11px; }
+@media (min-width: 769px) {
+  .product-table th.pcat-yearrates, .product-table td.pcat-yearrates { max-width: 260px; }
 }
 
 .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }

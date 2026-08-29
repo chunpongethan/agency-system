@@ -57,7 +57,7 @@ export default function ProductCatalogue({ products, actions }:
 
   const hasFilters = q !== "" || fType !== "" || fProvider !== "" || fTenor !== "" || fSchedule !== "" || fPI !== "";
   const clearFilters = () => { setQ(""); setFType(""); setFProvider(""); setFTenor(""); setFSchedule(""); setFPI(""); };
-  const colSpan = actions ? 8 : 7;
+  const colSpan = actions ? 9 : 8;
 
   return (
     <>
@@ -94,6 +94,7 @@ export default function ProductCatalogue({ products, actions }:
         <thead>
           <tr>
             <th>{t("common.code")}</th><th className="pcat-name">{t("admin.products.thName")}</th><th>{t("common.type")}</th><th className="num">{t("admin.products.thBaseRate")}</th>
+            <th className="pcat-yearrates">{t("admin.products.thYearRates")}</th>
             <th className="num">{t("admin.products.thAfypConv")}</th><th>{t("admin.products.thSchedule")}</th><th>{t("admin.products.thInsuranceDetails")}</th>
             {actions && <th></th>}
           </tr>
@@ -108,6 +109,17 @@ export default function ProductCatalogue({ products, actions }:
               <td className="pcat-name" data-label={t("admin.products.thName")}>{p.name}</td>
               <td data-label={t("common.type")}>{productTypeLabel(p.type)}</td>
               <td className="num" data-label={t("admin.products.thBaseRate")}>{pct(p.base_commission_rate)}</td>
+              <td className="pcat-yearrates" data-label={t("admin.products.thYearRates")}>
+                {p.year_commissions && p.year_commissions.length > 0
+                  ? <span className="year-rates">
+                      {p.year_commissions.map((r, i) => (
+                        <span className="yr-chip" key={i}>
+                          <span className="yr-n">{t("admin.products.yearN", { y: i + 1 })}</span>{pct(r)}
+                        </span>
+                      ))}
+                    </span>
+                  : <span className="muted">—</span>}
+              </td>
               <td className="num" data-label={t("admin.products.thAfypConv")}>{pct(p.afyp_conversion)}</td>
               <td data-label={t("admin.products.thSchedule")}>{scheduleLabel(p.commission_schedule)}</td>
               <td className="muted" data-label={t("admin.products.thInsuranceDetails")} style={{ fontSize: 12 }}>

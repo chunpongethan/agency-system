@@ -497,6 +497,8 @@ export const translations: Record<string, Translation> = {
   "admin.products.confirmDelete": { "zh-Hant": "確定刪除產品 {name}（{code}）？此操作無法復原。", en: "Delete product {name} ({code})? This cannot be undone." },
   "admin.products.thName": { "zh-Hant": "產品名稱", en: "Product name" },
   "admin.products.thBaseRate": { "zh-Hant": "基本比率", en: "Base rate" },
+  "admin.products.thYearRates": { "zh-Hant": "各年佣金", en: "Yearly rates" },
+  "admin.products.yearN": { "zh-Hant": "第{y}年", en: "Y{y}" },
   "admin.products.thAfypConv": { "zh-Hant": "AFYP 轉換", en: "AFYP conv." },
   "admin.products.thSchedule": { "zh-Hant": "派發方式", en: "Schedule" },
   "admin.products.thInsuranceDetails": { "zh-Hant": "保險詳情", en: "Insurance details" },
