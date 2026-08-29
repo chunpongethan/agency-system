@@ -162,13 +162,20 @@ def _migrate_training_files(insp) -> None:
         return
     with engine.begin() as conn:
         for u in uniques:
-            try:
-                conn.execute(text(f'ALTER TABLE training_files DROP CONSTRAINT IF EXISTS "{u["name"]}"'))
-            except Exception:
-                try:
-                    conn.execute(text(f'DROP INDEX IF EXISTS "{u["name"]}"'))
-                except Exception:
-                    pass
+            # The legacy uniqueness may be backed by a UNIQUE CONSTRAINT or a
+            # standalone UNIQUE INDEX (the auto index `ix_training_files_material_id`
+            # from the old column's index=True, unique=True). `DROP CONSTRAINT IF
+            # EXISTS` is a silent no-op for an index name (it does NOT raise), so we
+            # can't rely on an exception to fall through — run both, each guarded by
+            # IF EXISTS, so whichever kind it is gets removed.
+            name = u["name"]
+            conn.execute(text(f'ALTER TABLE training_files DROP CONSTRAINT IF EXISTS "{name}"'))
+            conn.execute(text(f'DROP INDEX IF EXISTS "{name}"'))
+        # The model declares a NON-unique index on material_id (many files per
+        # material); recreate it now that the legacy unique one is gone. Idempotent.
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_training_files_material_id "
+            "ON training_files (material_id)"))
 
 
 def _drop_legacy_title_unique(insp) -> None:
