@@ -9,7 +9,7 @@ import type { TrainingMaterial } from "../../api/types";
 
 const COMPANIES = ["heritree", "cpm"];
 const BLANK = { title: "", category: "", description: "", link_url: "",
-                companies: [...COMPANIES], inline_preview: false };
+                companies: [...COMPANIES] };
 
 export default function AdminTraining() {
   const { t } = useI18n();
@@ -87,7 +87,6 @@ export default function AdminTraining() {
         description: form.description || null,
         link_url: form.link_url || null,
         companies: form.companies,
-        inline_preview: form.inline_preview,
       };
       const saved = editId
         ? await api.updateTraining(editId, payload)
@@ -117,8 +116,7 @@ export default function AdminTraining() {
   function openEdit(m: TrainingMaterial) {
     setEditId(m.id);
     setForm({ title: m.title, category: m.category, description: m.description ?? "",
-              link_url: m.link_url ?? "", companies: m.companies ?? [...COMPANIES],
-              inline_preview: m.inline_preview });
+              link_url: m.link_url ?? "", companies: m.companies ?? [...COMPANIES] });
     setFiles([]); setError(null); setShowForm(true);
   }
   function closeForm() { setShowForm(false); setEditId(null); setFiles([]); }
@@ -189,14 +187,6 @@ export default function AdminTraining() {
               ))}
             </div>
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("training.companiesHint")}</div>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 400 }}>
-              <input type="checkbox" style={{ width: "auto" }} checked={form.inline_preview}
-                onChange={(e) => setForm({ ...form, inline_preview: e.target.checked })} />
-              {t("training.fInlinePreview")}
-            </label>
-            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("training.inlinePreviewHint")}</div>
           </div>
           {editing && editing.files.length > 0 && (
             <div style={{ marginTop: 10 }}>
