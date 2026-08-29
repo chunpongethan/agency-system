@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
@@ -14,6 +14,37 @@ const isNative = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCa
 const canPreview = (f: TrainingFile) => isNative(f.content_type) || !!f.preview_content_type;
 // The content type of the bytes the preview endpoint will serve.
 const previewType = (f: TrainingFile) => f.preview_content_type || f.content_type;
+const isVideo = (f: TrainingFile) => previewType(f).toLowerCase().startsWith("video/");
+
+// A video file rendered inline as a ready-to-play player, so the agent doesn't
+// have to click anything first. The file endpoint is auth-gated, so we fetch it
+// as an object URL on mount and revoke it on unmount.
+function VideoInline({ path, name }: { path: string; name: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    fetchBlobUrl(path)
+      .then((u) => {
+        if (cancelled) { URL.revokeObjectURL(u); return; }
+        objectUrl = u;
+        setUrl(u);
+      })
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [path]);
+  if (failed) return null;
+  return (
+    <div style={{ marginTop: 10 }}>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>{name}</div>
+      {url
+        ? <video src={url} controls preload="metadata"
+            style={{ width: "100%", maxHeight: 480, borderRadius: 8, background: "#000", display: "block" }} />
+        : <div className="muted" style={{ fontSize: 12 }}>…</div>}
+    </div>
+  );
+}
 
 // Agent-facing training portal: browse materials grouped by category, filter by
 // category, search by title/description, open links, and preview files on screen.
@@ -139,7 +170,7 @@ export default function Training() {
                         {t("training.openLink")} ↗
                       </a>
                     )}
-                    {m.files.map((f) => (
+                    {m.files.filter((f) => !isVideo(f)).map((f) => (
                       <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
                         onClick={() => onPreview(m, f)}
                         title={f.file_name}>
@@ -147,6 +178,10 @@ export default function Training() {
                       </button>
                     ))}
                   </div>
+                  {/* Videos preview in place — no click needed. */}
+                  {m.files.filter(isVideo).map((f) => (
+                    <VideoInline key={f.id} path={api.trainingFilePath(m.id, f.id)} name={f.file_name} />
+                  ))}
                   {m.inline_preview && inline && m.files.some((f) => f.id === inline.fid) && (
                     <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
                       {embed(inline.url, inline.type, m.files.find((f) => f.id === inline.fid)!.file_name)}
