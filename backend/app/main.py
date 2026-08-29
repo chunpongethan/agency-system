@@ -1366,6 +1366,108 @@ def create_case(payload: schemas.CaseIn, db: Session = Depends(get_db),
     return case
 
 
+@app.get("/cases/import-template")
+def cases_import_template(current: Agent = Depends(get_current_agent)):
+    """Download a ready-to-fill .xlsx template for batch lead import."""
+    from app.services import lead_import
+    return Response(
+        lead_import.build_template(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="lead_import_template.xlsx"'},
+    )
+
+
+@app.post("/cases/import")
+async def cases_import(file: UploadFile = File(...), db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    """Batch-create leads (cases) from an uploaded Excel workbook. Agents are
+    referenced by code and must be within the caller's visible scope. Each row is
+    validated independently; the response reports how many were created and the
+    per-row errors for those that were skipped."""
+    from decimal import Decimal, InvalidOperation
+    from app.services import lead_import
+
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024:
+        raise err(400, "file_too_large", "the file exceeds the 5 MB limit")
+    try:
+        parsed = lead_import.parse_rows(data)
+    except ValueError as e:
+        raise err(422, "invalid_file", f"could not read the spreadsheet: {e}")
+    if len(parsed) > 2000:
+        raise err(422, "too_many_rows", "at most 2000 rows per import")
+
+    # Resolve agent codes to ids, restricted to who the caller may assign.
+    visible = list(scoping.visible_agent_ids(db, current))
+    code_lookup = {code.casefold(): aid for aid, code in db.execute(
+        select(Agent.id, Agent.code).where(Agent.id.in_(visible))).all()}
+
+    def resolve(field: str, values: dict, required: bool) -> int | None:
+        code = str(values.get(field) or "").strip()
+        if not code:
+            if required:
+                raise ValueError(f"{field} 為必填 / required")
+            return None
+        aid = code_lookup.get(code.casefold())
+        if aid is None:
+            raise ValueError(f"代理編號無效或不在可見範圍 ({field}): {code}")
+        return aid
+
+    created = 0
+    errors: list[dict] = []
+    for item in parsed:
+        rn = item["row"]
+        v = item["values"]
+        try:
+            # A per-row SAVEPOINT so one bad row doesn't abort the whole batch.
+            with db.begin_nested():
+                name = str(v.get("prospect_name") or "").strip()
+                if not name:
+                    raise ValueError("客戶姓名為必填 / prospect_name required")
+                lead_id = resolve("lead_agent_code", v, required=True)
+                sdr_id = resolve("sdr_agent_code", v, required=False)
+                closer_id = resolve("closer_agent_code", v, required=False)
+                stage_raw = str(v.get("stage") or "").strip().lower() or "lead"
+                if stage_raw not in lead_import.STAGES:
+                    raise ValueError(f"階段無效 stage: {stage_raw} (有效: {', '.join(lead_import.STAGES)})")
+                keys, unknown = lead_import.normalize_case_types(v.get("case_types"))
+                if unknown:
+                    raise ValueError(f"個案類別無效 case_types: {', '.join(unknown)}")
+                afyp = None
+                afyp_raw = v.get("expected_afyp")
+                if afyp_raw is not None and str(afyp_raw).strip() != "":
+                    try:
+                        afyp = Decimal(str(afyp_raw).replace(",", "").strip())
+                    except (InvalidOperation, ValueError):
+                        raise ValueError(f"預計AFYP不是有效數字 expected_afyp: {afyp_raw}")
+
+                def clean(field: str) -> str | None:
+                    val = v.get(field)
+                    s = str(val).strip() if val is not None else ""
+                    return s or None
+
+                case = Case(
+                    ref=_next_case_ref(db), prospect_name=name,
+                    email=clean("email"), phone=clean("phone"),
+                    follow_up=clean("follow_up"), notes=clean("notes"),
+                    case_types=keys or None, expected_afyp=afyp,
+                    lead_agent_id=lead_id, sdr_agent_id=sdr_id, closer_agent_id=closer_id,
+                    stage=PipelineStage(stage_raw),
+                )
+                db.add(case)
+                db.flush()
+            created += 1
+        except Exception as e:  # noqa: BLE001 - reported per row
+            errors.append({"row": rn, "error": str(e)})
+
+    if created:
+        audit.record(db, current.id, "import", "case", None,
+                     after={"created": created, "failed": len(errors)})
+    db.commit()
+    return {"created": created, "failed": len(errors), "total": len(parsed),
+            "errors": errors[:200]}
+
+
 @app.patch("/cases/{case_id}", response_model=schemas.CaseOut)
 def update_case(case_id: int, payload: schemas.CaseUpdate,
                 db: Session = Depends(get_db),

@@ -121,6 +121,13 @@ export interface AgentDirectory {
 }
 
 // Enriched case row returned by GET /cases (for the pipeline board).
+export interface CaseImportResult {
+  created: number;
+  failed: number;
+  total: number;
+  errors: { row: number; error: string }[];
+}
+
 export interface CaseRow {
   id: number;
   ref: string;

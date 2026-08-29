@@ -134,3 +134,95 @@ def test_unrelated_agent_isolated(client):
     ax, other = auth(client, "AX"), auth(client, "OTH")
     case = mk_case(client, ax, ids["ax"]).json()
     assert all(c["id"] != case["id"] for c in client.get("/cases", headers=other).json())
+
+
+# --- Batch import ------------------------------------------------------------
+import io  # noqa: E402
+from openpyxl import Workbook, load_workbook  # noqa: E402
+from app.services import lead_import  # noqa: E402
+
+_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def _wb_bytes(rows, headers=None):
+    """Build an .xlsx with the template's friendly headers (or a custom set)."""
+    wb = Workbook(); ws = wb.active
+    ws.append(headers or [label for _, label in lead_import.COLUMNS])
+    for r in rows:
+        ws.append(r)
+    buf = io.BytesIO(); wb.save(buf); return buf.getvalue()
+
+
+def test_import_template_download(client):
+    adm = auth(client, "ADM")
+    r = client.get("/cases/import-template", headers=adm)
+    assert r.status_code == 200
+    assert "spreadsheetml" in r.headers["content-type"]
+    wb = load_workbook(io.BytesIO(r.content))
+    assert wb.active.title == "Leads"
+    assert wb.active.max_row >= 3            # header + 2 example rows
+    assert "說明 Instructions" in wb.sheetnames
+
+
+def test_batch_import_valid_and_invalid(client):
+    adm = auth(client, "ADM")
+    rows = [
+        ["Alice", "a@x.com", "111", "AX", "", "", "lead", "participating,medical", 500000, "call", "ref"],
+        ["Bob", "", "222", "AY", "AX", "", "prospect", "分紅險", "", "", ""],   # zh case-type label
+        ["BadAgent", "", "", "ZZZ", "", "", "lead", "", "", "", ""],           # unknown agent
+        ["BadStage", "", "", "AX", "", "", "nope", "", "", "", ""],            # invalid stage
+        ["", "", "", "AX", "", "", "lead", "", "", "", ""],                    # missing name
+        ["BadType", "", "", "AX", "", "", "lead", "flying", "", "", ""],       # unknown case type
+    ]
+    r = client.post("/cases/import", headers=adm,
+                    files={"file": ("leads.xlsx", _wb_bytes(rows), _XLSX)})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["created"] == 2
+    assert body["failed"] == 4
+    assert body["total"] == 6
+    assert len(body["errors"]) == 4
+
+    listed = client.get("/cases", headers=adm).json()
+    by_name = {c["prospect_name"]: c for c in listed}
+    assert {"Alice", "Bob"} <= set(by_name)
+    assert set(by_name["Alice"]["case_types"]) == {"participating", "medical"}
+    assert by_name["Alice"]["expected_afyp"] == 500000
+    assert by_name["Bob"]["case_types"] == ["participating"]   # 分紅險 -> participating
+    # distinct refs were assigned
+    assert by_name["Alice"]["ref"] != by_name["Bob"]["ref"]
+
+
+def test_import_respects_visible_scope(client):
+    top = auth(client, "TOP")
+    rows = [
+        ["Downline", "", "", "AX", "", "", "lead", "", "", "", ""],   # AX is in TOP's subtree
+        ["Outside", "", "", "OTH", "", "", "lead", "", "", "", ""],   # OTH is not
+    ]
+    r = client.post("/cases/import", headers=top,
+                    files={"file": ("l.xlsx", _wb_bytes(rows), _XLSX)})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["created"] == 1 and body["failed"] == 1
+    assert "OTH" in body["errors"][0]["error"]
+
+
+def test_import_accepts_machine_key_headers(client):
+    """Headers can be the raw field names, not just the friendly zh labels."""
+    adm = auth(client, "ADM")
+    headers = ["prospect_name", "lead_agent_code", "stage"]
+    rows = [["Zoe", "AX", "m1"]]
+    r = client.post("/cases/import", headers=adm,
+                    files={"file": ("l.xlsx", _wb_bytes(rows, headers), _XLSX)})
+    assert r.status_code == 200, r.text
+    assert r.json()["created"] == 1
+    zoe = next(c for c in client.get("/cases", headers=adm).json() if c["prospect_name"] == "Zoe")
+    assert zoe["stage"] == "m1"
+
+
+def test_import_rejects_missing_required_columns(client):
+    adm = auth(client, "ADM")
+    # No lead-agent column at all -> the whole file is rejected (422).
+    data = _wb_bytes([["Alice"]], headers=["prospect_name"])
+    r = client.post("/cases/import", headers=adm, files={"file": ("l.xlsx", data, _XLSX)})
+    assert r.status_code == 422

@@ -6,6 +6,7 @@ import type {
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
+  CaseImportResult,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -144,6 +145,13 @@ export const api = {
     request<CaseRow>(`/cases/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteCase: (id: number) =>
     request<{ deleted: number }>(`/cases/${id}`, { method: "DELETE" }),
+  // Batch lead import: download the .xlsx template, then upload a filled workbook.
+  caseImportTemplatePath: () => "/cases/import-template",
+  importCases: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm<CaseImportResult>("/cases/import", form);
+  },
 
   // Products
   products: () => request<Product[]>("/products"),
@@ -272,10 +280,10 @@ export async function fetchBlobUrl(path: string): Promise<string> {
   return URL.createObjectURL(await res.blob());
 }
 
-async function uploadFiles<T>(path: string, files: File[]): Promise<T> {
+// POST a prebuilt multipart form with the bearer token attached. The browser
+// sets the multipart boundary, so we must NOT set Content-Type.
+async function uploadForm<T>(path: string, form: FormData): Promise<T> {
   const token = getToken();
-  const form = new FormData();
-  files.forEach((f) => form.append("files", f));
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -292,6 +300,12 @@ async function uploadFiles<T>(path: string, files: File[]): Promise<T> {
     throw new ApiError(res.status, String(detail), res.headers.get("X-Error-Code"));
   }
   return res.json() as Promise<T>;
+}
+
+async function uploadFiles<T>(path: string, files: File[]): Promise<T> {
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  return uploadForm<T>(path, form);
 }
 
 // Download a protected file (CSV/PDF) with the bearer token attached.

@@ -1,13 +1,13 @@
-import { useMemo, useState, type FormEvent, type DragEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent, type DragEvent, type ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, errorText } from "../api/client";
+import { api, downloadFile, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { stageLabel, outcomeLabel, caseTypeLabel, LEAD_STAGES, CASE_TYPES } from "../i18n/labels";
 import { moneyFixed } from "../lib/format";
 import StageBadge from "../components/StageBadge";
-import type { CaseRow } from "../api/types";
+import type { CaseRow, CaseImportResult } from "../api/types";
 
 const BLANK = {
   prospect_name: "", email: "", phone: "", follow_up: "", notes: "",
@@ -49,6 +49,25 @@ export default function Leads() {
     mutationFn: (id: number) => api.deleteCase(id),
     onSuccess: () => { invalidate(); setError(null); }, onError: onErr,
   });
+
+  // --- Batch import (Excel) ---
+  const [showImport, setShowImport] = useState(false);
+  const [importResult, setImportResult] = useState<CaseImportResult | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const importMut = useMutation({
+    mutationFn: (file: File) => api.importCases(file),
+    onSuccess: (res) => { setImportResult(res); invalidate(); setError(null); },
+    onError: onErr,
+  });
+  async function downloadTemplate() {
+    try { await downloadFile(api.caseImportTemplatePath(), "lead_import_template.xlsx"); }
+    catch (e) { onErr(e); }
+  }
+  function onImportFile(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = ""; // let the same file be re-picked after a fix
+    if (f) { setImportResult(null); importMut.mutate(f); }
+  }
 
   // --- Create / edit ---
   const [showForm, setShowForm] = useState(false);
@@ -140,9 +159,43 @@ export default function Leads() {
             <button className={view === "table" ? "primary" : "ghost"} style={{ padding: "4px 12px" }}
               onClick={() => setView("table")}>{t("leads.viewTable")}</button>
           </div>
+          <button className="ghost" onClick={() => setShowImport((s) => !s)}>{t("leads.import")}</button>
           <button className="primary" onClick={openCreate}>{t("leads.new")}</button>
         </div>
       </div>
+
+      {showImport && (
+        <div className="card">
+          <h2 style={{ marginTop: 0 }}>{t("leads.importTitle")}</h2>
+          <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>{t("leads.importHint")}</p>
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <button className="ghost" onClick={downloadTemplate}>{t("leads.downloadTemplate")}</button>
+            <button className="primary" disabled={importMut.isPending}
+              onClick={() => fileRef.current?.click()}>
+              {importMut.isPending ? t("leads.importing") : t("leads.chooseFile")}
+            </button>
+            <input ref={fileRef} type="file" style={{ display: "none" }}
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={onImportFile} />
+          </div>
+          {importResult && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontWeight: 600 }}>
+                {t("leads.importResult", {
+                  created: importResult.created, failed: importResult.failed, total: importResult.total,
+                })}
+              </div>
+              {importResult.errors.length > 0 && (
+                <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: "var(--bad)" }}>
+                  {importResult.errors.map((er, i) => (
+                    <li key={i}>{t("leads.importRowError", { row: er.row, error: er.error })}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <div className="row" style={{ alignItems: "center", flexWrap: "wrap" }}>
