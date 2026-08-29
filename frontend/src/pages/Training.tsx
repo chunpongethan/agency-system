@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
@@ -14,18 +14,47 @@ const isNative = (ctype: string) => PREVIEWABLE.includes((ctype || "").toLowerCa
 const canPreview = (f: TrainingFile) => isNative(f.content_type) || !!f.preview_content_type;
 // The content type of the bytes the preview endpoint will serve.
 const previewType = (f: TrainingFile) => f.preview_content_type || f.content_type;
-const isVideo = (f: TrainingFile) => previewType(f).toLowerCase().startsWith("video/");
 
-// A video file rendered inline as a ready-to-play player, so the agent doesn't
-// have to click anything first. The file endpoint is auth-gated, so we fetch it
-// as an object URL on mount and revoke it on unmount.
-function VideoInline({ path, name }: { path: string; name: string }) {
+// Render the preview bytes by kind: image, video player, or an iframe (PDF —
+// which also covers PPTX/DOCX rendered to PDF — and plain text).
+function embed(url: string, type: string, name: string) {
+  const t = (type || "").toLowerCase();
+  if (t.startsWith("image/"))
+    return <img src={url} alt={name} style={{ maxWidth: "100%", maxHeight: 480, display: "block", margin: "0 auto" }} />;
+  if (t.startsWith("video/"))
+    return <video src={url} controls preload="metadata"
+      style={{ width: "100%", maxHeight: 480, background: "#000", display: "block" }} />;
+  return <iframe title={name} src={url} style={{ width: "100%", height: 600, border: "none", display: "block", background: "#fff" }} />;
+}
+
+// A file rendered inline as a ready-to-view preview, so the agent doesn't have to
+// click anything first (video, PDF, PPTX→PDF, image, text). The file endpoint is
+// auth-gated, so we fetch it as an object URL and revoke it on unmount. Fetching
+// is deferred until the card scrolls near the viewport — otherwise every file on
+// the page would download its full bytes on load.
+function InlinePreview({ previewPath, name, type, onDownload }:
+  { previewPath: string; name: string; type: string; onDownload: () => void }) {
+  const { t } = useI18n();
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+
   useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") { setVisible(true); return; }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setVisible(true); io.disconnect(); }
+    }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
     let cancelled = false;
     let objectUrl: string | null = null;
-    fetchBlobUrl(path)
+    fetchBlobUrl(previewPath)
       .then((u) => {
         if (cancelled) { URL.revokeObjectURL(u); return; }
         objectUrl = u;
@@ -33,64 +62,43 @@ function VideoInline({ path, name }: { path: string; name: string }) {
       })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [path]);
-  if (failed) return null;
+  }, [visible, previewPath]);
+
   return (
-    <div style={{ marginTop: 10 }}>
-      <div className="muted" style={{ fontSize: 12, marginBottom: 4 }}>{name}</div>
-      {url
-        ? <video src={url} controls preload="metadata"
-            style={{ width: "100%", maxHeight: 480, borderRadius: 8, background: "#000", display: "block" }} />
-        : <div className="muted" style={{ fontSize: 12 }}>…</div>}
+    <div ref={wrapRef} style={{ marginTop: 10 }}>
+      <div className="muted" style={{ fontSize: 12, marginBottom: 4, display: "flex",
+        justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>{name}</span>
+        <button type="button" onClick={onDownload} style={{ background: "none", border: "none",
+          color: "var(--brand, #2563eb)", cursor: "pointer", padding: 0, fontSize: 12, whiteSpace: "nowrap" }}>
+          ↓ {t("training.download")}
+        </button>
+      </div>
+      {!failed && (url
+        ? <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
+            {embed(url, type, name)}
+          </div>
+        : <div className="muted" style={{ fontSize: 12 }}>…</div>)}
     </div>
   );
 }
 
 // Agent-facing training portal: browse materials grouped by category, filter by
-// category, search by title/description, open links, and preview files on screen.
+// category, search by title/description, open links, and preview files on screen
+// (videos, PDFs, PPTX/Office rendered to PDF, and images render inline).
 export default function Training() {
   const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
   const [dlError, setDlError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ url: string; name: string; type: string } | null>(null);
-  // Embedded (no-popup) preview: at most one open at a time, keyed by file id.
-  const [inline, setInline] = useState<{ fid: number; url: string; type: string } | null>(null);
 
-  function closePreview() {
-    if (preview) URL.revokeObjectURL(preview.url);
-    setPreview(null);
-  }
-  function closeInline() {
-    if (inline) URL.revokeObjectURL(inline.url);
-    setInline(null);
-  }
-  async function onPreview(m: TrainingMaterial, f: TrainingFile) {
+  async function onDownloadFile(m: TrainingMaterial, f: TrainingFile) {
     setDlError(null);
     try {
-      if (!canPreview(f)) {
-        await downloadFile(api.trainingFilePath(m.id, f.id, true), f.file_name);
-        return;
-      }
-      if (m.inline_preview) {
-        if (inline?.fid === f.id) { closeInline(); return; }   // toggle off
-        const url = await fetchBlobUrl(api.trainingFilePath(m.id, f.id));
-        closeInline();
-        setInline({ fid: f.id, url, type: previewType(f) });
-        return;
-      }
-      const url = await fetchBlobUrl(api.trainingFilePath(m.id, f.id));
-      closePreview();
-      setPreview({ url, name: f.file_name, type: previewType(f) });
+      await downloadFile(api.trainingFilePath(m.id, f.id, true), f.file_name);
     } catch (e) {
       setDlError(errorText(e, t));
     }
-  }
-
-  function embed(url: string, type: string, name: string) {
-    if (type.startsWith("image/")) return <img src={url} alt={name} style={{ maxWidth: "100%", maxHeight: 480 }} />;
-    if (type.startsWith("video/")) return <video src={url} controls style={{ maxWidth: "100%", maxHeight: 480 }} />;
-    return <iframe title={name} src={url} style={{ width: "100%", height: 480, border: "none" }} />;
   }
 
   const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
@@ -163,58 +171,34 @@ export default function Training() {
                     <div className="training-remark" style={{ fontSize: 13, margin: "6px 0 0" }}
                       dangerouslySetInnerHTML={{ __html: m.description }} />
                   )}
-                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                    {m.link_url && (
-                      <a className="badge role" style={{ textDecoration: "none", padding: "4px 10px" }}
-                        href={m.link_url} target="_blank" rel="noopener noreferrer">
-                        {t("training.openLink")} ↗
-                      </a>
-                    )}
-                    {m.files.filter((f) => !isVideo(f)).map((f) => (
-                      <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
-                        onClick={() => onPreview(m, f)}
-                        title={f.file_name}>
-                        {canPreview(f) ? (m.inline_preview && inline?.fid === f.id ? "▾ " : "👁 ") : "↓ "}{f.file_name}
-                      </button>
-                    ))}
-                  </div>
-                  {/* Videos preview in place — no click needed. */}
-                  {m.files.filter(isVideo).map((f) => (
-                    <VideoInline key={f.id} path={api.trainingFilePath(m.id, f.id)} name={f.file_name} />
-                  ))}
-                  {m.inline_preview && inline && m.files.some((f) => f.id === inline.fid) && (
-                    <div style={{ marginTop: 10, border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
-                      {embed(inline.url, inline.type, m.files.find((f) => f.id === inline.fid)!.file_name)}
+                  {(m.link_url || m.files.some((f) => !canPreview(f))) && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                      {m.link_url && (
+                        <a className="badge role" style={{ textDecoration: "none", padding: "4px 10px" }}
+                          href={m.link_url} target="_blank" rel="noopener noreferrer">
+                          {t("training.openLink")} ↗
+                        </a>
+                      )}
+                      {/* Non-previewable files can only be downloaded. */}
+                      {m.files.filter((f) => !canPreview(f)).map((f) => (
+                        <button key={f.id} className="ghost" style={{ padding: "3px 10px" }}
+                          onClick={() => onDownloadFile(m, f)} title={f.file_name}>
+                          ↓ {f.file_name}
+                        </button>
+                      ))}
                     </div>
                   )}
+                  {/* Previewable files (video, PDF, PPTX→PDF, image) render in place. */}
+                  {m.files.filter(canPreview).map((f) => (
+                    <InlinePreview key={f.id} previewPath={api.trainingFilePath(m.id, f.id)}
+                      name={f.file_name} type={previewType(f)} onDownload={() => onDownloadFile(m, f)} />
+                  ))}
                 </div>
               ))}
             </div>
           </div>
         ))}
       </div>
-
-      {preview && (
-        <div className="modal-backdrop" onClick={closePreview}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <strong style={{ fontSize: 14 }}>{preview.name}</strong>
-              <div style={{ display: "flex", gap: 8 }}>
-                <a className="ghost" style={{ padding: "3px 10px" }} href={preview.url}
-                  download={preview.name}>{t("training.download")}</a>
-                <button className="ghost" style={{ padding: "3px 10px" }} onClick={closePreview}>✕</button>
-              </div>
-            </div>
-            <div className="modal-body">
-              {preview.type.startsWith("image/")
-                ? <img src={preview.url} alt={preview.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                : preview.type.startsWith("video/")
-                ? <video src={preview.url} controls autoPlay style={{ maxWidth: "100%", maxHeight: "100%" }} />
-                : <iframe title={preview.name} src={preview.url} style={{ width: "100%", height: "100%", border: "none" }} />}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
