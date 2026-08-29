@@ -82,7 +82,10 @@ def _ensure_columns() -> None:
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
     if "inline_preview" not in cols("training_materials"):
-        ddl.append("ALTER TABLE training_materials ADD COLUMN inline_preview BOOLEAN DEFAULT 0")
+        # Postgres rejects the integer literal 0 for a boolean default; SQLite is
+        # fine with either. Use the SQL boolean literal.
+        bool_false = "false" if engine.dialect.name == "postgresql" else "0"
+        ddl.append(f"ALTER TABLE training_materials ADD COLUMN inline_preview BOOLEAN DEFAULT {bool_false}")
     tf_cols = cols("training_files")
     if tf_cols and "file_name" not in tf_cols:
         ddl.append("ALTER TABLE training_files ADD COLUMN file_name VARCHAR(255) DEFAULT 'file'")
