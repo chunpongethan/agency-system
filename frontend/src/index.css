@@ -316,6 +316,11 @@ button.ghost:hover { background: #f9fafb; }
   background: rgba(0,0,0,.4); color: #fff; padding: 1px 7px; border-radius: 999px; letter-spacing: .03em;
 }
 .tm-thumb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Text cover for a plain note (no attachment / no image): show its title. */
+.tm-thumb-text {
+  padding: 0 16px; text-align: center; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
 .tm-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
 .tm-title-row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
 .tm-summary {

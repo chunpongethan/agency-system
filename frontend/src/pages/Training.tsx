@@ -48,11 +48,21 @@ function primaryExt(m: TrainingMaterial): string | null {
 // Office-as-PDF), which is what the server can render a thumbnail from.
 const thumbFile = (m: TrainingMaterial): TrainingFile | undefined => (m.files ?? []).find(canPreview);
 
+// First image embedded in the remark HTML (e.g. a pasted image), used as the
+// thumbnail for items with no attachment. DOMParser doesn't fetch it — we just
+// read the src (a data: URL or an http(s) link).
+function firstRemarkImage(html: string | null | undefined): string | null {
+  if (!html || !html.includes("<img")) return null;
+  const src = new DOMParser().parseFromString(html, "text/html").querySelector("img")?.getAttribute("src") || "";
+  return src.startsWith("data:image/") || /^https?:\/\//i.test(src) ? src : null;
+}
+
 // A real thumbnail tile: fetch the server-generated JPEG for the primary file
 // (a tiny image, ~10-40 KB — not the full file). Falls back to the type glyph
 // tile if there's no thumbnailable file or it 404s (e.g. video with no ffmpeg).
 function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: Kind; ext: string | null }) {
   const file = thumbFile(material);
+  const remarkImg = file ? null : firstRemarkImage(material.description);
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -66,11 +76,17 @@ function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: 
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [file, material.id]);
 
+  // Priority: server thumbnail of the attachment → an image in the remark →
+  // a glyph (a file exists but has no thumbnail yet, e.g. video sans ffmpeg) →
+  // a text cover with the title (a plain note with no attachment).
+  const imgSrc = (url && !failed) ? url : remarkImg;
   return (
     <div className="tm-thumb" style={{ background: THUMB[kind].bg }}>
-      {url && !failed
-        ? <img className="tm-thumb-img" src={url} alt="" />
-        : <span aria-hidden>{THUMB[kind].glyph}</span>}
+      {imgSrc
+        ? <img className="tm-thumb-img" src={imgSrc} alt="" />
+        : file
+          ? <span aria-hidden>{THUMB[kind].glyph}</span>
+          : <span className="tm-thumb-text">{material.title}</span>}
       {ext && <span className="tm-kind">{ext}</span>}
     </div>
   );
