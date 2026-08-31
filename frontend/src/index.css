@@ -356,6 +356,11 @@ button.ghost:hover { background: #f9fafb; }
 .menu-path { font-size: 12px; }
 .menu-toggle { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13px; white-space: nowrap; }
 
+/* A row deep-linked into (e.g. from a knowledge-base result) — briefly emphasised. */
+.product-table tr.row-focus > * { background: #fff8e1; }
+.product-table tr.row-focus.cards-on-mobile,
+.cards-on-mobile tr.row-focus { outline: 2px solid #f59e0b; outline-offset: -2px; border-radius: 8px; }
+
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
   .app { flex-direction: column; }

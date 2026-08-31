@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "../i18n/LanguageContext";
 import { pct } from "../lib/format";
 import { productTypeLabel, scheduleLabel, PRODUCT_TYPES, SCHEDULES } from "../i18n/labels";
@@ -15,10 +15,21 @@ function ageRange(p: Product): string {
  * and composes as AND. Pass `actions` to render a trailing per-row action cell;
  * omit it for a read-only table.
  */
-export default function ProductCatalogue({ products, actions }:
-  { products: Product[]; actions?: (p: Product) => ReactNode }) {
+export default function ProductCatalogue({ products, actions, focusId }:
+  { products: Product[]; actions?: (p: Product) => ReactNode; focusId?: number }) {
   const { t } = useI18n();
   const [q, setQ] = useState("");
+  const [focusCode, setFocusCode] = useState<string | null>(null);
+  const appliedFocus = useRef<number | null>(null);
+
+  // Deep-link: when a knowledge-base result links here with ?focus=<id>, filter
+  // the catalogue to that product (by its unique code) and highlight it. Applied
+  // once per focus id, so the user can still search freely afterwards.
+  useEffect(() => {
+    if (focusId == null || appliedFocus.current === focusId) return;
+    const p = products.find((x) => x.id === focusId);
+    if (p) { setQ(p.code); setFocusCode(p.code); appliedFocus.current = focusId; }
+  }, [focusId, products]);
   const [fType, setFType] = useState("");
   const [fProvider, setFProvider] = useState("");
   const [fTenor, setFTenor] = useState(""); // "" | "none" | "<int>"
@@ -104,7 +115,7 @@ export default function ProductCatalogue({ products, actions }:
             <tr><td colSpan={colSpan} className="muted" style={{ textAlign: "center", padding: "18px 0" }}>{t("admin.products.noMatch")}</td></tr>
           )}
           {filtered.map((p) => (
-            <tr key={p.id}>
+            <tr key={p.id} className={p.code === focusCode ? "row-focus" : ""}>
               <td data-label={t("common.code")}>{p.code}</td>
               <td className="pcat-name" data-label={t("admin.products.thName")}>{p.name}</td>
               <td data-label={t("common.type")}>{productTypeLabel(p.type)}</td>

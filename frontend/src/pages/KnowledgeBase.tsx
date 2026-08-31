@@ -12,13 +12,14 @@ const SRC_KEY: Record<string, string> = {
   training: "kb.srcTraining", product: "kb.srcProduct",
 };
 
-// Route a source to a page the current viewer can actually reach. Products live
-// on a seller page (/products) and a separate admin page (/admin/products), so
-// an admin must be sent to the admin one — otherwise the role guard bounces them
-// to the admin home. Computed here (role-aware) rather than server-side.
-function kbHref(sourceType: string, role: string | undefined): string {
-  if (sourceType === "product") return role === "admin" ? "#/admin/products" : "#/products";
-  if (sourceType === "training") return "#/training";
+// Deep-link a source to the specific item on a page the viewer can reach.
+// Products live on a seller page (/products) and a separate admin page
+// (/admin/products); the target page reads `?focus=`/`?material=` and opens that
+// item. Articles/documents are handled in-page (modal / download) via onClick.
+function kbHref(sourceType: string, refId: number, role: string | undefined): string {
+  if (sourceType === "product")
+    return `#${role === "admin" ? "/admin/products" : "/products"}?focus=${refId}`;
+  if (sourceType === "training") return `#/training?material=${refId}`;
   return "#/knowledge-base";       // article, document
 }
 
@@ -93,7 +94,7 @@ function AskPanel({ aiEnabled }: { aiEnabled: boolean }) {
                 <div className="kb-sources">
                   <span className="muted" style={{ fontSize: 11 }}>{t("kb.sources")}：</span>
                   {m.sources.map((s) => (
-                    <a key={s.n} href={kbHref(s.source_type, me?.role)} className="badge role kb-src" title={s.title}>
+                    <a key={s.n} href={kbHref(s.source_type, s.ref_id, me?.role)} className="badge role kb-src" title={s.title}>
                       [{s.n}] {t(SRC_KEY[s.source_type] || "kb.srcArticle")}: {s.title}
                     </a>
                   ))}
@@ -172,7 +173,7 @@ function BrowsePanel() {
                 }
               };
               return (
-                <a key={`${r.source_type}-${r.ref_id}`} href={kbHref(r.source_type, me?.role)}
+                <a key={`${r.source_type}-${r.ref_id}`} href={kbHref(r.source_type, r.ref_id, me?.role)}
                   className="kb-result" onClick={onClick}>
                   <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                     <span className="badge unit" style={{ fontSize: 11 }}>{t(SRC_KEY[r.source_type] || "kb.srcArticle")}</span>

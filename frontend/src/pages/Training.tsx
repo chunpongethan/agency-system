@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
@@ -155,6 +156,7 @@ export default function Training() {
   const [category, setCategory] = useState<string>("");
   const [dlError, setDlError] = useState<string | null>(null);
   const [open, setOpen] = useState<TrainingMaterial | null>(null);
+  const [params, setParams] = useSearchParams();
 
   async function onDownloadFile(m: TrainingMaterial, f: TrainingFile) {
     setDlError(null);
@@ -183,6 +185,15 @@ export default function Training() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  // Deep-link: ?material=<id> (e.g. from a knowledge-base search result) opens
+  // that material's detail modal, then clears the param so it can be re-opened.
+  useEffect(() => {
+    const mid = params.get("material");
+    if (!mid || rows.length === 0) return;
+    const m = rows.find((x) => String(x.id) === mid);
+    if (m) { setOpen(m); setParams({}, { replace: true }); }
+  }, [rows, params]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const categories = Array.from(new Set(rows.map((m) => m.category).filter(Boolean))).sort();
   const q = search.trim().toLowerCase();

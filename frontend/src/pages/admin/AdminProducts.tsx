@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
@@ -199,6 +200,8 @@ export default function AdminProducts() {
   const { t } = useI18n();
   const qc = useQueryClient();
   const products = useQuery({ queryKey: ["products"], queryFn: () => api.products() });
+  const [params] = useSearchParams();
+  const focusId = params.get("focus") ? Number(params.get("focus")) : undefined;
 
   const [form, setForm] = useState<PForm>(emptyForm());
   const [createErr, setCreateErr] = useState<string | null>(null);
@@ -256,7 +259,7 @@ export default function AdminProducts() {
       <div className="card">
         <h2>{t("admin.products.catalogue")}</h2>
         {actionMsg && <div className={actionOk ? "success" : "error"}>{actionMsg}</div>}
-        <ProductCatalogue products={products.data ?? []} actions={(p) => (
+        <ProductCatalogue products={products.data ?? []} focusId={focusId} actions={(p) => (
           <>
             <button className="ghost" onClick={() => startEdit(p)}>{t("common.edit")}</button>{" "}
             <button className="ghost" onClick={() => confirmDelete(p)}
