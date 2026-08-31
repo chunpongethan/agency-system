@@ -7,7 +7,7 @@ import type {
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
-  KbChatTurn,
+  KbChatTurn, MenuSetting,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -212,6 +212,11 @@ export const api = {
     request<TrainingCategory>(`/training-categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteTrainingCategory: (id: number) =>
     request<{ deleted: number }>(`/training-categories/${id}`, { method: "DELETE" }),
+
+  // Left-menu settings (選單設定)
+  menuSettings: () => request<MenuSetting[]>("/menu-settings"),
+  saveMenuSettings: (items: MenuSetting[]) =>
+    request<MenuSetting[]>("/menu-settings", { method: "PUT", body: JSON.stringify(items) }),
 
   // Title targets (業績目標設定)
   titleTargets: () => request<TitleTarget[]>("/title-targets"),

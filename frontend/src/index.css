@@ -345,6 +345,17 @@ button.ghost:hover { background: #f9fafb; }
   border-radius: 8px; background: var(--panel); cursor: pointer; }
 .kb-result:hover { border-color: var(--accent, #2563eb); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
 
+/* Left-menu control editor */
+.menu-editor { display: flex; flex-direction: column; gap: 6px; }
+.menu-row { display: flex; align-items: center; gap: 12px; padding: 7px 10px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); }
+.menu-row.off { opacity: .55; background: var(--bg); }
+.menu-reorder { display: flex; flex-direction: column; gap: 2px; }
+.menu-reorder .ghost { padding: 0 6px; line-height: 1.2; font-size: 12px; }
+.menu-label { font-weight: 600; min-width: 120px; }
+.menu-path { font-size: 12px; }
+.menu-toggle { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13px; white-space: nowrap; }
+
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
   .app { flex-direction: column; }

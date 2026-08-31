@@ -417,3 +417,9 @@ export interface KbAnswer {
 }
 
 export interface KbChatTurn { role: "user" | "assistant"; content: string; }
+
+export interface MenuSetting {
+  key: string;
+  enabled: boolean;
+  sort_order: number;
+}

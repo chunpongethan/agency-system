@@ -497,6 +497,18 @@ class KbArticle(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
 
 
+class MenuSetting(Base):
+    """Global left-menu customisation: one row per sidebar item with a show/hide
+    flag and sort order. The set of valid keys is defined by the frontend menu
+    registry; unknown keys are simply ignored when rendering."""
+    __tablename__ = "menu_settings"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(60), unique=True, index=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class KbDocument(Base):
     """An admin-uploaded reference document (PDF/DOCX/…) for the knowledge base.
     Shared across both companies. The raw bytes live here; `extracted_text` holds

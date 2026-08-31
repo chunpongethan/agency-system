@@ -25,7 +25,7 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, KbArticle, KbDocument, now_utc,
+    ProductRate, KbArticle, KbDocument, MenuSetting, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -2161,6 +2161,37 @@ def kb_ask(payload: schemas.KbAskIn, current: Agent = Depends(get_current_agent)
     audit.record(db, current.id, "ask", "kb", None, after={"q": question[:200]})
     db.commit()
     return {"answer": result["text"], "sources": result["sources"]}
+
+
+# --- Left-menu settings (選單設定; admins customise the sidebar globally) ------
+@app.get("/menu-settings", response_model=list[schemas.MenuSettingOut])
+def list_menu_settings(current: Agent = Depends(get_current_agent),
+                       db: Session = Depends(get_db)):
+    """Global sidebar show/hide + order. Any authed user reads it to render the
+    menu; an empty list means 'use the frontend defaults'."""
+    return db.execute(select(MenuSetting).order_by(MenuSetting.sort_order)).scalars().all()
+
+
+@app.put("/menu-settings", response_model=list[schemas.MenuSettingOut])
+def set_menu_settings(payload: list[schemas.MenuSettingIn],
+                      db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """Replace the whole menu configuration (admin)."""
+    existing = {m.key: m for m in db.execute(select(MenuSetting)).scalars()}
+    seen: set[str] = set()
+    for item in payload:
+        seen.add(item.key)
+        row = existing.get(item.key)
+        if row is None:
+            row = MenuSetting(key=item.key)
+            db.add(row)
+        row.enabled = item.enabled
+        row.sort_order = item.sort_order
+    for key, row in existing.items():
+        if key not in seen:
+            db.delete(row)                       # drop keys no longer sent
+    audit.record(db, current.id, "update", "menu_settings", None, after={"count": len(payload)})
+    db.commit()
+    return db.execute(select(MenuSetting).order_by(MenuSetting.sort_order)).scalars().all()
 
 
 # --- Reports -----------------------------------------------------------------

@@ -525,3 +525,17 @@ class KbSource(BaseModel):
 class KbAnswerOut(BaseModel):
     answer: str
     sources: list[KbSource]
+
+
+# --- Left-menu settings ------------------------------------------------------
+class MenuSettingIn(BaseModel):
+    key: str
+    enabled: bool = True
+    sort_order: int = 0
+
+
+class MenuSettingOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    key: str
+    enabled: bool
+    sort_order: int

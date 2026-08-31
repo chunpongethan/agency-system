@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { titleLabel } from "../lib/titles";
 import { roleLabel, companyLabel } from "../i18n/labels";
+import { api } from "../api/client";
+import { buildMenu, type Role } from "../lib/menu";
 import LanguageToggle from "./LanguageToggle";
 import CurrencyToggle from "./CurrencyToggle";
 
 export default function Layout() {
   const { me, logout } = useAuth();
   const { t } = useI18n();
-  const isAdmin = me?.role === "admin";
-  const isManager = me?.role === "manager";
-  const isSeller = me?.role === "agent" || isManager; // admins don't sell
+
+  // Global left-menu config (admin-controlled). Resilient: on error/empty we fall
+  // back to the registry defaults inside buildMenu.
+  const menuSettings = useQuery({
+    queryKey: ["menuSettings"], queryFn: () => api.menuSettings(),
+    staleTime: 60_000, retry: false,
+  });
+  const { main, admin } = buildMenu(me?.role as Role | undefined, menuSettings.data);
 
   // Mobile nav drawer (desktop ignores this — the sidebar is always visible there).
   const [navOpen, setNavOpen] = useState(false);
@@ -29,27 +37,15 @@ export default function Layout() {
       <aside className={`sidebar ${navOpen ? "open" : ""}`}>
         <div className="brand">{t("app.brand")}</div>
         <nav onClick={() => setNavOpen(false)}>
-          {isSeller && <NavLink to="/" end>{t("nav.dashboard")}</NavLink>}
-          {(isSeller || isAdmin) && <NavLink to="/clients">{t("nav.clients")}</NavLink>}
-          {(isSeller || isAdmin) && <NavLink to="/leads">{t("nav.leads")}</NavLink>}
-          {(isSeller || isAdmin) && <NavLink to="/training">{t("nav.training")}</NavLink>}
-          {(isSeller || isAdmin) && <NavLink to="/knowledge-base">{t("nav.knowledgeBase")}</NavLink>}
-          {isSeller && <NavLink to="/products">{t("nav.products")}</NavLink>}
-          {isSeller && <NavLink to="/my-transactions">{t("nav.myTxns")}</NavLink>}
-          {isAdmin && <NavLink to="/transactions/new">{t("nav.newTransaction")}</NavLink>}
-          {(isManager || isAdmin) && <NavLink to="/hierarchy">{t("nav.hierarchy")}</NavLink>}
-          <NavLink to="/reports">{t("nav.reports")}</NavLink>
-          {isAdmin && (
+          {main.map((m) => (
+            <NavLink key={m.key} to={m.to} end={m.end}>{t(m.labelKey)}</NavLink>
+          ))}
+          {admin.length > 0 && (
             <>
               <div className="nav-section">{t("nav.admin")}</div>
-              <NavLink to="/admin/agents">{t("nav.agents")}</NavLink>
-              <NavLink to="/admin/transactions">{t("nav.transactions")}</NavLink>
-              <NavLink to="/admin/products">{t("nav.products")}</NavLink>
-              <NavLink to="/admin/rules">{t("nav.rules")}</NavLink>
-              <NavLink to="/admin/targets">{t("nav.targets")}</NavLink>
-              <NavLink to="/admin/training">{t("nav.trainingAdmin")}</NavLink>
-              <NavLink to="/admin/knowledge-base">{t("nav.knowledgeBaseAdmin")}</NavLink>
-              <NavLink to="/admin/payouts">{t("nav.payouts")}</NavLink>
+              {admin.map((m) => (
+                <NavLink key={m.key} to={m.to} end={m.end}>{t(m.labelKey)}</NavLink>
+              ))}
             </>
           )}
         </nav>
