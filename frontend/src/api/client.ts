@@ -177,6 +177,8 @@ export const api = {
     request<TrainingMaterial>(`/training-materials/${id}/files/${fileId}`, { method: "DELETE" }),
   trainingFilePath: (id: number, fileId: number, download = false) =>
     `/training-materials/${id}/files/${fileId}${download ? "?download=1" : ""}`,
+  trainingThumbPath: (id: number, fileId: number) =>
+    `/training-materials/${id}/files/${fileId}/thumb`,
   // Training categories (培訓類別)
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),
   createTrainingCategory: (payload: { name: string; sort_order?: number }) =>

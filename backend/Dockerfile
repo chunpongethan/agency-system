@@ -16,10 +16,13 @@ WORKDIR /app
 # LibreOffice (headless) renders uploaded Office docs (PPTX/DOCX/XLSX) to a PDF
 # so agents can preview them on screen; fonts-noto-cjk keeps Chinese text intact
 # in the generated PDF. Impress/Writer/Calc cover the three Office formats.
+# ffmpeg extracts a frame for video thumbnails (image/PDF thumbnails use
+# Pillow/PyMuPDF wheels installed via pip below).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         fonts-wqy-zenhei fonts-noto-cjk \
         libreoffice-impress libreoffice-writer libreoffice-calc \
+        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # System deps for bcrypt/psycopg2 wheels are already provided; keep image slim.

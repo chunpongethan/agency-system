@@ -44,6 +44,38 @@ function primaryExt(m: TrainingMaterial): string | null {
   return m.link_url ? "LINK" : null;
 }
 
+// The material's thumbnail file: the first previewable file (image/PDF/video/
+// Office-as-PDF), which is what the server can render a thumbnail from.
+const thumbFile = (m: TrainingMaterial): TrainingFile | undefined => (m.files ?? []).find(canPreview);
+
+// A real thumbnail tile: fetch the server-generated JPEG for the primary file
+// (a tiny image, ~10-40 KB — not the full file). Falls back to the type glyph
+// tile if there's no thumbnailable file or it 404s (e.g. video with no ffmpeg).
+function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: Kind; ext: string | null }) {
+  const file = thumbFile(material);
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!file) return;
+    let cancelled = false;
+    let objectUrl: string | null = null;
+    fetchBlobUrl(api.trainingThumbPath(material.id, file.id))
+      .then((u) => { if (cancelled) { URL.revokeObjectURL(u); return; } objectUrl = u; setUrl(u); })
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [file, material.id]);
+
+  return (
+    <div className="tm-thumb" style={{ background: THUMB[kind].bg }}>
+      {url && !failed
+        ? <img className="tm-thumb-img" src={url} alt="" />
+        : <span aria-hidden>{THUMB[kind].glyph}</span>}
+      {ext && <span className="tm-kind">{ext}</span>}
+    </div>
+  );
+}
+
 // Strip the sanitised HTML remark down to a short plain-text summary. DOMParser
 // does not run scripts or fetch images, so this touches nothing on the network.
 function plainSummary(html: string | null | undefined, n = 160): string {
@@ -200,10 +232,7 @@ export default function Training() {
                 const fileCount = (m.files ?? []).length;
                 return (
                   <button key={m.id} type="button" className="tm-card" onClick={() => setOpen(m)}>
-                    <div className="tm-thumb" style={{ background: THUMB[kind].bg }}>
-                      <span aria-hidden>{THUMB[kind].glyph}</span>
-                      {ext && <span className="tm-kind">{ext}</span>}
-                    </div>
+                    <ThumbTile material={m} kind={kind} ext={ext} />
                     <div className="tm-body">
                       <div className="tm-title-row">
                         <strong>{m.title}</strong>

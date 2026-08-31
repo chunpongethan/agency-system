@@ -65,6 +65,57 @@ def _upload(tc, headers, mid, *files):
                    files=[("files", f) for f in files])
 
 
+def test_thumbnail_generated_for_image_and_pdf(client):
+    """A real PNG and a real PDF each get a small JPEG thumbnail; a non-thumbnailable
+    file 404s (the UI falls back to a type tile)."""
+    import io
+    pytest.importorskip("PIL")
+    try:
+        import pymupdf as fitz
+    except Exception:
+        fitz = pytest.importorskip("fitz")
+    from PIL import Image
+
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+
+    # real 40x30 PNG
+    buf = io.BytesIO(); Image.new("RGB", (40, 30), (12, 34, 56)).save(buf, "PNG")
+    png = buf.getvalue()
+    # real 1-page PDF
+    doc = fitz.open(); doc.new_page(width=200, height=280); pdf = doc.tobytes()
+
+    up = _upload(client, adm, mid,
+                 ("pic.png", png, "image/png"),
+                 ("doc.pdf", pdf, "application/pdf"),
+                 ("data.bin", b"\x00\x01\x02not-media", "application/octet-stream"))
+    assert up.status_code == 200, up.text
+    files = {f["file_name"]: f["id"] for f in up.json()["files"]}
+
+    for name in ("pic.png", "doc.pdf"):
+        r = client.get(f"/training-materials/{mid}/files/{files[name]}/thumb", headers=ax)
+        assert r.status_code == 200, (name, r.text)
+        assert r.headers["content-type"] == "image/jpeg"
+        assert r.content[:2] == b"\xff\xd8"          # JPEG magic
+        assert 0 < len(r.content) < 200_000
+
+    # non-media file has no thumbnail
+    assert client.get(f"/training-materials/{mid}/files/{files['data.bin']}/thumb",
+                      headers=ax).status_code == 404
+
+
+def test_thumbnail_scoped_by_company(client):
+    adm, cpm = auth(client, "ADM"), auth(client, "cpm1")
+    import io
+    pytest.importorskip("PIL")
+    from PIL import Image
+    mid = mk_material(client, adm, companies=["heritree"]).json()["id"]
+    buf = io.BytesIO(); Image.new("RGB", (20, 20), (1, 2, 3)).save(buf, "PNG")
+    fid = _upload(client, adm, mid, ("p.png", buf.getvalue(), "image/png")).json()["files"][0]["id"]
+    # a CPM agent can't see a heritree-only material's thumbnail
+    assert client.get(f"/training-materials/{mid}/files/{fid}/thumb", headers=cpm).status_code == 404
+
+
 def test_admin_creates_and_agent_reads(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     r = mk_material(client, adm, link_url="https://example.com/guide.pdf")

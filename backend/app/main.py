@@ -96,6 +96,10 @@ def _ensure_columns() -> None:
         blob_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
         ddl.append("ALTER TABLE training_files ADD COLUMN preview_content_type VARCHAR(120)")
         ddl.append(f"ALTER TABLE training_files ADD COLUMN preview_data {blob_type}")
+    if tf_cols and "thumbnail" not in tf_cols:
+        blob_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
+        ddl.append(f"ALTER TABLE training_files ADD COLUMN thumbnail {blob_type}")
+        ddl.append("ALTER TABLE training_files ADD COLUMN thumbnail_content_type VARCHAR(120)")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -1607,6 +1611,99 @@ def _office_to_pdf(data: bytes, filename: str) -> bytes | None:
     return None
 
 
+# --- Thumbnail generation (small JPEG for the material list) ------------------
+_THUMB_MAX = 512  # px on the long edge
+
+
+def _jpeg_thumb_from_image_bytes(data: bytes) -> bytes | None:
+    """Downscale any Pillow-readable image to a small JPEG. Returns None if Pillow
+    is unavailable or the bytes aren't a decodable image."""
+    try:
+        import io as _io
+        from PIL import Image
+    except Exception:
+        return None
+    try:
+        im = Image.open(_io.BytesIO(data))
+        im.load()
+        if im.mode not in ("RGB", "L"):
+            im = im.convert("RGB")
+        im.thumbnail((_THUMB_MAX, _THUMB_MAX))
+        buf = _io.BytesIO()
+        im.save(buf, "JPEG", quality=80, optimize=True)
+        return buf.getvalue()
+    except Exception:
+        return None
+
+
+def _jpeg_thumb_from_pdf(data: bytes) -> bytes | None:
+    """Render the first PDF page to a small JPEG via PyMuPDF (pure-pip, no system
+    binary). Also used for PPTX/DOCX via their rendered-PDF preview."""
+    try:
+        try:
+            import pymupdf as fitz          # PyMuPDF (new import name)
+        except Exception:
+            import fitz                     # older PyMuPDF
+    except Exception:
+        return None
+    try:
+        doc = fitz.open(stream=data, filetype="pdf")
+        if doc.page_count == 0:
+            return None
+        page = doc.load_page(0)
+        long_edge = max(page.rect.width, page.rect.height) or 1
+        scale = min(2.0, _THUMB_MAX / long_edge)
+        pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), alpha=False)
+        png = pix.tobytes("png")
+        return _jpeg_thumb_from_image_bytes(png) or png
+    except Exception:
+        return None
+
+
+def _jpeg_thumb_from_video(data: bytes) -> bytes | None:
+    """Grab a frame ~1s in via ffmpeg (best-effort; None if ffmpeg is absent)."""
+    import shutil as _shutil
+    exe = _shutil.which("ffmpeg")
+    if not exe:
+        return None
+    import os, tempfile, subprocess
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "in")
+        out = os.path.join(tmp, "frame.jpg")
+        with open(src, "wb") as fh:
+            fh.write(data)
+        try:
+            subprocess.run(
+                [exe, "-y", "-ss", "1", "-i", src, "-frames:v", "1",
+                 "-vf", f"scale='min({_THUMB_MAX},iw)':-2", out],
+                check=True, timeout=90, capture_output=True)
+        except Exception:
+            return None
+        if os.path.exists(out):
+            with open(out, "rb") as fh:
+                # Re-encode through Pillow when available to normalise size; else
+                # serve ffmpeg's JPEG directly.
+                raw = fh.read()
+                return _jpeg_thumb_from_image_bytes(raw) or raw
+    return None
+
+
+def _make_thumbnail(content_type: str, data: bytes, preview_data: bytes | None) -> bytes | None:
+    """Best-effort small JPEG thumbnail for a training file. Returns None when the
+    type isn't thumbnailable or the needed tool is missing (caller falls back to a
+    type tile in the UI)."""
+    ct = (content_type or "").lower()
+    if ct.startswith("image/"):
+        return _jpeg_thumb_from_image_bytes(data)
+    if ct == "application/pdf":
+        return _jpeg_thumb_from_pdf(data)
+    if ct.startswith("video/"):
+        return _jpeg_thumb_from_video(data)
+    if preview_data:                      # PPTX/DOCX/XLSX rendered to PDF
+        return _jpeg_thumb_from_pdf(preview_data)
+    return None
+
+
 def _training_out(db: Session, m: TrainingMaterial) -> dict:
     """Serialise a material for the API (file bytes never included)."""
     files = db.execute(
@@ -1739,6 +1836,11 @@ async def upload_training_files(material_id: int, files: list[UploadFile] = File
             if pdf:
                 tf.preview_data = pdf
                 tf.preview_content_type = "application/pdf"
+        # A small thumbnail for the material list (best-effort).
+        thumb = _make_thumbnail(ctype, data, tf.preview_data)
+        if thumb:
+            tf.thumbnail = thumb
+            tf.thumbnail_content_type = "image/jpeg"
         db.add(tf)
         added.append(file.filename or "file")
     if not added:
@@ -1781,6 +1883,31 @@ def get_training_file(material_id: int, file_id: int, download: bool = False,
     return Response(
         content=content, media_type=media,
         headers={"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff"},
+    )
+
+
+@app.get("/training-materials/{material_id}/files/{file_id}/thumb")
+def get_training_thumb(material_id: int, file_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    """Serve a file's small JPEG thumbnail for the material list. Generated at
+    upload; for files that predate thumbnails it's generated once here and cached.
+    404 when the file isn't thumbnailable (the UI then shows a type tile)."""
+    m = db.get(TrainingMaterial, material_id)
+    if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
+        raise HTTPException(404, "not found")
+    row = db.get(TrainingFile, file_id)
+    if row is None or row.material_id != material_id:
+        raise HTTPException(404, "not found")
+    if not row.thumbnail:
+        thumb = _make_thumbnail(row.content_type or "", row.data, row.preview_data)
+        if not thumb:
+            raise HTTPException(404, "no thumbnail")
+        row.thumbnail = thumb
+        row.thumbnail_content_type = "image/jpeg"
+        db.commit()
+    return Response(
+        content=row.thumbnail, media_type=row.thumbnail_content_type or "image/jpeg",
+        headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"},
     )
 
 

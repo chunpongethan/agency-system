@@ -460,6 +460,11 @@ class TrainingFile(Base):
     # so non-natively-viewable Office docs can still preview on screen.
     preview_content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     preview_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    # Small JPEG thumbnail (first page / a frame / a downscaled image) for the
+    # material list, generated at upload (or on first request). Lets the list show
+    # a real preview image without fetching the full file.
+    thumbnail: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    thumbnail_content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
 
 class TrainingCategory(Base):
