@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type FormEvent, type MouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, errorText } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import type { KbArticle, KbSource, KbChatTurn } from "../api/types";
 
@@ -10,6 +11,16 @@ const SRC_KEY: Record<string, string> = {
   article: "kb.srcArticle", document: "kb.srcDocument",
   training: "kb.srcTraining", product: "kb.srcProduct",
 };
+
+// Route a source to a page the current viewer can actually reach. Products live
+// on a seller page (/products) and a separate admin page (/admin/products), so
+// an admin must be sent to the admin one — otherwise the role guard bounces them
+// to the admin home. Computed here (role-aware) rather than server-side.
+function kbHref(sourceType: string, role: string | undefined): string {
+  if (sourceType === "product") return role === "admin" ? "#/admin/products" : "#/products";
+  if (sourceType === "training") return "#/training";
+  return "#/knowledge-base";       // article, document
+}
 
 export default function KnowledgeBase() {
   const { t } = useI18n();
@@ -39,6 +50,7 @@ export default function KnowledgeBase() {
 // --- Ask (chat) --------------------------------------------------------------
 function AskPanel({ aiEnabled }: { aiEnabled: boolean }) {
   const { t } = useI18n();
+  const { me } = useAuth();
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -81,7 +93,7 @@ function AskPanel({ aiEnabled }: { aiEnabled: boolean }) {
                 <div className="kb-sources">
                   <span className="muted" style={{ fontSize: 11 }}>{t("kb.sources")}：</span>
                   {m.sources.map((s) => (
-                    <a key={s.n} href={s.link} className="badge role kb-src" title={s.title}>
+                    <a key={s.n} href={kbHref(s.source_type, me?.role)} className="badge role kb-src" title={s.title}>
                       [{s.n}] {t(SRC_KEY[s.source_type] || "kb.srcArticle")}: {s.title}
                     </a>
                   ))}
@@ -114,6 +126,7 @@ function AskPanel({ aiEnabled }: { aiEnabled: boolean }) {
 // --- Browse / search ---------------------------------------------------------
 function BrowsePanel() {
   const { t } = useI18n();
+  const { me } = useAuth();
   const [q, setQ] = useState("");
   const [openArticle, setOpenArticle] = useState<KbArticle | null>(null);
   const [dlError, setDlError] = useState<string | null>(null);
@@ -145,15 +158,30 @@ function BrowsePanel() {
           {search.isLoading && <div className="spinner">{t("common.loading")}</div>}
           {search.data && search.data.length === 0 && <p className="muted">{t("kb.noResults")}</p>}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {(search.data ?? []).map((r) => (
-              <a key={`${r.source_type}-${r.ref_id}`} href={r.link} className="kb-result">
-                <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                  <span className="badge unit" style={{ fontSize: 11 }}>{t(SRC_KEY[r.source_type] || "kb.srcArticle")}</span>
-                  <strong>{r.title}</strong>
-                </div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{r.snippet}</div>
-              </a>
-            ))}
+            {(search.data ?? []).map((r) => {
+              // Articles open in the modal, documents download; training/products
+              // navigate to a page the viewer can access.
+              const onClick = (e: MouseEvent) => {
+                if (r.source_type === "article") {
+                  e.preventDefault();
+                  const a = (articles.data ?? []).find((x) => x.id === r.ref_id);
+                  if (a) setOpenArticle(a);
+                } else if (r.source_type === "document") {
+                  e.preventDefault();
+                  onDownloadDoc(r.ref_id, r.title);
+                }
+              };
+              return (
+                <a key={`${r.source_type}-${r.ref_id}`} href={kbHref(r.source_type, me?.role)}
+                  className="kb-result" onClick={onClick}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+                    <span className="badge unit" style={{ fontSize: 11 }}>{t(SRC_KEY[r.source_type] || "kb.srcArticle")}</span>
+                    <strong>{r.title}</strong>
+                  </div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{r.snippet}</div>
+                </a>
+              );
+            })}
           </div>
         </>
       ) : (
