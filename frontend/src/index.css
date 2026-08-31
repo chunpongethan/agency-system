@@ -292,7 +292,35 @@ button.ghost:hover { background: #f9fafb; }
   padding: 10px 14px; border-bottom: 1px solid var(--line);
 }
 .modal-body { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; background: #f3f4f6; }
+/* Detail variant: scrollable, top-aligned content (remark + multiple previews). */
+.modal-body.detail { display: block; overflow-y: auto; background: var(--panel, #fff); padding: 16px 18px; }
 @media (max-width: 768px) { .modal-backdrop { padding: 8px; } .modal-panel { height: 92vh; } }
+
+/* Training portal: thumbnail + summary cards (no file preload). */
+.training-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.tm-card {
+  display: flex; flex-direction: column; text-align: left; padding: 0; overflow: hidden;
+  width: 100%; font: inherit; color: inherit; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.tm-card:hover { box-shadow: 0 8px 22px rgba(0,0,0,.12); transform: translateY(-2px); }
+.tm-thumb {
+  height: 116px; display: flex; align-items: center; justify-content: center;
+  position: relative; font-size: 42px; line-height: 1; color: #fff;
+}
+.tm-thumb .tm-kind {
+  position: absolute; right: 8px; bottom: 8px; font-size: 10px; font-weight: 600;
+  background: rgba(0,0,0,.4); color: #fff; padding: 1px 7px; border-radius: 999px; letter-spacing: .03em;
+}
+.tm-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.tm-title-row { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tm-summary {
+  margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tm-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
+.tm-meta .tm-open { margin-left: auto; color: var(--accent, #2563eb); font-size: 12px; font-weight: 600; }
 
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
