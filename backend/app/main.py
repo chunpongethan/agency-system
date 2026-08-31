@@ -8,7 +8,7 @@ principal via get_current_agent and enforces scoping (agent / manager / admin).
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form
@@ -25,7 +25,7 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, KbArticle, KbDocument, MenuSetting, now_utc,
+    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -2158,9 +2158,65 @@ def kb_ask(payload: schemas.KbAskIn, current: Agent = Depends(get_current_agent)
         result = kb_ai.answer(question, payload.history, ranked)
     except kb_ai.KbAiError as e:
         raise err(503, "ai_unavailable", str(e))
+    u = result.get("usage") or {}
+    if u.get("model"):
+        db.add(KbUsage(agent_id=current.id, model=u["model"],
+                       input_tokens=u.get("input_tokens", 0), output_tokens=u.get("output_tokens", 0)))
     audit.record(db, current.id, "ask", "kb", None, after={"q": question[:200]})
     db.commit()
     return {"answer": result["text"], "sources": result["sources"]}
+
+
+@app.get("/kb/usage")
+def kb_usage(start: date | None = None, end: date | None = None,
+             db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """LLM usage + estimated cost for the AI knowledge base (admin). Aggregated by
+    month, model, and agent. Cost uses the price table in kb_ai (best-effort)."""
+    stmt = select(KbUsage)
+    if start is not None:
+        stmt = stmt.where(KbUsage.created_at >= datetime(start.year, start.month, start.day, tzinfo=timezone.utc))
+    if end is not None:
+        stmt = stmt.where(KbUsage.created_at < datetime(end.year, end.month, end.day, tzinfo=timezone.utc) + timedelta(days=1))
+    rows = db.execute(stmt.order_by(KbUsage.created_at.desc())).scalars().all()
+
+    names = {a.id: (a.name, a.code) for a in db.execute(select(Agent)).scalars()}
+
+    def blank():
+        return {"requests": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+
+    total = blank()
+    by_model: dict[str, dict] = {}
+    by_month: dict[str, dict] = {}
+    by_agent: dict[int, dict] = {}
+    for r in rows:
+        c = kb_ai.cost_usd(r.model, r.input_tokens, r.output_tokens)
+        for bucket in (total,):
+            bucket["requests"] += 1
+            bucket["input_tokens"] += r.input_tokens
+            bucket["output_tokens"] += r.output_tokens
+            bucket["cost_usd"] += c
+        m = by_model.setdefault(r.model, {**blank(), "model": r.model})
+        mo = by_month.setdefault(r.created_at.strftime("%Y-%m"), {**blank(), "month": r.created_at.strftime("%Y-%m")})
+        ag = by_agent.setdefault(r.agent_id or 0, {**blank(), "agent_id": r.agent_id,
+                                                   "name": names.get(r.agent_id, ("?", "?"))[0],
+                                                   "code": names.get(r.agent_id, ("?", "?"))[1]})
+        for bucket in (m, mo, ag):
+            bucket["requests"] += 1
+            bucket["input_tokens"] += r.input_tokens
+            bucket["output_tokens"] += r.output_tokens
+            bucket["cost_usd"] += c
+    for d in (total, *by_model.values(), *by_month.values(), *by_agent.values()):
+        d["cost_usd"] = round(d["cost_usd"], 4)
+
+    return {
+        "total": total,
+        "by_model": sorted(by_model.values(), key=lambda x: x["cost_usd"], reverse=True),
+        "by_month": sorted(by_month.values(), key=lambda x: x["month"], reverse=True),
+        "by_agent": sorted(by_agent.values(), key=lambda x: x["cost_usd"], reverse=True)[:15],
+        "prices": kb_ai.prices(),
+        "model": os.getenv("ANTHROPIC_MODEL", kb_ai.DEFAULT_MODEL),
+        "ai_enabled": kb_ai.ai_enabled(),
+    }
 
 
 # --- Left-menu settings (選單設定; admins customise the sidebar globally) ------

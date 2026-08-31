@@ -423,3 +423,19 @@ export interface MenuSetting {
   enabled: boolean;
   sort_order: number;
 }
+
+export interface KbUsageBucket {
+  requests: number;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+}
+export interface KbUsageSummary {
+  total: KbUsageBucket;
+  by_model: (KbUsageBucket & { model: string })[];
+  by_month: (KbUsageBucket & { month: string })[];
+  by_agent: (KbUsageBucket & { agent_id: number | null; name: string; code: string })[];
+  prices: Record<string, { in: number; out: number }>;
+  model: string;
+  ai_enabled: boolean;
+}

@@ -35,6 +35,42 @@ class KbAiError(RuntimeError):
     """Raised when the assistant can't run (no key) or the API call fails."""
 
 
+# USD per 1,000,000 tokens (input, output), by model tier. Best-effort estimates
+# for cost reporting — override with ANTHROPIC_PRICES (JSON) if your plan differs.
+_DEFAULT_PRICES = {
+    "opus": {"in": 15.0, "out": 75.0},
+    "sonnet": {"in": 3.0, "out": 15.0},
+    "haiku": {"in": 0.80, "out": 4.0},
+}
+
+
+def prices() -> dict:
+    raw = os.getenv("ANTHROPIC_PRICES")
+    if raw:
+        try:
+            import json
+            merged = dict(_DEFAULT_PRICES)
+            merged.update(json.loads(raw))
+            return merged
+        except Exception:
+            pass
+    return _DEFAULT_PRICES
+
+
+def price_tier(model: str) -> str:
+    m = (model or "").lower()
+    if "opus" in m:
+        return "opus"
+    if "haiku" in m:
+        return "haiku"
+    return "sonnet"
+
+
+def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    r = prices().get(price_tier(model), _DEFAULT_PRICES["sonnet"])
+    return round(input_tokens / 1e6 * r["in"] + output_tokens / 1e6 * r["out"], 6)
+
+
 def ai_enabled() -> bool:
     return bool(os.getenv("ANTHROPIC_API_KEY"))
 
@@ -80,6 +116,15 @@ def answer(question: str, history: list[dict] | None, chunks) -> dict:
         log.exception("Anthropic call failed")
         raise KbAiError(f"AI request failed: {e}")
 
+    usage = getattr(resp, "usage", None)
     sources = [{"n": i, "title": c.title, "source_type": c.source_type,
                 "link": c.link, "ref_id": c.ref_id} for i, c in enumerate(chunks, start=1)]
-    return {"text": text or "（沒有回覆）", "sources": sources}
+    return {
+        "text": text or "（沒有回覆）",
+        "sources": sources,
+        "usage": {
+            "model": model,
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+        },
+    }

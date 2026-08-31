@@ -497,6 +497,20 @@ class KbArticle(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
 
 
+class KbUsage(Base):
+    """One row per AI knowledge-base answer: the model and token counts, so admins
+    can see LLM usage and estimated cost. Cost is computed at read time from a
+    price table (rates change), not stored here."""
+    __tablename__ = "kb_usage"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True, index=True)
+    model: Mapped[str] = mapped_column(String(80))
+    input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
 class MenuSetting(Base):
     """Global left-menu customisation: one row per sidebar item with a show/hide
     flag and sort order. The set of valid keys is defined by the frontend menu

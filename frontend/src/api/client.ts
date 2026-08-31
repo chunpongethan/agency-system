@@ -7,7 +7,7 @@ import type {
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
-  KbChatTurn, MenuSetting,
+  KbChatTurn, MenuSetting, KbUsageSummary,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -203,6 +203,7 @@ export const api = {
   kbSearch: (q: string) => request<KbSearchResult[]>(`/kb/search${qs({ q })}`),
   kbAsk: (question: string, history: KbChatTurn[]) =>
     request<KbAnswer>("/kb/ask", { method: "POST", body: JSON.stringify({ question, history }) }),
+  kbUsage: () => request<KbUsageSummary>("/kb/usage"),
 
   // Training categories (培訓類別)
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),

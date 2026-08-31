@@ -188,3 +188,38 @@ def test_ask_validates_question(client, monkeypatch):
     monkeypatch.setattr(kb_ai, "ai_enabled", lambda: True)
     assert client.post("/kb/ask", headers=auth(client, "AX"),
                        json={"question": "   "}).status_code == 422
+
+
+# --- usage / cost ------------------------------------------------------------
+def test_usage_admin_only(client):
+    assert client.get("/kb/usage", headers=auth(client, "AX")).status_code == 403
+
+
+def test_usage_aggregates(client):
+    from sqlalchemy import select as sel
+    from app.models.models import KbUsage, Agent
+    with client._Session() as db:
+        adm_id = db.execute(sel(Agent.id).where(Agent.code == "ADM")).scalar()
+        db.add(KbUsage(agent_id=adm_id, model="claude-sonnet-5", input_tokens=1000, output_tokens=500))
+        db.add(KbUsage(agent_id=adm_id, model="claude-haiku-4-5", input_tokens=2000, output_tokens=1000))
+        db.commit()
+    b = client.get("/kb/usage", headers=auth(client, "ADM")).json()
+    assert b["total"]["requests"] == 2
+    assert b["total"]["input_tokens"] == 3000 and b["total"]["output_tokens"] == 1500
+    # sonnet 0.0105 + haiku (0.0016 + 0.004) = 0.0161
+    assert abs(b["total"]["cost_usd"] - 0.0161) < 1e-6
+    assert {m["model"] for m in b["by_model"]} == {"claude-sonnet-5", "claude-haiku-4-5"}
+    assert b["by_agent"][0]["code"] == "ADM"
+    assert "sonnet" in b["prices"]
+
+
+def test_ask_records_usage(client, monkeypatch):
+    from app.services import kb_ai
+    monkeypatch.setattr(kb_ai, "ai_enabled", lambda: True)
+    monkeypatch.setattr(kb_ai, "answer", lambda q, h, c: {
+        "text": "ok", "sources": [],
+        "usage": {"model": "claude-sonnet-5", "input_tokens": 100, "output_tokens": 50}})
+    assert client.post("/kb/ask", headers=auth(client, "AX"),
+                       json={"question": "hi?"}).status_code == 200
+    b = client.get("/kb/usage", headers=auth(client, "ADM")).json()
+    assert b["total"]["requests"] == 1 and b["total"]["input_tokens"] == 100

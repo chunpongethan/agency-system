@@ -34,6 +34,7 @@ export const MENU: MenuItem[] = [
   { key: "adminTargets", to: "/admin/targets", labelKey: "nav.targets", roles: ["admin"], group: "admin" },
   { key: "adminTraining", to: "/admin/training", labelKey: "nav.trainingAdmin", roles: ["admin"], group: "admin" },
   { key: "adminKnowledgeBase", to: "/admin/knowledge-base", labelKey: "nav.knowledgeBaseAdmin", roles: ["admin"], group: "admin" },
+  { key: "adminLlm", to: "/admin/llm", labelKey: "nav.llmAdmin", roles: ["admin"], group: "admin" },
   { key: "adminPayouts", to: "/admin/payouts", labelKey: "nav.payouts", roles: ["admin"], group: "admin" },
   { key: "adminMenu", to: "/admin/menu", labelKey: "nav.menuAdmin", roles: ["admin"], group: "admin", locked: true },
 ];
