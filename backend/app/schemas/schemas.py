@@ -456,3 +456,72 @@ class AuditOut(BaseModel):
     before: str | None
     after: str | None
     created_at: datetime
+
+
+# --- AI Knowledge base -------------------------------------------------------
+class KbArticleIn(BaseModel):
+    title: str
+    category: str | None = None
+    body: str
+    tags: list[str] | None = None
+    is_active: bool = True
+
+
+class KbArticleUpdate(BaseModel):
+    title: str | None = None
+    category: str | None = None
+    body: str | None = None
+    tags: list[str] | None = None
+    is_active: bool | None = None
+
+
+class KbArticleOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    category: str | None = None
+    body: str
+    tags: list[str] | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class KbDocumentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    title: str
+    file_name: str
+    content_type: str
+    file_size: int
+    created_at: datetime
+
+
+class KbStatusOut(BaseModel):
+    ai_enabled: bool
+
+
+class KbSearchResult(BaseModel):
+    source_type: str
+    ref_id: int
+    title: str
+    link: str
+    snippet: str
+
+
+class KbAskIn(BaseModel):
+    question: str
+    history: list[dict] | None = None
+
+
+class KbSource(BaseModel):
+    n: int
+    title: str
+    source_type: str
+    link: str
+    ref_id: int
+
+
+class KbAnswerOut(BaseModel):
+    answer: str
+    sources: list[KbSource]

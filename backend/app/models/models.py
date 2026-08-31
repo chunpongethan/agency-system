@@ -465,6 +465,9 @@ class TrainingFile(Base):
     # a real preview image without fetching the full file.
     thumbnail: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     thumbnail_content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    # Extracted plain text (PDF/Office-preview), cached the first time the AI
+    # knowledge base ingests this file. NULL = not yet extracted.
+    extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class TrainingCategory(Base):
@@ -476,3 +479,35 @@ class TrainingCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(80), unique=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class KbArticle(Base):
+    """An admin-authored knowledge-base article/FAQ. Shared across both companies
+    (no company column). `body` is sanitised HTML (same trust boundary as training
+    remarks). Feeds both the browse/search list and the AI assistant's context."""
+    __tablename__ = "kb_articles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    category: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    body: Mapped[str] = mapped_column(Text)                       # sanitised HTML
+    tags: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
+
+
+class KbDocument(Base):
+    """An admin-uploaded reference document (PDF/DOCX/…) for the knowledge base.
+    Shared across both companies. The raw bytes live here; `extracted_text` holds
+    the text mined at upload (via PyMuPDF) that the AI assistant reads."""
+    __tablename__ = "kb_documents"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    file_name: Mapped[str] = mapped_column(String(255), default="file")
+    content_type: Mapped[str] = mapped_column(String(120), default="application/octet-stream")
+    file_size: Mapped[int] = mapped_column(Integer, default=0)
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)

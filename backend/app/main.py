@@ -11,7 +11,7 @@ import os
 from datetime import date
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -25,7 +25,7 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, now_utc,
+    ProductRate, KbArticle, KbDocument, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -100,6 +100,8 @@ def _ensure_columns() -> None:
         blob_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
         ddl.append(f"ALTER TABLE training_files ADD COLUMN thumbnail {blob_type}")
         ddl.append("ALTER TABLE training_files ADD COLUMN thumbnail_content_type VARCHAR(120)")
+    if tf_cols and "extracted_text" not in tf_cols:
+        ddl.append("ALTER TABLE training_files ADD COLUMN extracted_text TEXT")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -1992,6 +1994,173 @@ def delete_training_category(category_id: int, db: Session = Depends(get_db),
                  before={"name": cat.name})
     db.delete(cat); db.commit()
     return {"deleted": category_id}
+
+
+# --- AI Knowledge base (知識庫; admins author, every agent asks/browses) -------
+from app.services import kb_retrieval, kb_ai   # noqa: E402
+
+_KB_ASK_HITS: dict[int, list[float]] = {}
+_KB_MAX_Q = 2000
+
+
+def _kb_rate_limit(agent_id: int, limit: int = 20, window: float = 60.0) -> None:
+    import time
+    now = time.time()
+    hits = [t for t in _KB_ASK_HITS.get(agent_id, []) if now - t < window]
+    if len(hits) >= limit:
+        raise err(429, "rate_limited", "太多請求，請稍後再試 / too many requests")
+    hits.append(now)
+    _KB_ASK_HITS[agent_id] = hits
+
+
+@app.get("/kb/status", response_model=schemas.KbStatusOut)
+def kb_status(current: Agent = Depends(get_current_agent)):
+    return {"ai_enabled": kb_ai.ai_enabled()}
+
+
+@app.get("/kb/articles", response_model=list[schemas.KbArticleOut])
+def list_kb_articles(current: Agent = Depends(get_current_agent),
+                     db: Session = Depends(get_db)):
+    stmt = select(KbArticle).order_by(KbArticle.updated_at.desc())
+    if not scoping.is_admin(current):
+        stmt = stmt.where(KbArticle.is_active == True)  # noqa: E712
+    return db.execute(stmt).scalars().all()
+
+
+@app.post("/kb/articles", response_model=schemas.KbArticleOut)
+def create_kb_article(payload: schemas.KbArticleIn, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    art = KbArticle(title=payload.title, category=payload.category,
+                    body=sanitize_html(payload.body) or "", tags=payload.tags or None,
+                    is_active=payload.is_active)
+    db.add(art); db.flush()
+    audit.record(db, current.id, "create", "kb_article", art.id, after={"title": art.title})
+    db.commit(); db.refresh(art)
+    return art
+
+
+@app.patch("/kb/articles/{article_id}", response_model=schemas.KbArticleOut)
+def update_kb_article(article_id: int, payload: schemas.KbArticleUpdate,
+                      db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    art = db.get(KbArticle, article_id)
+    if art is None:
+        raise HTTPException(404, "article not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "body" in data:
+        data["body"] = sanitize_html(data["body"]) or ""
+    for k, v in data.items():
+        setattr(art, k, v)
+    db.flush()
+    audit.record(db, current.id, "update", "kb_article", art.id, after=data)
+    db.commit(); db.refresh(art)
+    return art
+
+
+@app.delete("/kb/articles/{article_id}")
+def delete_kb_article(article_id: int, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    art = db.get(KbArticle, article_id)
+    if art is None:
+        raise HTTPException(404, "article not found")
+    audit.record(db, current.id, "delete", "kb_article", article_id, before={"title": art.title})
+    db.delete(art); db.commit()
+    return {"deleted": article_id}
+
+
+@app.get("/kb/documents", response_model=list[schemas.KbDocumentOut])
+def list_kb_documents(current: Agent = Depends(get_current_agent),
+                      db: Session = Depends(get_db)):
+    return db.execute(select(KbDocument).order_by(KbDocument.created_at.desc())).scalars().all()
+
+
+@app.post("/kb/documents", response_model=schemas.KbDocumentOut)
+async def upload_kb_document(file: UploadFile = File(...), title: str = Form(""),
+                             db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    data = await file.read()
+    if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
+        raise err(400, "file_too_large", f"file exceeds the {TRAINING_MAX_UPLOAD_MB} MB limit")
+    if not data:
+        raise err(400, "empty_file", "empty file")
+    ctype = file.content_type or "application/octet-stream"
+    text = kb_retrieval.pdf_to_text(data) if ctype.lower() == "application/pdf" else ""
+    doc = KbDocument(title=(title or file.filename or "document").strip(),
+                     file_name=file.filename or "file", content_type=ctype,
+                     file_size=len(data), data=data, extracted_text=text)
+    db.add(doc); db.flush()
+    audit.record(db, current.id, "create", "kb_document", doc.id, after={"title": doc.title})
+    db.commit(); db.refresh(doc)
+    return doc
+
+
+@app.get("/kb/documents/{doc_id}")
+def get_kb_document(doc_id: int, download: bool = False, db: Session = Depends(get_db),
+                    current: Agent = Depends(get_current_agent)):
+    doc = db.get(KbDocument, doc_id)
+    if doc is None:
+        raise HTTPException(404, "document not found")
+    inline = (not download) and (doc.content_type or "").lower() in _PREVIEW_TYPES
+    name = (doc.file_name or "file").replace('"', "")
+    from urllib.parse import quote
+    ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "file"
+    disposition = (f"{'inline' if inline else 'attachment'}; "
+                   f"filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}")
+    return Response(content=doc.data, media_type=doc.content_type or "application/octet-stream",
+                    headers={"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff"})
+
+
+@app.delete("/kb/documents/{doc_id}")
+def delete_kb_document(doc_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    doc = db.get(KbDocument, doc_id)
+    if doc is None:
+        raise HTTPException(404, "document not found")
+    audit.record(db, current.id, "delete", "kb_document", doc_id, before={"title": doc.title})
+    db.delete(doc); db.commit()
+    return {"deleted": doc_id}
+
+
+@app.get("/kb/search", response_model=list[schemas.KbSearchResult])
+def kb_search(q: str = "", current: Agent = Depends(get_current_agent),
+              db: Session = Depends(get_db)):
+    q = (q or "").strip()
+    if not q:
+        return []
+    chunks = kb_retrieval.build_corpus(db, company=current.company, is_admin=scoping.is_admin(current))
+    ranked = kb_retrieval.rank(chunks, q, k=20)
+    # de-dup by (source_type, ref_id), keeping the best-ranked chunk per item
+    seen: set[tuple[str, int]] = set()
+    out = []
+    for c in ranked:
+        key = (c.source_type, c.ref_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"source_type": c.source_type, "ref_id": c.ref_id, "title": c.title,
+                    "link": c.link, "snippet": kb_retrieval.snippet(c.text, q)})
+    return out
+
+
+@app.post("/kb/ask", response_model=schemas.KbAnswerOut)
+def kb_ask(payload: schemas.KbAskIn, current: Agent = Depends(get_current_agent),
+           db: Session = Depends(get_db)):
+    question = (payload.question or "").strip()
+    if not question:
+        raise err(422, "validation", "question is required")
+    if len(question) > _KB_MAX_Q:
+        raise err(422, "validation", f"question too long (max {_KB_MAX_Q} chars)")
+    if not kb_ai.ai_enabled():
+        raise err(503, "ai_unavailable", "AI assistant is not configured")
+    _kb_rate_limit(current.id)
+    chunks = kb_retrieval.build_corpus(db, company=current.company, is_admin=scoping.is_admin(current))
+    ranked = kb_retrieval.rank(chunks, question, k=12)
+    try:
+        result = kb_ai.answer(question, payload.history, ranked)
+    except kb_ai.KbAiError as e:
+        raise err(503, "ai_unavailable", str(e))
+    audit.record(db, current.id, "ask", "kb", None, after={"q": question[:200]})
+    db.commit()
+    return {"answer": result["text"], "sources": result["sources"]}
 
 
 # --- Reports -----------------------------------------------------------------

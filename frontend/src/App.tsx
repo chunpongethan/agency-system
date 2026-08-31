@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Leads from "./pages/Leads";
 import Training from "./pages/Training";
+import KnowledgeBase from "./pages/KnowledgeBase";
 import Products from "./pages/Products";
 import Transactions from "./pages/Transactions";
 import NewTransaction from "./pages/NewTransaction";
@@ -22,6 +23,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminRules from "./pages/admin/AdminRules";
 import AdminTargets from "./pages/admin/AdminTargets";
 import AdminTraining from "./pages/admin/AdminTraining";
+import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import type { ReactElement } from "react";
 
@@ -94,6 +96,14 @@ export default function App() {
           }
         />
         <Route
+          path="/knowledge-base"
+          element={
+            <RequireRole roles={["agent", "manager", "admin"]}>
+              <KnowledgeBase />
+            </RequireRole>
+          }
+        />
+        <Route
           path="/clients/:id"
           element={
             <RequireRole roles={["agent", "manager", "admin"]}>
@@ -158,6 +168,10 @@ export default function App() {
         <Route
           path="/admin/training"
           element={<RequireRole roles={["admin"]}><AdminTraining /></RequireRole>}
+        />
+        <Route
+          path="/admin/knowledge-base"
+          element={<RequireRole roles={["admin"]}><AdminKnowledgeBase /></RequireRole>}
         />
         <Route
           path="/admin/payouts"

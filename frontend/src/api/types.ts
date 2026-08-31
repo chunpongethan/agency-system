@@ -371,3 +371,49 @@ export interface PeriodInfo {
   locked_at: string | null;
   snapshot: AgencySummaryRow[] | null;
 }
+
+// --- AI Knowledge base ---
+export interface KbArticle {
+  id: number;
+  title: string;
+  category: string | null;
+  body: string;
+  tags: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KbDocument {
+  id: number;
+  title: string;
+  file_name: string;
+  content_type: string;
+  file_size: number;
+  created_at: string;
+}
+
+export interface KbStatus { ai_enabled: boolean; }
+
+export interface KbSearchResult {
+  source_type: string;
+  ref_id: number;
+  title: string;
+  link: string;
+  snippet: string;
+}
+
+export interface KbSource {
+  n: number;
+  title: string;
+  source_type: string;
+  link: string;
+  ref_id: number;
+}
+
+export interface KbAnswer {
+  answer: string;
+  sources: KbSource[];
+}
+
+export interface KbChatTurn { role: "user" | "assistant"; content: string; }

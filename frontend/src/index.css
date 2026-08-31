@@ -330,6 +330,21 @@ button.ghost:hover { background: #f9fafb; }
 .tm-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
 .tm-meta .tm-open { margin-left: auto; color: var(--accent, #2563eb); font-size: 12px; font-weight: 600; }
 
+/* AI Knowledge Base — chat + search results */
+.kb-chat { max-height: 55vh; min-height: 220px; overflow-y: auto; display: flex; flex-direction: column;
+  gap: 10px; padding: 6px 2px; }
+.kb-msg { display: flex; }
+.kb-msg.user { justify-content: flex-end; }
+.kb-msg.assistant { justify-content: flex-start; }
+.kb-bubble { max-width: 78%; padding: 9px 12px; border-radius: 12px; font-size: 14px; line-height: 1.5;
+  border: 1px solid var(--line); background: var(--bg); }
+.kb-msg.user .kb-bubble { background: var(--brand); color: #fff; border-color: var(--brand); }
+.kb-sources { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.kb-src { text-decoration: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kb-result { display: block; text-decoration: none; color: inherit; padding: 9px 12px; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); cursor: pointer; }
+.kb-result:hover { border-color: var(--accent, #2563eb); box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+
 /* ============================ Mobile (H5) ============================ */
 @media (max-width: 768px) {
   .app { flex-direction: column; }

@@ -6,7 +6,8 @@ import type {
   AgentStatement, AgencySummaryRow, CommissionPreview, PayoutResult, PeriodInfo,
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
-  CaseImportResult,
+  CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
+  KbChatTurn,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -179,6 +180,30 @@ export const api = {
     `/training-materials/${id}/files/${fileId}${download ? "?download=1" : ""}`,
   trainingThumbPath: (id: number, fileId: number) =>
     `/training-materials/${id}/files/${fileId}/thumb`,
+  // AI Knowledge base (知識庫)
+  kbStatus: () => request<KbStatus>("/kb/status"),
+  listKbArticles: () => request<KbArticle[]>("/kb/articles"),
+  createKbArticle: (payload: Record<string, unknown>) =>
+    request<KbArticle>("/kb/articles", { method: "POST", body: JSON.stringify(payload) }),
+  updateKbArticle: (id: number, payload: Record<string, unknown>) =>
+    request<KbArticle>(`/kb/articles/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteKbArticle: (id: number) =>
+    request<{ deleted: number }>(`/kb/articles/${id}`, { method: "DELETE" }),
+  listKbDocuments: () => request<KbDocument[]>("/kb/documents"),
+  uploadKbDocument: (file: File, title: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("title", title);
+    return uploadForm<KbDocument>("/kb/documents", form);
+  },
+  kbDocumentPath: (id: number, download = false) =>
+    `/kb/documents/${id}${download ? "?download=1" : ""}`,
+  deleteKbDocument: (id: number) =>
+    request<{ deleted: number }>(`/kb/documents/${id}`, { method: "DELETE" }),
+  kbSearch: (q: string) => request<KbSearchResult[]>(`/kb/search${qs({ q })}`),
+  kbAsk: (question: string, history: KbChatTurn[]) =>
+    request<KbAnswer>("/kb/ask", { method: "POST", body: JSON.stringify({ question, history }) }),
+
   // Training categories (培訓類別)
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),
   createTrainingCategory: (payload: { name: string; sort_order?: number }) =>
