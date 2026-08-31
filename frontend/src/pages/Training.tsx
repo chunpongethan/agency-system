@@ -231,7 +231,12 @@ export default function Training() {
                 const summary = plainSummary(m.description);
                 const fileCount = (m.files ?? []).length;
                 return (
-                  <button key={m.id} type="button" className="tm-card" onClick={() => setOpen(m)}>
+                  // A div (not a <button>): iOS Safari doesn't give absolutely
+                  // positioned children inside a <button> a containing block, which
+                  // collapsed the thumbnail image on mobile.
+                  <div key={m.id} className="tm-card" role="button" tabIndex={0}
+                    onClick={() => setOpen(m)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(m); } }}>
                     <ThumbTile material={m} kind={kind} ext={ext} />
                     <div className="tm-body">
                       <div className="tm-title-row">
@@ -247,7 +252,7 @@ export default function Training() {
                         <span className="tm-open">{t("training.openItem")} →</span>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
