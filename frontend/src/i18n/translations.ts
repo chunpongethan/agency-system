@@ -752,6 +752,8 @@ export const translations: Record<string, Translation> = {
   "training.fileCount": { "zh-Hant": "{n} 個檔案", en: "{n} file(s)" },
   "training.openItem": { "zh-Hant": "開啟", en: "Open" },
   "training.noSummary": { "zh-Hant": "（沒有說明）", en: "(no description)" },
+  "training.moveUp": { "zh-Hant": "上移", en: "Move up" },
+  "training.moveDown": { "zh-Hant": "下移", en: "Move down" },
   "training.transcodeVideos": { "zh-Hant": "轉換影片 (H.264)", en: "Convert videos (H.264)" },
   "training.transcodeHint": { "zh-Hant": "將非 H.264 影片轉為手機可播放的 H.264 格式（背景處理）。", en: "Convert non-H.264 videos to mobile-playable H.264 (runs in the background)." },
   "training.transcodeScheduled": { "zh-Hant": "已排程轉換 {n} 部影片，完成後即可在手機播放。", en: "Scheduled {n} video(s) for conversion; they'll play on mobile once done." },

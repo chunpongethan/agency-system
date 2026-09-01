@@ -4,6 +4,7 @@ import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { dateShort } from "../../lib/format";
 import { companyLabel } from "../../i18n/labels";
+import { chineseVariant } from "../../lib/zh";
 import HtmlEditor from "../../components/HtmlEditor";
 import type { TrainingMaterial } from "../../api/types";
 
@@ -44,6 +45,19 @@ export default function AdminTraining() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
   const onErr = (e: unknown) => setError(errorText(e, t) || t("training.saveFailed"));
+
+  // Reorder materials (admin-controlled display order).
+  const reorder = useMutation({
+    mutationFn: (ids: number[]) => api.reorderTraining(ids),
+    onSuccess: () => { invalidate(); setError(null); }, onError: onErr,
+  });
+  function move(idx: number, dir: -1 | 1) {
+    const order = rows.map((m) => m.id);
+    const j = idx + dir;
+    if (j < 0 || j >= order.length) return;
+    [order[idx], order[j]] = [order[j], order[idx]];
+    reorder.mutate(order);
+  }
 
   // Backfill: transcode any non-H.264 videos so they play on mobile.
   const [transcodeMsg, setTranscodeMsg] = useState<string | null>(null);
@@ -276,9 +290,9 @@ export default function AdminTraining() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((m) => (
+            {rows.map((m, idx) => (
               <tr key={m.id}>
-                <td data-label={t("training.thTitle")}>{m.title}</td>
+                <td data-label={t("training.thTitle")} lang={chineseVariant(m.title)}>{m.title}</td>
                 <td data-label={t("training.thCategory")}><span className="badge dc">{m.category}</span></td>
                 <td data-label={t("training.thCompanies")}>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -304,6 +318,10 @@ export default function AdminTraining() {
                   </div>
                 </td>
                 <td className="num tr-actions" style={{ whiteSpace: "nowrap" }}>
+                  <button className="ghost" title={t("training.moveUp")} disabled={reorder.isPending || idx === 0}
+                    onClick={() => move(idx, -1)}>↑</button>{" "}
+                  <button className="ghost" title={t("training.moveDown")} disabled={reorder.isPending || idx === rows.length - 1}
+                    onClick={() => move(idx, 1)}>↓</button>{" "}
                   <button className="ghost" onClick={() => openEdit(m)}>{t("common.edit")}</button>{" "}
                   <button className="ghost" style={{ color: "var(--bad)" }}
                     onClick={() => { if (window.confirm(t("training.confirmDelete", { title: m.title }))) remove.mutate(m.id); }}>

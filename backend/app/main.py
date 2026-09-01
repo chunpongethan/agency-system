@@ -81,6 +81,8 @@ def _ensure_columns() -> None:
     # Training: per-company visibility + per-file metadata (multi-file support).
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
+    if "sort_order" not in cols("training_materials") and "training_materials" in insp.get_table_names():
+        ddl.append("ALTER TABLE training_materials ADD COLUMN sort_order INTEGER DEFAULT 0")
     if "inline_preview" not in cols("training_materials"):
         # Postgres rejects the integer literal 0 for a boolean default; SQLite is
         # fine with either. Use the SQL boolean literal.
@@ -1852,7 +1854,7 @@ def list_training_materials(category: str | None = None, q: str | None = None,
         like = f"%{q}%"
         stmt = stmt.where(or_(TrainingMaterial.title.ilike(like),
                               TrainingMaterial.description.ilike(like)))
-    stmt = stmt.order_by(TrainingMaterial.created_at.desc())
+    stmt = stmt.order_by(TrainingMaterial.sort_order.asc(), TrainingMaterial.created_at.desc())
     rows = db.execute(stmt).scalars().all()
     if not scoping.is_admin(current):
         rows = [m for m in rows if _visible_to_company(m, current.company)]
@@ -1871,17 +1873,32 @@ def _clean_companies(companies: list[str] | None) -> list[str] | None:
 def create_training_material(payload: schemas.TrainingMaterialIn,
                              db: Session = Depends(get_db),
                              current: Agent = Depends(require_admin)):
+    next_order = (db.execute(select(func.max(TrainingMaterial.sort_order))).scalar() or 0) + 1
     m = TrainingMaterial(
         title=payload.title, category=payload.category,
         description=sanitize_html(payload.description), link_url=payload.link_url,
         companies=_clean_companies(payload.companies),
-        inline_preview=payload.inline_preview, created_by=current.id,
+        inline_preview=payload.inline_preview, sort_order=next_order, created_by=current.id,
     )
     db.add(m); db.flush()
     audit.record(db, current.id, "create", "training_material", m.id,
                  after={"title": m.title, "category": m.category})
     db.commit(); db.refresh(m)
     return _training_out(db, m)
+
+
+@app.put("/training-materials/order")
+def reorder_training_materials(payload: list[int], db: Session = Depends(get_db),
+                               current: Agent = Depends(require_admin)):
+    """Set the display order of training materials from a list of ids (admin).
+    Each material's sort_order becomes its index in the list."""
+    for i, mid in enumerate(payload):
+        m = db.get(TrainingMaterial, mid)
+        if m is not None:
+            m.sort_order = i
+    audit.record(db, current.id, "reorder", "training_material", None, after={"count": len(payload)})
+    db.commit()
+    return {"ordered": len(payload)}
 
 
 @app.patch("/training-materials/{material_id}", response_model=schemas.TrainingMaterialOut)

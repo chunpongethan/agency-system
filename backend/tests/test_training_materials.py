@@ -177,6 +177,20 @@ def test_transcode_pending_admin_only(client):
                        headers=auth(client, "AX")).status_code == 403
 
 
+def test_reorder_materials(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    ids = [mk_material(client, adm, title=f"M{i}").json()["id"] for i in range(3)]
+    listed = [m["id"] for m in client.get("/training-materials", headers=adm).json()]
+    assert listed == ids                                     # default = creation order
+
+    rev = list(reversed(ids))
+    assert client.put("/training-materials/order", headers=adm, json=rev).status_code == 200
+    listed2 = [m["id"] for m in client.get("/training-materials", headers=adm).json()]
+    assert listed2 == rev                                    # custom order honoured
+
+    assert client.put("/training-materials/order", headers=ax, json=ids).status_code == 403  # admin only
+
+
 def test_admin_creates_and_agent_reads(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     r = mk_material(client, adm, link_url="https://example.com/guide.pdf")

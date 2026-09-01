@@ -172,6 +172,8 @@ export const api = {
     request<TrainingMaterial>(`/training-materials/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteTraining: (id: number) =>
     request<{ deleted: number }>(`/training-materials/${id}`, { method: "DELETE" }),
+  reorderTraining: (ids: number[]) =>
+    request<{ ordered: number }>("/training-materials/order", { method: "PUT", body: JSON.stringify(ids) }),
   uploadTrainingFiles: (id: number, files: File[]) =>
     uploadFiles<TrainingMaterial>(`/training-materials/${id}/files`, files),
   deleteTrainingFile: (id: number, fileId: number) =>

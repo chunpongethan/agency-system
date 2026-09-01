@@ -437,6 +437,8 @@ class TrainingMaterial(Base):
     companies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     # When true, agents preview the files embedded in the card instead of a popup.
     inline_preview: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Admin-controlled display order (ascending); ties fall back to created_at.
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
