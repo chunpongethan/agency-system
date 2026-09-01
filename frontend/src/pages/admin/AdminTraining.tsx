@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
@@ -19,6 +19,17 @@ export default function AdminTraining() {
   const categories = useQuery({ queryKey: ["trainingCategories"], queryFn: () => api.trainingCategories() });
   const rows = materials.data ?? [];
   const cats = categories.data ?? [];
+  // Group materials by category (preserving the server sort_order within each) so
+  // the admin can arrange each category independently.
+  const catGroups = (() => {
+    const map = new Map<string, TrainingMaterial[]>();
+    for (const m of rows) {
+      const k = m.category || "—";
+      const arr = map.get(k);
+      if (arr) arr.push(m); else map.set(k, [m]);
+    }
+    return Array.from(map.entries());
+  })();
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -51,11 +62,17 @@ export default function AdminTraining() {
     mutationFn: (ids: number[]) => api.reorderTraining(ids),
     onSuccess: () => { invalidate(); setError(null); }, onError: onErr,
   });
-  function move(idx: number, dir: -1 | 1) {
+  // Reorder within a category: swap the material with its same-category neighbour
+  // in the global order list, then persist the full order. Materials of other
+  // categories keep their relative positions, so ordering is effectively per-category.
+  function move(group: TrainingMaterial[], idxInGroup: number, dir: -1 | 1) {
+    const j = idxInGroup + dir;
+    if (j < 0 || j >= group.length) return;
     const order = rows.map((m) => m.id);
-    const j = idx + dir;
-    if (j < 0 || j >= order.length) return;
-    [order[idx], order[j]] = [order[j], order[idx]];
+    const a = order.indexOf(group[idxInGroup].id);
+    const b = order.indexOf(group[j].id);
+    if (a < 0 || b < 0) return;
+    [order[a], order[b]] = [order[b], order[a]];
     reorder.mutate(order);
   }
 
@@ -290,45 +307,50 @@ export default function AdminTraining() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((m, idx) => (
-              <tr key={m.id}>
-                <td data-label={t("training.thTitle")} lang={chineseVariant(m.title)}>{m.title}</td>
-                <td data-label={t("training.thCategory")}><span className="badge dc">{m.category}</span></td>
-                <td data-label={t("training.thCompanies")}>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {(m.companies ?? COMPANIES).map((ckey) => (
-                      <span key={ckey} className="badge unit" style={{ fontSize: 11 }}>{companyLabel(ckey)}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className="muted" style={{ whiteSpace: "nowrap" }} data-label={t("training.thDate")}>{dateShort(m.created_at)}</td>
-                <td className="tr-attachments" data-label={t("training.thAttachments")}>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {m.link_url && (
-                      <a className="badge role" href={m.link_url} target="_blank" rel="noopener noreferrer"
-                        style={{ textDecoration: "none" }}>{t("training.hasLink")} ↗</a>
-                    )}
-                    {m.files.map((f) => (
-                      <button key={f.id} type="button" onClick={() => onDownload(m.id, f.id, f.file_name)}
-                        title={f.file_name}
-                        style={{ width: "auto", padding: "2px 8px", cursor: "pointer", fontSize: 12 }}
-                        className="ghost">↓ {f.file_name}</button>
-                    ))}
-                    {!m.link_url && m.files.length === 0 && <span className="muted">—</span>}
-                  </div>
-                </td>
-                <td className="num tr-actions" style={{ whiteSpace: "nowrap" }}>
-                  <button className="ghost" title={t("training.moveUp")} disabled={reorder.isPending || idx === 0}
-                    onClick={() => move(idx, -1)}>↑</button>{" "}
-                  <button className="ghost" title={t("training.moveDown")} disabled={reorder.isPending || idx === rows.length - 1}
-                    onClick={() => move(idx, 1)}>↓</button>{" "}
-                  <button className="ghost" onClick={() => openEdit(m)}>{t("common.edit")}</button>{" "}
-                  <button className="ghost" style={{ color: "var(--bad)" }}
-                    onClick={() => { if (window.confirm(t("training.confirmDelete", { title: m.title }))) remove.mutate(m.id); }}>
-                    {t("common.delete")}
-                  </button>
-                </td>
-              </tr>
+            {catGroups.map(([cat, list]) => (
+              <Fragment key={cat}>
+                <tr className="cat-row"><td colSpan={6}><span className="badge dc">{cat}</span></td></tr>
+                {list.map((m, i) => (
+                  <tr key={m.id}>
+                    <td data-label={t("training.thTitle")} lang={chineseVariant(m.title)}>{m.title}</td>
+                    <td data-label={t("training.thCategory")}><span className="badge dc">{m.category}</span></td>
+                    <td data-label={t("training.thCompanies")}>
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {(m.companies ?? COMPANIES).map((ckey) => (
+                          <span key={ckey} className="badge unit" style={{ fontSize: 11 }}>{companyLabel(ckey)}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="muted" style={{ whiteSpace: "nowrap" }} data-label={t("training.thDate")}>{dateShort(m.created_at)}</td>
+                    <td className="tr-attachments" data-label={t("training.thAttachments")}>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {m.link_url && (
+                          <a className="badge role" href={m.link_url} target="_blank" rel="noopener noreferrer"
+                            style={{ textDecoration: "none" }}>{t("training.hasLink")} ↗</a>
+                        )}
+                        {m.files.map((f) => (
+                          <button key={f.id} type="button" onClick={() => onDownload(m.id, f.id, f.file_name)}
+                            title={f.file_name}
+                            style={{ width: "auto", padding: "2px 8px", cursor: "pointer", fontSize: 12 }}
+                            className="ghost">↓ {f.file_name}</button>
+                        ))}
+                        {!m.link_url && m.files.length === 0 && <span className="muted">—</span>}
+                      </div>
+                    </td>
+                    <td className="num tr-actions" style={{ whiteSpace: "nowrap" }}>
+                      <button className="ghost" title={t("training.moveUp")} disabled={reorder.isPending || i === 0}
+                        onClick={() => move(list, i, -1)}>↑</button>{" "}
+                      <button className="ghost" title={t("training.moveDown")} disabled={reorder.isPending || i === list.length - 1}
+                        onClick={() => move(list, i, 1)}>↓</button>{" "}
+                      <button className="ghost" onClick={() => openEdit(m)}>{t("common.edit")}</button>{" "}
+                      <button className="ghost" style={{ color: "var(--bad)" }}
+                        onClick={() => { if (window.confirm(t("training.confirmDelete", { title: m.title }))) remove.mutate(m.id); }}>
+                        {t("common.delete")}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
             {!materials.isLoading && rows.length === 0 && (
               <tr><td colSpan={6} className="muted">{t("training.empty")}</td></tr>

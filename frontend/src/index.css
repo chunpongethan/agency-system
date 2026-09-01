@@ -184,6 +184,14 @@ button.ghost:hover { background: #f9fafb; }
   .cards-on-mobile td.pcat-actions { justify-content: flex-end; }
   /* Training-materials maintenance: actions right-aligned; attachments stack
      full-width (label above the file buttons) so long filenames stay readable. */
+  }
+/* Category section header row inside the materials maintenance table (desktop). */
+.cat-row td { background: var(--bg); padding-top: 12px; }
+@media (max-width: 768px) {
+  /* Category section header inside the materials table (mobile: a plain label). */
+  .cards-on-mobile tr.cat-row { border: none; background: transparent; padding: 0; margin: 8px 0 2px; }
+  .cards-on-mobile tr.cat-row td { display: block; border: none; padding: 2px 0; text-align: left; }
+  .cards-on-mobile tr.cat-row td::before { content: none; }
   .cards-on-mobile td.tr-actions { justify-content: flex-end; gap: 8px; }
   .cards-on-mobile td.tr-attachments {
     flex-direction: column; align-items: flex-start; text-align: left; gap: 6px;
