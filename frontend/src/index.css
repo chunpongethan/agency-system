@@ -20,6 +20,16 @@
     "Hiragino Sans GB", sans-serif;
   color: var(--ink);
 }
+/* Regional glyph forms: content tagged lang="zh-Hant"/"zh-Hans" (see lib/zh.ts)
+   flips the CJK font priority so Traditional and Simplified each render natively. */
+:lang(zh-Hant) {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Hiragino Sans GB", sans-serif;
+}
+:lang(zh-Hans) {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft YaHei", "Noto Sans SC", "Hiragino Sans GB", sans-serif;
+}
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); }

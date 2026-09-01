@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "../i18n/LanguageContext";
 import { pct } from "../lib/format";
 import { productTypeLabel, scheduleLabel, PRODUCT_TYPES, SCHEDULES } from "../i18n/labels";
+import { chineseVariant } from "../lib/zh";
 import type { Product } from "../api/types";
 
 function ageRange(p: Product): string {
@@ -117,7 +118,7 @@ export default function ProductCatalogue({ products, actions, focusId }:
           {filtered.map((p) => (
             <tr key={p.id} className={p.code === focusCode ? "row-focus" : ""}>
               <td data-label={t("common.code")}>{p.code}</td>
-              <td className="pcat-name" data-label={t("admin.products.thName")}>{p.name}</td>
+              <td className="pcat-name" data-label={t("admin.products.thName")} lang={chineseVariant(p.name)}>{p.name}</td>
               <td data-label={t("common.type")}>{productTypeLabel(p.type)}</td>
               <td className="num" data-label={t("admin.products.thBaseRate")}>{pct(p.base_commission_rate)}</td>
               <td className="pcat-yearrates" data-label={t("admin.products.thYearRates")}>

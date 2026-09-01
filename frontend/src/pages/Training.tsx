@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
 import { dateShort } from "../lib/format";
+import { chineseVariant } from "../lib/zh";
 import type { TrainingMaterial, TrainingFile } from "../api/types";
 
 const PREVIEWABLE = ["application/pdf", "image/png", "image/jpeg", "image/jpg",
@@ -87,7 +88,7 @@ function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: 
         ? <img className="tm-thumb-img" src={imgSrc} alt="" />
         : file
           ? <span aria-hidden>{THUMB[kind].glyph}</span>
-          : <span className="tm-thumb-text">{material.title}</span>}
+          : <span className="tm-thumb-text" lang={chineseVariant(material.title)}>{material.title}</span>}
       {ext && <span className="tm-kind">{ext}</span>}
     </div>
   );
@@ -271,11 +272,11 @@ export default function Training() {
                     <ThumbTile material={m} kind={kind} ext={ext} />
                     <div className="tm-body">
                       <div className="tm-title-row">
-                        <strong>{m.title}</strong>
+                        <strong lang={chineseVariant(m.title)}>{m.title}</strong>
                         <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</span>
                       </div>
                       {summary
-                        ? <p className="tm-summary">{summary}</p>
+                        ? <p className="tm-summary" lang={chineseVariant(summary)}>{summary}</p>
                         : <p className="tm-summary muted" style={{ fontStyle: "italic" }}>{t("training.noSummary")}</p>}
                       <div className="tm-meta">
                         {fileCount > 0 && <span className="badge unit" style={{ fontSize: 11 }}>{t("training.fileCount", { n: fileCount })}</span>}
@@ -296,7 +297,7 @@ export default function Training() {
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
               <div style={{ minWidth: 0 }}>
-                <strong style={{ fontSize: 15 }}>{open.title}</strong>
+                <strong style={{ fontSize: 15 }} lang={chineseVariant(open.title)}>{open.title}</strong>
                 <div className="muted" style={{ fontSize: 12 }}>
                   <span className="badge dc" style={{ marginRight: 6 }}>{open.category || t("training.uncategorized")}</span>
                   {dateShort(open.created_at)}
@@ -306,7 +307,7 @@ export default function Training() {
             </div>
             <div className="modal-body detail">
               {open.description && (
-                <div className="training-remark" style={{ fontSize: 14 }}
+                <div className="training-remark" style={{ fontSize: 14 }} lang={chineseVariant(open.description)}
                   dangerouslySetInnerHTML={{ __html: open.description }} />
               )}
               {open.link_url && (

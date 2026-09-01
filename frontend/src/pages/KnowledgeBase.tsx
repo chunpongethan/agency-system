@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
+import { chineseVariant } from "../lib/zh";
 import type { KbArticle, KbSource, KbChatTurn } from "../api/types";
 
 type ChatMsg = { role: "user" | "assistant"; content: string; sources?: KbSource[] };
@@ -89,7 +90,7 @@ function AskPanel({ aiEnabled }: { aiEnabled: boolean }) {
         {messages.map((m, i) => (
           <div key={i} className={`kb-msg ${m.role}`}>
             <div className="kb-bubble">
-              <div style={{ whiteSpace: "pre-wrap" }}>{m.content}</div>
+              <div style={{ whiteSpace: "pre-wrap" }} lang={chineseVariant(m.content)}>{m.content}</div>
               {m.sources && m.sources.length > 0 && (
                 <div className="kb-sources">
                   <span className="muted" style={{ fontSize: 11 }}>{t("kb.sources")}：</span>
@@ -177,9 +178,9 @@ function BrowsePanel() {
                   className="kb-result" onClick={onClick}>
                   <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
                     <span className="badge unit" style={{ fontSize: 11 }}>{t(SRC_KEY[r.source_type] || "kb.srcArticle")}</span>
-                    <strong>{r.title}</strong>
+                    <strong lang={chineseVariant(r.title)}>{r.title}</strong>
                   </div>
-                  <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>{r.snippet}</div>
+                  <div className="muted" style={{ fontSize: 12, marginTop: 3 }} lang={chineseVariant(r.snippet)}>{r.snippet}</div>
                 </a>
               );
             })}
@@ -193,7 +194,7 @@ function BrowsePanel() {
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {(articles.data ?? []).map((a) => (
                 <button key={a.id} className="kb-result" style={{ textAlign: "left" }} onClick={() => setOpenArticle(a)}>
-                  <strong>{a.title}</strong>
+                  <strong lang={chineseVariant(a.title)}>{a.title}</strong>
                   {a.category && <span className="badge dc" style={{ marginLeft: 8, fontSize: 11 }}>{a.category}</span>}
                   {!a.is_active && <span className="badge cancelled" style={{ marginLeft: 8, fontSize: 11 }}>停用</span>}
                 </button>
@@ -219,11 +220,11 @@ function BrowsePanel() {
         <div className="modal-backdrop" onClick={() => setOpenArticle(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
             <div className="modal-head">
-              <strong style={{ fontSize: 15 }}>{openArticle.title}</strong>
+              <strong style={{ fontSize: 15 }} lang={chineseVariant(openArticle.title)}>{openArticle.title}</strong>
               <button className="ghost" style={{ padding: "3px 10px" }} onClick={() => setOpenArticle(null)}>✕</button>
             </div>
             <div className="modal-body detail">
-              <div className="training-remark" dangerouslySetInnerHTML={{ __html: openArticle.body }} />
+              <div className="training-remark" lang={chineseVariant(openArticle.body)} dangerouslySetInnerHTML={{ __html: openArticle.body }} />
             </div>
           </div>
         </div>
