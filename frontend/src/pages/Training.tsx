@@ -143,7 +143,7 @@ function FilePreview({ previewPath, name, type, onDownload }:
         ? <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
             {embed(url, type, name)}
           </div>
-        : <div className="muted" style={{ fontSize: 12 }}>…</div>)}
+        : <div className="preview-loading"><span className="spin" aria-hidden />{t("common.loading")}</div>)}
     </div>
   );
 }

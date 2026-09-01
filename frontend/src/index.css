@@ -204,6 +204,18 @@ button.ghost:hover { background: #f9fafb; }
 .muted { color: var(--muted); }
 .spinner { color: var(--muted); font-size: 14px; padding: 20px 0; }
 
+/* Inline loading sign for a file preview that's still fetching. */
+@keyframes spin { to { transform: rotate(360deg); } }
+.preview-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 140px;
+  border: 1px solid var(--line); border-radius: 8px; background: #f3f4f6;
+  color: var(--muted); font-size: 13px;
+}
+.preview-loading .spin {
+  width: 18px; height: 18px; border: 2px solid var(--line); border-top-color: var(--brand, #2563eb);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+
 /* Login */
 .login-wrap { display: flex; align-items: center; justify-content: center; min-height: 100vh; width: 100%; }
 .login-wrap { padding: 16px; }
