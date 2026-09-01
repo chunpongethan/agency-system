@@ -422,6 +422,7 @@ export interface MenuSetting {
   key: string;
   enabled: boolean;
   sort_order: number;
+  label?: string | null;
 }
 
 export interface KbUsageBucket {

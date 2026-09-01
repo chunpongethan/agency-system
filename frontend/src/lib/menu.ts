@@ -39,16 +39,20 @@ export const MENU: MenuItem[] = [
   { key: "adminMenu", to: "/admin/menu", labelKey: "nav.menuAdmin", roles: ["admin"], group: "admin", locked: true },
 ];
 
+export type ResolvedMenuItem = MenuItem & { labelOverride?: string };
+
 // Merge the registry with saved settings for a given role → the ordered, visible
-// items per group. Falls back to registry defaults when a key has no setting.
+// items per group, each carrying any admin label override. Falls back to registry
+// defaults when a key has no setting.
 export function buildMenu(role: Role | undefined, settings: MenuSetting[] | undefined) {
   const byKey = new Map((settings ?? []).map((s) => [s.key, s]));
   const idx = (m: MenuItem) => MENU.indexOf(m);
   const order = (m: MenuItem) => byKey.get(m.key)?.sort_order ?? idx(m);
-  const visible = MENU
+  const visible: ResolvedMenuItem[] = MENU
     .filter((m) => !!role && m.roles.includes(role))
     .filter((m) => m.locked || (byKey.get(m.key)?.enabled ?? true))
-    .sort((a, b) => order(a) - order(b) || idx(a) - idx(b));
+    .sort((a, b) => order(a) - order(b) || idx(a) - idx(b))
+    .map((m) => ({ ...m, labelOverride: byKey.get(m.key)?.label || undefined }));
   return {
     main: visible.filter((m) => m.group === "main"),
     admin: visible.filter((m) => m.group === "admin"),

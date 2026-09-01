@@ -43,7 +43,7 @@ export const translations: Record<string, Translation> = {
   "llm.priceIn": { "zh-Hant": "輸入", en: "Input" },
   "llm.priceOut": { "zh-Hant": "輸出", en: "Output" },
   "menu.title": { "zh-Hant": "左側選單設定", en: "Left menu control" },
-  "menu.subtitle": { "zh-Hant": "控制側邊選單各項目的顯示與排序（套用至所有使用者）。", en: "Show/hide and reorder the sidebar items (applies to everyone)." },
+  "menu.subtitle": { "zh-Hant": "控制側邊選單各項目的名稱、顯示與排序（套用至所有使用者）。", en: "Rename, show/hide, and reorder the sidebar items (applies to everyone)." },
   "menu.hint": { "zh-Hant": "隱藏只影響側邊選單；使用者仍可透過網址存取該頁面。各角色本身無權限的項目不會顯示。", en: "Hiding only affects the sidebar — pages remain reachable by URL. Items a role can't access are never shown." },
   "menu.mainGroup": { "zh-Hant": "主選單", en: "Main menu" },
   "menu.adminGroup": { "zh-Hant": "管理選單", en: "Admin menu" },

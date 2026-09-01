@@ -54,14 +54,16 @@ def test_admin_sets_and_reads(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     cfg = [
         {"key": "reports", "enabled": True, "sort_order": 0},
-        {"key": "leads", "enabled": False, "sort_order": 1},
-        {"key": "clients", "enabled": True, "sort_order": 2},
+        {"key": "leads", "enabled": False, "sort_order": 1, "label": "客戶名單"},
+        {"key": "clients", "enabled": True, "sort_order": 2, "label": ""},
     ]
     r = client.put("/menu-settings", headers=adm, json=cfg)
     assert r.status_code == 200
     got = client.get("/menu-settings", headers=ax).json()
     assert [g["key"] for g in got] == ["reports", "leads", "clients"]      # ordered by sort_order
-    assert next(g for g in got if g["key"] == "leads")["enabled"] is False
+    leads = next(g for g in got if g["key"] == "leads")
+    assert leads["enabled"] is False and leads["label"] == "客戶名單"       # label override round-trips
+    assert next(g for g in got if g["key"] == "clients")["label"] is None  # blank label -> null
 
 
 def test_put_replaces_and_drops_missing(client):

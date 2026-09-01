@@ -38,13 +38,13 @@ export default function Layout() {
         <div className="brand">{t("app.brand")}</div>
         <nav onClick={() => setNavOpen(false)}>
           {main.map((m) => (
-            <NavLink key={m.key} to={m.to} end={m.end}>{t(m.labelKey)}</NavLink>
+            <NavLink key={m.key} to={m.to} end={m.end}>{m.labelOverride || t(m.labelKey)}</NavLink>
           ))}
           {admin.length > 0 && (
             <>
               <div className="nav-section">{t("nav.admin")}</div>
               {admin.map((m) => (
-                <NavLink key={m.key} to={m.to} end={m.end}>{t(m.labelKey)}</NavLink>
+                <NavLink key={m.key} to={m.to} end={m.end}>{m.labelOverride || t(m.labelKey)}</NavLink>
               ))}
             </>
           )}

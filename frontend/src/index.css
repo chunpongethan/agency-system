@@ -350,11 +350,20 @@ button.ghost:hover { background: #f9fafb; }
 .menu-row { display: flex; align-items: center; gap: 12px; padding: 7px 10px; border: 1px solid var(--line);
   border-radius: 8px; background: var(--panel); }
 .menu-row.off { opacity: .55; background: var(--bg); }
-.menu-reorder { display: flex; flex-direction: column; gap: 2px; }
+.menu-reorder { display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; }
 .menu-reorder .ghost { padding: 0 6px; line-height: 1.2; font-size: 12px; }
-.menu-label { font-weight: 600; min-width: 120px; }
-.menu-path { font-size: 12px; }
-.menu-toggle { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13px; white-space: nowrap; }
+.menu-name { flex: 1 1 160px; min-width: 120px; font-weight: 600; }
+.menu-path { font-size: 12px; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.menu-toggle { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 400; font-size: 13px; white-space: nowrap; flex: 0 0 auto; }
+
+/* H5: stack the row so the name input, path, and toggle don't overflow. */
+@media (max-width: 768px) {
+  .menu-row { flex-wrap: wrap; gap: 8px; }
+  .menu-name { flex: 1 1 100%; order: 1; }
+  .menu-reorder { flex-direction: row; order: 2; }
+  .menu-toggle { order: 2; margin-left: auto; }
+  .menu-path { order: 3; flex: 1 1 100%; }
+}
 
 /* A row deep-linked into (e.g. from a knowledge-base result) — briefly emphasised. */
 .product-table tr.row-focus > * { background: #fff8e1; }

@@ -521,6 +521,8 @@ class MenuSetting(Base):
     key: Mapped[str] = mapped_column(String(60), unique=True, index=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    # Optional display-name override; NULL/empty = use the built-in translated label.
+    label: Mapped[str | None] = mapped_column(String(80), nullable=True)
 
 
 class KbDocument(Base):

@@ -532,6 +532,7 @@ class MenuSettingIn(BaseModel):
     key: str
     enabled: bool = True
     sort_order: int = 0
+    label: str | None = None
 
 
 class MenuSettingOut(BaseModel):
@@ -539,3 +540,4 @@ class MenuSettingOut(BaseModel):
     key: str
     enabled: bool
     sort_order: int
+    label: str | None = None

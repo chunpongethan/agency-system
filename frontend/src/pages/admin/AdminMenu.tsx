@@ -5,7 +5,7 @@ import { useI18n } from "../../i18n/LanguageContext";
 import { MENU, type MenuItem } from "../../lib/menu";
 import type { MenuSetting } from "../../api/types";
 
-type Row = { key: string; enabled: boolean };
+type Row = { key: string; enabled: boolean; label: string };
 type Groups = { main: Row[]; admin: Row[] };
 
 function initialGroups(settings: MenuSetting[]): Groups {
@@ -13,7 +13,11 @@ function initialGroups(settings: MenuSetting[]): Groups {
   const idx = (m: MenuItem) => MENU.indexOf(m);
   const ord = (m: MenuItem) => byKey.get(m.key)?.sort_order ?? idx(m);
   const all = [...MENU].sort((a, b) => ord(a) - ord(b) || idx(a) - idx(b));
-  const toRow = (m: MenuItem): Row => ({ key: m.key, enabled: m.locked ? true : (byKey.get(m.key)?.enabled ?? true) });
+  const toRow = (m: MenuItem): Row => ({
+    key: m.key,
+    enabled: m.locked ? true : (byKey.get(m.key)?.enabled ?? true),
+    label: byKey.get(m.key)?.label ?? "",
+  });
   return {
     main: all.filter((m) => m.group === "main").map(toRow),
     admin: all.filter((m) => m.group === "admin").map(toRow),
@@ -35,7 +39,7 @@ export default function AdminMenu() {
       const flat: MenuSetting[] = [];
       let order = 0;
       for (const g of [groups!.main, groups!.admin]) {
-        for (const r of g) flat.push({ key: r.key, enabled: r.enabled, sort_order: order++ });
+        for (const r of g) flat.push({ key: r.key, enabled: r.enabled, sort_order: order++, label: r.label.trim() || null });
       }
       return api.saveMenuSettings(flat);
     },
@@ -49,6 +53,13 @@ export default function AdminMenu() {
     setGroups((g) => {
       if (!g) return g;
       const rows = g[group].map((r, j) => (j === i ? { ...r, enabled: !r.enabled } : r));
+      return { ...g, [group]: rows };
+    });
+  }
+  function setLabel(group: "main" | "admin", i: number, value: string) {
+    setGroups((g) => {
+      if (!g) return g;
+      const rows = g[group].map((r, j) => (j === i ? { ...r, label: value } : r));
       return { ...g, [group]: rows };
     });
   }
@@ -76,7 +87,8 @@ export default function AdminMenu() {
                 <button className="ghost" disabled={i === 0} onClick={() => move(group, i, -1)} title="↑">↑</button>
                 <button className="ghost" disabled={i === groups[group].length - 1} onClick={() => move(group, i, 1)} title="↓">↓</button>
               </div>
-              <span className="menu-label">{t(item.labelKey)}</span>
+              <input className="menu-name" value={r.label} placeholder={t(item.labelKey)}
+                onChange={(e) => setLabel(group, i, e.target.value)} />
               <code className="muted menu-path">{item.to}</code>
               <label className="menu-toggle">
                 <input type="checkbox" style={{ width: "auto" }} checked={r.enabled}

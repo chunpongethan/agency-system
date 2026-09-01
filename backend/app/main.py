@@ -102,6 +102,8 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE training_files ADD COLUMN thumbnail_content_type VARCHAR(120)")
     if tf_cols and "extracted_text" not in tf_cols:
         ddl.append("ALTER TABLE training_files ADD COLUMN extracted_text TEXT")
+    if "label" not in cols("menu_settings") and "menu_settings" in insp.get_table_names():
+        ddl.append("ALTER TABLE menu_settings ADD COLUMN label VARCHAR(80)")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -2242,6 +2244,7 @@ def set_menu_settings(payload: list[schemas.MenuSettingIn],
             db.add(row)
         row.enabled = item.enabled
         row.sort_order = item.sort_order
+        row.label = (item.label or "").strip() or None
     for key, row in existing.items():
         if key not in seen:
             db.delete(row)                       # drop keys no longer sent
