@@ -45,6 +45,14 @@ export default function AdminTraining() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
   const onErr = (e: unknown) => setError(errorText(e, t) || t("training.saveFailed"));
 
+  // Backfill: transcode any non-H.264 videos so they play on mobile.
+  const [transcodeMsg, setTranscodeMsg] = useState<string | null>(null);
+  const transcode = useMutation({
+    mutationFn: () => api.transcodePendingVideos(),
+    onSuccess: (r) => setTranscodeMsg(t("training.transcodeScheduled", { n: r.scheduled })),
+    onError: onErr,
+  });
+
   // --- Training types (培訓類別) management ---------------------------------
   const invalidateCats = () => qc.invalidateQueries({ queryKey: ["trainingCategories"] });
   const [catEdits, setCatEdits] = useState<Record<number, string>>({});
@@ -132,10 +140,18 @@ export default function AdminTraining() {
           <h1 className="page-title">{t("training.adminTitle")}</h1>
           <p className="page-sub">{t("training.adminSubtitle")}</p>
         </div>
-        <button className="primary" onClick={() => (showForm ? closeForm() : openCreate())}>
-          {showForm ? t("common.cancel") : t("training.new")}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="ghost" disabled={transcode.isPending}
+            onClick={() => { setTranscodeMsg(null); transcode.mutate(); }}
+            title={t("training.transcodeHint")}>
+            {transcode.isPending ? t("common.loading") : t("training.transcodeVideos")}
+          </button>
+          <button className="primary" onClick={() => (showForm ? closeForm() : openCreate())}>
+            {showForm ? t("common.cancel") : t("training.new")}
+          </button>
+        </div>
       </div>
+      {transcodeMsg && <div className="card success" style={{ padding: "10px 14px" }}>{transcodeMsg}</div>}
 
       {showForm && (
         <form className="card" onSubmit={onSubmit}>

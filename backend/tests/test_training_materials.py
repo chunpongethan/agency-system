@@ -44,6 +44,7 @@ def client():
     main.app.dependency_overrides[main.get_db] = override_get_db
     tc = TestClient(main.app)
     tc._ids = ids
+    tc._Session = Session
     yield tc
     main.app.dependency_overrides.clear()
 
@@ -137,6 +138,43 @@ def test_video_range_streaming_and_token_auth(client):
     tok = ax["Authorization"].split()[1]
     assert client.get(f"{path}?token={tok}").status_code == 200
     assert client.get(path).status_code == 401               # no creds at all
+
+
+def test_video_transcode_scheduling_and_serving(client, monkeypatch):
+    from app import main
+    from app.models.models import TrainingFile
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+
+    scheduled = []
+    monkeypatch.setattr(main, "_maybe_transcode_video", lambda fid: scheduled.append(fid))
+
+    data = b"\x00\x00\x00\x18ftypisom" + b"H" * 400
+    fid = _upload(client, adm, mid, ("v.mp4", data, "video/mp4")).json()["files"][-1]["id"]
+    assert fid in scheduled                                   # upload scheduled a transcode
+
+    # simulate a finished transcode by storing an H.264 preview stream
+    with client._Session() as db:
+        row = db.get(TrainingFile, fid)
+        row.preview_data = b"H264-TRANSCODED-BYTES"
+        row.preview_content_type = "video/mp4"
+        db.commit()
+
+    inline = client.get(f"/training-materials/{mid}/files/{fid}", headers=ax)
+    assert inline.status_code == 200 and inline.content == b"H264-TRANSCODED-BYTES"   # serves H.264
+    assert inline.headers["content-type"].startswith("video/")
+    orig = client.get(f"/training-materials/{mid}/files/{fid}?download=1", headers=ax)
+    assert orig.content == data                               # download still the original
+
+    # transcode-pending skips a video that already has an H.264 preview
+    scheduled.clear()
+    r = client.post("/training-materials/transcode-pending", headers=adm)
+    assert r.status_code == 200 and r.json()["scheduled"] == 0 and fid not in scheduled
+
+
+def test_transcode_pending_admin_only(client):
+    assert client.post("/training-materials/transcode-pending",
+                       headers=auth(client, "AX")).status_code == 403
 
 
 def test_admin_creates_and_agent_reads(client):

@@ -1640,6 +1640,86 @@ def _office_to_pdf(data: bytes, filename: str) -> bytes | None:
     return None
 
 
+# --- Video transcoding (to H.264 so it plays on mobile browsers) --------------
+_VIDEO_MAX_TRANSCODE_MB = int(os.getenv("VIDEO_MAX_TRANSCODE_MB", "300"))
+
+
+def _video_codec(data: bytes) -> str | None:
+    """The first video stream's codec name via ffprobe (e.g. 'h264', 'hevc'),
+    or None if ffprobe is absent / it fails."""
+    import shutil
+    exe = shutil.which("ffprobe")
+    if not exe:
+        return None
+    import os, tempfile, subprocess
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "in")
+        with open(src, "wb") as fh:
+            fh.write(data)
+        try:
+            out = subprocess.run(
+                [exe, "-v", "error", "-select_streams", "v:0",
+                 "-show_entries", "stream=codec_name", "-of", "default=nk=1:nw=1", src],
+                capture_output=True, timeout=60, check=True)
+            return (out.stdout.decode(errors="replace").strip().lower() or None)
+        except Exception:
+            return None
+
+
+def _video_to_h264(data: bytes) -> bytes | None:
+    """Transcode a video to a web-friendly H.264/AAC MP4 (faststart) via ffmpeg.
+    Best-effort: None if ffmpeg is absent or the conversion fails."""
+    import shutil
+    exe = shutil.which("ffmpeg")
+    if not exe:
+        return None
+    import os, tempfile, subprocess
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "in")
+        out = os.path.join(tmp, "out.mp4")
+        with open(src, "wb") as fh:
+            fh.write(data)
+        try:
+            subprocess.run(
+                [exe, "-y", "-i", src,
+                 "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p",
+                 "-preset", "veryfast", "-crf", "23",
+                 "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out],
+                capture_output=True, timeout=1800, check=True)
+            if os.path.exists(out):
+                with open(out, "rb") as fh:
+                    return fh.read()
+        except Exception:
+            return None
+    return None
+
+
+def _maybe_transcode_video(file_id: int) -> None:
+    """Background task: if a training file is a non-H.264 video, transcode it to
+    H.264 and store it as the inline-preview stream (preview_data). The original
+    is kept for download. Best-effort — on any failure the original is left as-is."""
+    db = SessionLocal()
+    try:
+        row = db.get(TrainingFile, file_id)
+        if row is None or not (row.content_type or "").lower().startswith("video/"):
+            return
+        if row.preview_data and (row.preview_content_type or "").startswith("video/"):
+            return                                              # already transcoded
+        if row.file_size and row.file_size > _VIDEO_MAX_TRANSCODE_MB * 1024 * 1024:
+            return                                              # too large — skip
+        if _video_codec(row.data) == "h264":
+            return                                              # already web-friendly
+        h264 = _video_to_h264(row.data)
+        if h264:
+            row.preview_data = h264
+            row.preview_content_type = "video/mp4"
+            db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
 # --- Thumbnail generation (small JPEG for the material list) ------------------
 _THUMB_MAX = 512  # px on the long edge
 
@@ -1840,7 +1920,8 @@ def delete_training_material(material_id: int, db: Session = Depends(get_db),
 
 
 @app.post("/training-materials/{material_id}/files", response_model=schemas.TrainingMaterialOut)
-async def upload_training_files(material_id: int, files: list[UploadFile] = File(...),
+async def upload_training_files(material_id: int, background: BackgroundTasks,
+                                files: list[UploadFile] = File(...),
                                 db: Session = Depends(get_db),
                                 current: Agent = Depends(require_admin)):
     """Append one or more files to a material (multi-file upload)."""
@@ -1848,6 +1929,7 @@ async def upload_training_files(material_id: int, files: list[UploadFile] = File
     if m is None:
         raise HTTPException(404, "training material not found")
     added = []
+    created: list[TrainingFile] = []
     for file in files:
         data = await file.read()
         if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
@@ -1872,14 +1954,36 @@ async def upload_training_files(material_id: int, files: list[UploadFile] = File
             tf.thumbnail_content_type = "image/jpeg"
         db.add(tf)
         added.append(file.filename or "file")
+        created.append(tf)
     if not added:
         raise err(400, "empty_file", "no non-empty file uploaded")
     m.updated_at = now_utc()
     db.flush()
     audit.record(db, current.id, "update", "training_material", m.id,
                  after={"files_added": added})
-    db.commit(); db.refresh(m)
+    db.commit()
+    # Transcode non-H.264 videos to H.264 in the background so they play on mobile.
+    for tf in created:
+        if (tf.content_type or "").lower().startswith("video/"):
+            background.add_task(_maybe_transcode_video, tf.id)
+    db.refresh(m)
     return _training_out(db, m)
+
+
+@app.post("/training-materials/transcode-pending")
+def transcode_pending_videos(background: BackgroundTasks, db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    """Schedule background H.264 transcoding for video files that don't yet have a
+    web-friendly (H.264) preview — backfills videos uploaded before auto-transcode
+    so they play on mobile. Returns how many were scheduled."""
+    rows = db.execute(select(TrainingFile.id, TrainingFile.content_type,
+                             TrainingFile.preview_content_type)).all()
+    n = 0
+    for fid, ct, pct in rows:
+        if (ct or "").lower().startswith("video/") and not (pct or "").startswith("video/"):
+            background.add_task(_maybe_transcode_video, fid)
+            n += 1
+    return {"scheduled": n}
 
 
 @app.get("/training-materials/{material_id}/files/{file_id}")
@@ -1898,11 +2002,15 @@ def get_training_file(material_id: int, file_id: int, request: Request, download
     ctype = row.content_type or "application/octet-stream"
     name = (row.file_name or "file").replace('"', "")
     content, media = row.data, ctype
-    if not download and ctype.lower() in _PREVIEW_TYPES:
+    pv_ct = (row.preview_content_type or "")
+    if not download and row.preview_data is not None and pv_ct.startswith("video/"):
+        inline = True                                    # serve the transcoded H.264 (mobile-friendly)
+        content, media = row.preview_data, pv_ct
+    elif not download and ctype.lower() in _PREVIEW_TYPES:
         inline = True                                    # natively viewable
     elif not download and row.preview_data is not None:
-        inline = True                                    # serve the rendered preview
-        content, media = row.preview_data, row.preview_content_type or "application/pdf"
+        inline = True                                    # serve the rendered preview (Office → PDF)
+        content, media = row.preview_data, pv_ct or "application/pdf"
         name = os.path.splitext(name)[0] + ".pdf"
     else:
         inline = False                                   # download the original
