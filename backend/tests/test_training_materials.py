@@ -177,6 +177,17 @@ def test_transcode_pending_admin_only(client):
                        headers=auth(client, "AX")).status_code == 403
 
 
+def test_simplified_input_converted_to_traditional(client):
+    adm = auth(client, "ADM")
+    r = mk_material(client, adm, title="香港分红险", category="产品知识",
+                    description="<p>产品优势</p>")
+    assert r.status_code == 200, r.text
+    m = r.json()
+    assert m["title"] == "香港分紅險"
+    assert m["category"] == "產品知識"
+    assert "產品優勢" in m["description"] and "产品优势" not in m["description"]
+
+
 def test_reorder_materials(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     ids = [mk_material(client, adm, title=f"M{i}").json()["id"] for i in range(3)]

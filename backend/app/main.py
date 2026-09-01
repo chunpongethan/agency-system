@@ -37,6 +37,7 @@ from app.services import (
     periods, payouts, exports, audit, mailer,
 )
 from app.services.sanitize import sanitize_html
+from app.services.zh_convert import to_traditional, convert_in
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
 # Base URL of the web app, used to build password-reset links in emails.
@@ -531,6 +532,7 @@ def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
     ).scalars().first():
         raise err(409, "email_in_use", "email already in use")
     data = payload.model_dump(exclude={"password"})
+    convert_in(data, "name")
     agent = Agent(**data, company=company)
     if payload.password:
         agent.password_hash = hash_password(payload.password)
@@ -589,6 +591,7 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
     new_password = data.pop("password", None)
     if new_password:
         agent.password_hash = hash_password(new_password)
+    convert_in(data, "name")
     for k, v in data.items():
         setattr(agent, k, v)
     db.flush()
@@ -771,6 +774,7 @@ def create_product(payload: schemas.ProductIn, db: Session = Depends(get_db),
                    current: Agent = Depends(require_admin)):
     data = payload.model_dump()
     _encode_year_commissions(data)
+    convert_in(data, "name")
     if data.get("type") == ProductType.INSURANCE.value:
         _sync_insurance_base_rate(data)
     product = Product(**data)
@@ -797,6 +801,7 @@ def update_product(product_id: int, payload: schemas.ProductUpdate,
         raise HTTPException(404, "product not found")
     data = payload.model_dump(exclude_unset=True)
     _encode_year_commissions(data)
+    convert_in(data, "name")
     # Route the per-company rate config out of the shared product update.
     rate_base = data.pop("base_commission_rate", None)
     rate_years = data.pop("year_commissions", None)
@@ -1875,8 +1880,8 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
                              current: Agent = Depends(require_admin)):
     next_order = (db.execute(select(func.max(TrainingMaterial.sort_order))).scalar() or 0) + 1
     m = TrainingMaterial(
-        title=payload.title, category=payload.category,
-        description=sanitize_html(payload.description), link_url=payload.link_url,
+        title=to_traditional(payload.title), category=to_traditional(payload.category),
+        description=to_traditional(sanitize_html(payload.description)), link_url=payload.link_url,
         companies=_clean_companies(payload.companies),
         inline_preview=payload.inline_preview, sort_order=next_order, created_by=current.id,
     )
@@ -1912,7 +1917,8 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     if "companies" in data:
         data["companies"] = _clean_companies(data["companies"])
     if "description" in data:
-        data["description"] = sanitize_html(data["description"])
+        data["description"] = to_traditional(sanitize_html(data["description"]))
+    convert_in(data, "title", "category")
     before = {"title": m.title, "category": m.category, "link_url": m.link_url}
     for k, v in data.items():
         setattr(m, k, v)
@@ -2118,7 +2124,7 @@ def list_training_categories(db: Session = Depends(get_db),
 def create_training_category(payload: schemas.TrainingCategoryIn,
                              db: Session = Depends(get_db),
                              current: Agent = Depends(require_admin)):
-    name = payload.name.strip()
+    name = to_traditional(payload.name.strip())
     if not name:
         raise err(422, "validation", "name is required")
     if db.execute(select(TrainingCategory).where(TrainingCategory.name == name)).first():
@@ -2139,7 +2145,7 @@ def update_training_category(category_id: int, payload: schemas.TrainingCategory
         raise HTTPException(404, "training category not found")
     data = payload.model_dump(exclude_unset=True)
     if "name" in data:
-        new_name = (data["name"] or "").strip()
+        new_name = to_traditional((data["name"] or "").strip())
         if not new_name:
             raise err(422, "validation", "name is required")
         clash = db.execute(
@@ -2205,8 +2211,8 @@ def list_kb_articles(current: Agent = Depends(get_current_agent),
 @app.post("/kb/articles", response_model=schemas.KbArticleOut)
 def create_kb_article(payload: schemas.KbArticleIn, db: Session = Depends(get_db),
                       current: Agent = Depends(require_admin)):
-    art = KbArticle(title=payload.title, category=payload.category,
-                    body=sanitize_html(payload.body) or "", tags=payload.tags or None,
+    art = KbArticle(title=to_traditional(payload.title), category=to_traditional(payload.category),
+                    body=to_traditional(sanitize_html(payload.body)) or "", tags=payload.tags or None,
                     is_active=payload.is_active)
     db.add(art); db.flush()
     audit.record(db, current.id, "create", "kb_article", art.id, after={"title": art.title})
@@ -2222,7 +2228,8 @@ def update_kb_article(article_id: int, payload: schemas.KbArticleUpdate,
         raise HTTPException(404, "article not found")
     data = payload.model_dump(exclude_unset=True)
     if "body" in data:
-        data["body"] = sanitize_html(data["body"]) or ""
+        data["body"] = to_traditional(sanitize_html(data["body"])) or ""
+    convert_in(data, "title", "category")
     for k, v in data.items():
         setattr(art, k, v)
     db.flush()
@@ -2259,7 +2266,7 @@ async def upload_kb_document(file: UploadFile = File(...), title: str = Form("")
         raise err(400, "empty_file", "empty file")
     ctype = file.content_type or "application/octet-stream"
     text = kb_retrieval.pdf_to_text(data) if ctype.lower() == "application/pdf" else ""
-    doc = KbDocument(title=(title or file.filename or "document").strip(),
+    doc = KbDocument(title=to_traditional((title or file.filename or "document").strip()),
                      file_name=file.filename or "file", content_type=ctype,
                      file_size=len(data), data=data, extracted_text=text)
     db.add(doc); db.flush()

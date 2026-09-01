@@ -68,6 +68,19 @@ def test_status_ai_disabled_without_key(client, monkeypatch):
 
 
 # --- articles ----------------------------------------------------------------
+def test_article_input_converted_to_traditional(client):
+    adm = auth(client, "ADM")
+    r = client.post("/kb/articles", headers=adm, json={
+        "title": "退保费用说明", "category": "产品知识", "body": "<p>红险的产品优势</p>"})
+    assert r.status_code == 200, r.text
+    a = r.json()
+    # HK Traditional (s2hk); assert Simplified-only chars are gone rather than a
+    # specific variant glyph (e.g. 说 → 説 in HK, not 說).
+    assert a["title"].startswith("退保費用") and not any(c in a["title"] for c in "费说")
+    assert a["category"] == "產品知識"
+    assert "紅險" in a["body"] and "產品優勢" in a["body"] and "产品优势" not in a["body"]
+
+
 def test_article_crud_admin_only(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     # agent cannot create
