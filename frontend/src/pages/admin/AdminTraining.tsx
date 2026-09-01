@@ -91,12 +91,31 @@ export default function AdminTraining() {
     onError: onErr,
   });
 
-  // Backfill: transcode any non-H.264 videos so they play on mobile.
-  const transcode = useMutation({
-    mutationFn: () => api.transcodePendingVideos(),
-    onSuccess: (r) => setTranscodeMsg(t("training.transcodeScheduled", { n: r.scheduled })),
-    onError: onErr,
-  });
+  // Backfill: transcode non-H.264 videos to H.264 so they play on mobile. Done
+  // per-file and synchronously (each result is saved before the next) so it's
+  // reliable and shows progress — unlike the old fire-and-forget background job.
+  const [videoBusy, setVideoBusy] = useState(false);
+  async function runTranscode() {
+    const pending: { mid: number; fid: number }[] = [];
+    for (const m of rows) for (const f of m.files ?? []) {
+      const ct = (f.content_type || "").toLowerCase();
+      const pct = (f.preview_content_type || "").toLowerCase();
+      if (ct.startsWith("video/") && !pct.startsWith("video/")) pending.push({ mid: m.id, fid: f.id });
+    }
+    if (pending.length === 0) { setTranscodeMsg(t("training.transcodeNone")); return; }
+    setVideoBusy(true);
+    let ok = 0, fail = 0;
+    for (let i = 0; i < pending.length; i++) {
+      setTranscodeMsg(t("training.transcodeProgress", { i: i + 1, n: pending.length }));
+      try {
+        const r = await api.transcodeVideoFile(pending[i].mid, pending[i].fid);
+        if (r.status === "failed") fail++; else ok++;
+      } catch { fail++; }
+    }
+    setVideoBusy(false);
+    qc.invalidateQueries({ queryKey: ["training"] });
+    setTranscodeMsg(t("training.transcodeResult", { ok, fail }));
+  }
 
   // --- Training types (培訓類別) management ---------------------------------
   const invalidateCats = () => qc.invalidateQueries({ queryKey: ["trainingCategories"] });
@@ -191,10 +210,10 @@ export default function AdminTraining() {
             title={t("training.convertExistingHint")}>
             {convertExisting.isPending ? t("common.loading") : t("training.convertExisting")}
           </button>
-          <button className="ghost" disabled={transcode.isPending}
-            onClick={() => { setTranscodeMsg(null); transcode.mutate(); }}
+          <button className="ghost" disabled={videoBusy}
+            onClick={() => { setTranscodeMsg(null); runTranscode(); }}
             title={t("training.transcodeHint")}>
-            {transcode.isPending ? t("common.loading") : t("training.transcodeVideos")}
+            {videoBusy ? t("common.loading") : t("training.transcodeVideos")}
           </button>
           <button className="primary" onClick={() => (showForm ? closeForm() : openCreate())}>
             {showForm ? t("common.cancel") : t("training.new")}

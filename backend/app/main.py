@@ -1701,26 +1701,39 @@ def _video_to_h264(data: bytes) -> bytes | None:
     return None
 
 
+def _transcode_video_now(db: Session, row: TrainingFile) -> str:
+    """Transcode one training file to H.264 (stored as the inline-preview stream)
+    if it's a non-H.264 video. Returns 'done' | 'skipped' | 'failed'. Runs
+    synchronously so the result is persisted before returning; the original is
+    kept for download and left intact on failure."""
+    import logging
+    ct = (row.content_type or "").lower()
+    if not ct.startswith("video/"):
+        return "skipped"
+    if row.preview_data and (row.preview_content_type or "").startswith("video/"):
+        return "done"                                          # already transcoded
+    if row.file_size and row.file_size > _VIDEO_MAX_TRANSCODE_MB * 1024 * 1024:
+        return "skipped"                                       # too large
+    if _video_codec(row.data) == "h264":
+        return "skipped"                                       # original already plays everywhere
+    h264 = _video_to_h264(row.data)
+    if not h264:
+        logging.getLogger("training").warning(
+            "video transcode failed for training file %s (%s)", row.id, row.file_name)
+        return "failed"
+    row.preview_data = h264
+    row.preview_content_type = "video/mp4"
+    db.commit()
+    return "done"
+
+
 def _maybe_transcode_video(file_id: int) -> None:
-    """Background task: if a training file is a non-H.264 video, transcode it to
-    H.264 and store it as the inline-preview stream (preview_data). The original
-    is kept for download. Best-effort — on any failure the original is left as-is."""
+    """Background wrapper for on-upload transcoding (best-effort)."""
     db = SessionLocal()
     try:
         row = db.get(TrainingFile, file_id)
-        if row is None or not (row.content_type or "").lower().startswith("video/"):
-            return
-        if row.preview_data and (row.preview_content_type or "").startswith("video/"):
-            return                                              # already transcoded
-        if row.file_size and row.file_size > _VIDEO_MAX_TRANSCODE_MB * 1024 * 1024:
-            return                                              # too large — skip
-        if _video_codec(row.data) == "h264":
-            return                                              # already web-friendly
-        h264 = _video_to_h264(row.data)
-        if h264:
-            row.preview_data = h264
-            row.preview_content_type = "video/mp4"
-            db.commit()
+        if row is not None:
+            _transcode_video_now(db, row)
     except Exception:
         db.rollback()
     finally:
@@ -2127,6 +2140,22 @@ def _ranged_response(request: Request, content: bytes, media: str, disposition: 
         return Response(chunk, status_code=206, media_type=media, headers={
             **base, "Content-Range": f"bytes {start}-{end}/{total}", "Content-Length": str(len(chunk))})
     return Response(content, media_type=media, headers={**base, "Content-Length": str(total)})
+
+
+@app.post("/training-materials/{material_id}/files/{file_id}/transcode")
+def transcode_training_video(material_id: int, file_id: int, db: Session = Depends(get_db),
+                             current: Agent = Depends(require_admin)):
+    """Synchronously transcode one video file to H.264 (admin). Reliable — the
+    result is committed before responding — so it isn't lost to a restart the way
+    a background task can be. Returns done | skipped | failed."""
+    m = db.get(TrainingMaterial, material_id)
+    if m is None:
+        raise HTTPException(404, "training material not found")
+    row = db.get(TrainingFile, file_id)
+    if row is None or row.material_id != material_id:
+        raise HTTPException(404, "file not found")
+    status = _transcode_video_now(db, row)
+    return {"file_id": file_id, "status": status}
 
 
 @app.get("/training-materials/{material_id}/files/{file_id}/thumb")

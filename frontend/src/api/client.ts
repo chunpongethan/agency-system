@@ -187,6 +187,9 @@ export const api = {
     `/training-materials/${id}/files/${fileId}/thumb`,
   transcodePendingVideos: () =>
     request<{ scheduled: number }>("/training-materials/transcode-pending", { method: "POST" }),
+  transcodeVideoFile: (id: number, fileId: number) =>
+    request<{ file_id: number; status: string }>(
+      `/training-materials/${id}/files/${fileId}/transcode`, { method: "POST" }),
   // Absolute URL with the JWT in a `token` query param, for <video>/<img> tags
   // that can't set an Authorization header. Enables iOS range streaming of video.
   mediaUrl: (path: string) =>
