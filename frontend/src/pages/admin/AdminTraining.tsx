@@ -248,7 +248,7 @@ export default function AdminTraining() {
       <div className="card">
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}
         {listError && <div className="error">{listError}</div>}
-        <table>
+        <table className="cards-on-mobile">
           <thead>
             <tr>
               <th>{t("training.thTitle")}</th>
@@ -262,17 +262,17 @@ export default function AdminTraining() {
           <tbody>
             {rows.map((m) => (
               <tr key={m.id}>
-                <td>{m.title}</td>
-                <td><span className="badge dc">{m.category}</span></td>
-                <td>
+                <td data-label={t("training.thTitle")}>{m.title}</td>
+                <td data-label={t("training.thCategory")}><span className="badge dc">{m.category}</span></td>
+                <td data-label={t("training.thCompanies")}>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {(m.companies ?? COMPANIES).map((ckey) => (
                       <span key={ckey} className="badge unit" style={{ fontSize: 11 }}>{companyLabel(ckey)}</span>
                     ))}
                   </div>
                 </td>
-                <td className="muted" style={{ whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</td>
-                <td>
+                <td className="muted" style={{ whiteSpace: "nowrap" }} data-label={t("training.thDate")}>{dateShort(m.created_at)}</td>
+                <td className="tr-attachments" data-label={t("training.thAttachments")}>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {m.link_url && (
                       <a className="badge role" href={m.link_url} target="_blank" rel="noopener noreferrer"
@@ -287,7 +287,7 @@ export default function AdminTraining() {
                     {!m.link_url && m.files.length === 0 && <span className="muted">—</span>}
                   </div>
                 </td>
-                <td className="num" style={{ whiteSpace: "nowrap" }}>
+                <td className="num tr-actions" style={{ whiteSpace: "nowrap" }}>
                   <button className="ghost" onClick={() => openEdit(m)}>{t("common.edit")}</button>{" "}
                   <button className="ghost" style={{ color: "var(--bad)" }}
                     onClick={() => { if (window.confirm(t("training.confirmDelete", { title: m.title }))) remove.mutate(m.id); }}>

@@ -165,6 +165,12 @@ button.ghost:hover { background: #f9fafb; }
     word-break: break-word;
   }
   .cards-on-mobile td.pcat-actions { justify-content: flex-end; }
+  /* Training-materials maintenance: actions right-aligned; attachments stack
+     full-width (label above the file buttons) so long filenames stay readable. */
+  .cards-on-mobile td.tr-actions { justify-content: flex-end; gap: 8px; }
+  .cards-on-mobile td.tr-attachments {
+    flex-direction: column; align-items: flex-start; text-align: left; gap: 6px;
+  }
   /* Stack the label over the year-rate chips so a long list wraps across the
      full card width instead of being crammed against the right edge. */
   .cards-on-mobile td.pcat-yearrates {
