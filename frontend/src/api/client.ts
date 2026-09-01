@@ -180,6 +180,10 @@ export const api = {
     `/training-materials/${id}/files/${fileId}${download ? "?download=1" : ""}`,
   trainingThumbPath: (id: number, fileId: number) =>
     `/training-materials/${id}/files/${fileId}/thumb`,
+  // Absolute URL with the JWT in a `token` query param, for <video>/<img> tags
+  // that can't set an Authorization header. Enables iOS range streaming of video.
+  mediaUrl: (path: string) =>
+    `${BASE}${path}${path.includes("?") ? "&" : "?"}token=${encodeURIComponent(getToken() || "")}`,
   // AI Knowledge base (知識庫)
   kbStatus: () => request<KbStatus>("/kb/status"),
   listKbArticles: () => request<KbArticle[]>("/kb/articles"),

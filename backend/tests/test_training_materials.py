@@ -116,6 +116,29 @@ def test_thumbnail_scoped_by_company(client):
     assert client.get(f"/training-materials/{mid}/files/{fid}/thumb", headers=cpm).status_code == 404
 
 
+def test_video_range_streaming_and_token_auth(client):
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
+    data = b"\x00\x00\x00\x18ftypmp42" + b"A" * 500
+    fid = _upload(client, adm, mid, ("v.mp4", data, "video/mp4")).json()["files"][0]["id"]
+    path = f"/training-materials/{mid}/files/{fid}"
+
+    full = client.get(path, headers=ax)
+    assert full.status_code == 200
+    assert full.headers.get("accept-ranges") == "bytes"      # seekable
+    assert len(full.content) == len(data)
+
+    r = client.get(path, headers={**ax, "Range": "bytes=0-99"})
+    assert r.status_code == 206                               # partial content
+    assert r.headers["content-range"] == f"bytes 0-99/{len(data)}"
+    assert len(r.content) == 100
+
+    # <video> can't send headers → JWT in a query param must authenticate
+    tok = ax["Authorization"].split()[1]
+    assert client.get(f"{path}?token={tok}").status_code == 200
+    assert client.get(path).status_code == 401               # no creds at all
+
+
 def test_admin_creates_and_agent_reads(client):
     adm, ax = auth(client, "ADM"), auth(client, "AX")
     r = mk_material(client, adm, link_url="https://example.com/guide.pdf")

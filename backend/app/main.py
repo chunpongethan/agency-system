@@ -11,7 +11,7 @@ import os
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -386,6 +386,31 @@ def get_current_agent(
 ) -> Agent:
     try:
         payload = decode_token(credentials.credentials)
+    except jwt.PyJWTError:
+        raise HTTPException(401, "invalid or expired token")
+    agent_id = payload.get("sub")
+    agent = db.get(Agent, int(agent_id)) if agent_id is not None else None
+    if agent is None or not agent.is_active:
+        raise HTTPException(401, "unknown or inactive principal")
+    return agent
+
+
+def get_agent_for_media(request: Request, token: str | None = None,
+                        db: Session = Depends(get_db)) -> Agent:
+    """Auth for media (video/file) GETs: a <video>/<img> tag can't send an
+    Authorization header, so accept the JWT either in the header or a `token`
+    query param (same short-lived token, HTTPS-only). Needed for iOS range
+    streaming of videos, which won't play from an in-memory blob URL."""
+    raw = None
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        raw = auth[7:].strip()
+    elif token:
+        raw = token
+    if not raw:
+        raise HTTPException(401, "missing credentials")
+    try:
+        payload = decode_token(raw)
     except jwt.PyJWTError:
         raise HTTPException(401, "invalid or expired token")
     agent_id = payload.get("sub")
@@ -1858,11 +1883,12 @@ async def upload_training_files(material_id: int, files: list[UploadFile] = File
 
 
 @app.get("/training-materials/{material_id}/files/{file_id}")
-def get_training_file(material_id: int, file_id: int, download: bool = False,
+def get_training_file(material_id: int, file_id: int, request: Request, download: bool = False,
                       db: Session = Depends(get_db),
-                      current: Agent = Depends(get_current_agent)):
+                      current: Agent = Depends(get_agent_for_media)):
     """Serve one file. Safe types render inline for on-screen preview (add
-    ?download=1 to force a download); other types always download."""
+    ?download=1 to force a download); other types always download. Supports HTTP
+    Range so videos stream/seek (and play on iOS, which won't play from a blob)."""
     m = db.get(TrainingMaterial, material_id)
     if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
         raise HTTPException(404, "file not found")
@@ -1884,10 +1910,32 @@ def get_training_file(material_id: int, file_id: int, download: bool = False,
     ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "file"
     disposition = (f"{'inline' if inline else 'attachment'}; "
                    f"filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name)}")
-    return Response(
-        content=content, media_type=media,
-        headers={"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff"},
-    )
+    return _ranged_response(request, content, media, disposition)
+
+
+def _ranged_response(request: Request, content: bytes, media: str, disposition: str) -> Response:
+    """Serve `content`, honouring a single-range HTTP Range header with a 206.
+    Always advertises Accept-Ranges so clients (iOS video) know they can seek."""
+    total = len(content)
+    base = {"Content-Disposition": disposition, "X-Content-Type-Options": "nosniff",
+            "Accept-Ranges": "bytes"}
+    rng = request.headers.get("range", "")
+    if rng.startswith("bytes="):
+        spec = rng[6:].split(",")[0].strip()
+        start_s, _, end_s = spec.partition("-")
+        try:
+            start = int(start_s) if start_s else 0
+            end = int(end_s) if end_s else total - 1
+        except ValueError:
+            start, end = 0, total - 1
+        end = min(end, total - 1)
+        if start > end or start >= total:
+            return Response(status_code=416, headers={"Content-Range": f"bytes */{total}",
+                                                       "Accept-Ranges": "bytes"})
+        chunk = content[start:end + 1]
+        return Response(chunk, status_code=206, media_type=media, headers={
+            **base, "Content-Range": f"bytes {start}-{end}/{total}", "Content-Length": str(len(chunk))})
+    return Response(content, media_type=media, headers={**base, "Content-Length": str(total)})
 
 
 @app.get("/training-materials/{material_id}/files/{file_id}/thumb")

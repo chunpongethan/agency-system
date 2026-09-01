@@ -109,7 +109,7 @@ function embed(url: string, type: string, name: string) {
   if (t.startsWith("image/"))
     return <img src={url} alt={name} style={{ maxWidth: "100%", maxHeight: 480, display: "block", margin: "0 auto" }} />;
   if (t.startsWith("video/"))
-    return <video src={url} controls autoPlay preload="metadata"
+    return <video src={url} controls playsInline preload="metadata"
       style={{ width: "100%", maxHeight: 520, background: "#000", display: "block" }} />;
   return <iframe title={name} src={url} style={{ width: "100%", height: 600, border: "none", display: "block", background: "#fff" }} />;
 }
@@ -119,16 +119,20 @@ function embed(url: string, type: string, name: string) {
 function FilePreview({ previewPath, name, type, onDownload }:
   { previewPath: string; name: string; type: string; onDownload: () => void }) {
   const { t } = useI18n();
-  const [url, setUrl] = useState<string | null>(null);
+  // Video streams directly from a ranged URL (no blob) so it plays on iOS and can
+  // seek; other types are fetched as an auth'd blob for inline preview.
+  const isVideo = (type || "").toLowerCase().startsWith("video/");
+  const [url, setUrl] = useState<string | null>(isVideo ? api.mediaUrl(previewPath) : null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
+    if (isVideo) { setUrl(api.mediaUrl(previewPath)); return; }
     let cancelled = false;
     let objectUrl: string | null = null;
     fetchBlobUrl(previewPath)
       .then((u) => { if (cancelled) { URL.revokeObjectURL(u); return; } objectUrl = u; setUrl(u); })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [previewPath]);
+  }, [previewPath, isVideo]);
   return (
     <div style={{ marginTop: 12 }}>
       <div className="muted" style={{ fontSize: 12, marginBottom: 4, display: "flex",
