@@ -174,6 +174,9 @@ export const api = {
     request<{ deleted: number }>(`/training-materials/${id}`, { method: "DELETE" }),
   reorderTraining: (ids: number[]) =>
     request<{ ordered: number }>("/training-materials/order", { method: "PUT", body: JSON.stringify(ids) }),
+  convertExistingToTraditional: () =>
+    request<{ changed: Record<string, number>; total: number; skipped: string[] }>(
+      "/admin/convert-existing", { method: "POST" }),
   uploadTrainingFiles: (id: number, files: File[]) =>
     uploadFiles<TrainingMaterial>(`/training-materials/${id}/files`, files),
   deleteTrainingFile: (id: number, fileId: number) =>

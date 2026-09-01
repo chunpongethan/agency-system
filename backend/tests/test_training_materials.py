@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-from app.models.models import Base, Agent, Role
+from app.models.models import Base, Agent, Role, TrainingMaterial
 from app.security import hash_password
 
 
@@ -186,6 +186,28 @@ def test_simplified_input_converted_to_traditional(client):
     assert m["title"] == "香港分紅險"
     assert m["category"] == "產品知識"
     assert "產品優勢" in m["description"] and "产品优势" not in m["description"]
+
+
+def test_convert_existing_backfill(client):
+    from app.models.models import Product, ProductType
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    with client._Session() as db:
+        db.add(TrainingMaterial(title="产品优势", category="产品知识", description="<p>网络覆盖</p>"))
+        db.add(Product(code="INS-X-1", name="环宇盈活", type=list(ProductType)[0]))
+        db.commit()
+
+    assert client.post("/admin/convert-existing", headers=ax).status_code == 403  # admin only
+    r = client.post("/admin/convert-existing", headers=adm)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["changed"]["training_materials"] >= 1 and body["changed"]["products"] >= 1
+
+    m = next(x for x in client.get("/training-materials", headers=adm).json() if x["title"] == "產品優勢")
+    assert m["category"] == "產品知識" and "網絡覆蓋" in m["description"]
+    p = next(x for x in client.get("/products", headers=ax).json() if x["code"] == "INS-X-1")
+    assert p["name"] == "環宇盈活"
+    # idempotent: a second run changes nothing
+    assert client.post("/admin/convert-existing", headers=adm).json()["total"] == 0
 
 
 def test_reorder_materials(client):

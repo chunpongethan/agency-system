@@ -1906,6 +1906,66 @@ def reorder_training_materials(payload: list[int], db: Session = Depends(get_db)
     return {"ordered": len(payload)}
 
 
+@app.post("/admin/convert-existing")
+def convert_existing_to_traditional(db: Session = Depends(get_db),
+                                    current: Agent = Depends(require_admin)):
+    """One-off backfill: convert existing Simplified content to HK Traditional in
+    the same fields normalised on save (admin). Only rows that actually change are
+    touched; returns per-entity counts. Skips a training-category rename that would
+    collide with an existing category name."""
+    changed = {"training_materials": 0, "training_categories": 0, "kb_articles": 0,
+               "kb_documents": 0, "products": 0, "agents": 0}
+    skipped: list[str] = []
+
+    for m in db.execute(select(TrainingMaterial)).scalars():
+        nt, nc, nd = to_traditional(m.title), to_traditional(m.category), to_traditional(m.description)
+        if (nt, nc, nd) != (m.title, m.category, m.description):
+            m.title, m.category, m.description = nt, nc, nd
+            changed["training_materials"] += 1
+
+    names = {c.name for c in db.execute(select(TrainingCategory)).scalars()}
+    for c in db.execute(select(TrainingCategory)).scalars():
+        nn = to_traditional(c.name)
+        if nn == c.name:
+            continue
+        if nn in names:                                  # a category with that name already exists
+            skipped.append(f"category:{c.name}→{nn}")
+            continue
+        names.discard(c.name); names.add(nn)
+        c.name = nn
+        changed["training_categories"] += 1
+
+    for a in db.execute(select(KbArticle)).scalars():
+        nt, nc, nb = to_traditional(a.title), to_traditional(a.category), to_traditional(a.body)
+        if (nt, nc, nb) != (a.title, a.category, a.body):
+            a.title, a.category, a.body = nt, nc, nb
+            changed["kb_articles"] += 1
+
+    for d in db.execute(select(KbDocument)).scalars():
+        nt = to_traditional(d.title)
+        if nt != d.title:
+            d.title = nt
+            changed["kb_documents"] += 1
+
+    for p in db.execute(select(Product)).scalars():
+        nn = to_traditional(p.name)
+        if nn != p.name:
+            p.name = nn
+            changed["products"] += 1
+
+    for ag in db.execute(select(Agent)).scalars():
+        nn = to_traditional(ag.name)
+        if nn != ag.name:
+            ag.name = nn
+            changed["agents"] += 1
+
+    total = sum(changed.values())
+    audit.record(db, current.id, "convert", "maintenance", None,
+                 after={"changed": changed, "skipped": len(skipped)})
+    db.commit()
+    return {"changed": changed, "total": total, "skipped": skipped}
+
+
 @app.patch("/training-materials/{material_id}", response_model=schemas.TrainingMaterialOut)
 def update_training_material(material_id: int, payload: schemas.TrainingMaterialUpdate,
                              db: Session = Depends(get_db),

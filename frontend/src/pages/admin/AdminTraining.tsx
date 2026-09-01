@@ -56,6 +56,8 @@ export default function AdminTraining() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["training"] });
   const onErr = (e: unknown) => setError(errorText(e, t) || t("training.saveFailed"));
+  // Shared status line for the backfill/transcode maintenance actions.
+  const [transcodeMsg, setTranscodeMsg] = useState<string | null>(null);
 
   // Reorder materials (admin-controlled display order).
   const reorder = useMutation({
@@ -76,8 +78,20 @@ export default function AdminTraining() {
     reorder.mutate(order);
   }
 
+  // Backfill: convert existing Simplified content to Traditional.
+  const convertExisting = useMutation({
+    mutationFn: () => api.convertExistingToTraditional(),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ["training"] });
+      qc.invalidateQueries({ queryKey: ["kbArticles"] });
+      qc.invalidateQueries({ queryKey: ["kbDocuments"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      setTranscodeMsg(t("training.convertExistingDone", { n: r.total }));
+    },
+    onError: onErr,
+  });
+
   // Backfill: transcode any non-H.264 videos so they play on mobile.
-  const [transcodeMsg, setTranscodeMsg] = useState<string | null>(null);
   const transcode = useMutation({
     mutationFn: () => api.transcodePendingVideos(),
     onSuccess: (r) => setTranscodeMsg(t("training.transcodeScheduled", { n: r.scheduled })),
@@ -172,6 +186,11 @@ export default function AdminTraining() {
           <p className="page-sub">{t("training.adminSubtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="ghost" disabled={convertExisting.isPending}
+            onClick={() => { if (window.confirm(t("training.convertExistingConfirm"))) { setTranscodeMsg(null); convertExisting.mutate(); } }}
+            title={t("training.convertExistingHint")}>
+            {convertExisting.isPending ? t("common.loading") : t("training.convertExisting")}
+          </button>
           <button className="ghost" disabled={transcode.isPending}
             onClick={() => { setTranscodeMsg(null); transcode.mutate(); }}
             title={t("training.transcodeHint")}>
