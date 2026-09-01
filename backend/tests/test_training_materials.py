@@ -179,7 +179,7 @@ def test_transcode_endpoint_syncs_h264(client, monkeypatch):
     mid = mk_material(client, adm).json()["id"]
     fid = _upload(client, adm, mid, ("v.mp4", b"\x00\x00\x00\x18ftyp" + b"H" * 300,
                                      "video/mp4")).json()["files"][-1]["id"]
-    monkeypatch.setattr(main, "_video_codec", lambda data: "hevc")
+    monkeypatch.setattr(main, "_video_stream_info", lambda data: ("hevc", None))
     monkeypatch.setattr(main, "_video_to_h264", lambda data: b"H264-BYTES")
 
     r = client.post(f"/training-materials/{mid}/files/{fid}/transcode", headers=adm)
@@ -197,11 +197,26 @@ def test_transcode_endpoint_skips_already_h264(client, monkeypatch):
     mid = mk_material(client, adm).json()["id"]
     fid = _upload(client, adm, mid, ("v.mp4", b"\x00\x00\x00\x18ftyp" + b"H" * 300,
                                      "video/mp4")).json()["files"][-1]["id"]
-    monkeypatch.setattr(main, "_video_codec", lambda data: "h264")
+    monkeypatch.setattr(main, "_video_stream_info", lambda data: ("h264", "yuv420p"))
     monkeypatch.setattr(main, "_video_to_h264",
-                        lambda data: (_ for _ in ()).throw(AssertionError("should not transcode h264")))
+                        lambda data: (_ for _ in ()).throw(AssertionError("should not transcode 8-bit h264")))
     assert client.post(f"/training-materials/{mid}/files/{fid}/transcode",
                        headers=adm).json()["status"] == "skipped"
+
+
+def test_transcode_endpoint_converts_10bit_h264(client, monkeypatch):
+    # H.264 High 10 / yuv420p10le is codec 'h264' but iOS can't decode it — must transcode.
+    from app import main
+    adm, ax = auth(client, "ADM"), auth(client, "AX")
+    monkeypatch.setattr(main, "_maybe_transcode_video", lambda fid: None)
+    mid = mk_material(client, adm).json()["id"]
+    fid = _upload(client, adm, mid, ("v.mp4", b"\x00\x00\x00\x18ftyp" + b"H" * 300,
+                                     "video/mp4")).json()["files"][-1]["id"]
+    monkeypatch.setattr(main, "_video_stream_info", lambda data: ("h264", "yuv420p10le"))
+    monkeypatch.setattr(main, "_video_to_h264", lambda data: b"H264-8BIT")
+    r = client.post(f"/training-materials/{mid}/files/{fid}/transcode", headers=adm)
+    assert r.status_code == 200 and r.json()["status"] == "done"
+    assert client.get(f"/training-materials/{mid}/files/{fid}", headers=ax).content == b"H264-8BIT"
 
 
 def test_transcode_pending_admin_only(client):

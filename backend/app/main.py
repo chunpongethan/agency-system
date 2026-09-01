@@ -1651,13 +1651,18 @@ def _office_to_pdf(data: bytes, filename: str) -> bytes | None:
 _VIDEO_MAX_TRANSCODE_MB = int(os.getenv("VIDEO_MAX_TRANSCODE_MB", "300"))
 
 
-def _video_codec(data: bytes) -> str | None:
-    """The first video stream's codec name via ffprobe (e.g. 'h264', 'hevc'),
-    or None if ffprobe is absent / it fails."""
+# Pixel formats iOS Safari can decode for H.264 (8-bit 4:2:0). 10-bit (High 10,
+# yuv420p10le) and 4:2:2/4:4:4 are NOT supported and must be transcoded.
+_IOS_SAFE_PIX = {"yuv420p", "yuvj420p"}
+
+
+def _video_stream_info(data: bytes) -> tuple[str | None, str | None]:
+    """(codec_name, pix_fmt) of the first video stream via ffprobe, lowercased;
+    (None, None) if ffprobe is absent / fails."""
     import shutil
     exe = shutil.which("ffprobe")
     if not exe:
-        return None
+        return (None, None)
     import os, tempfile, subprocess
     with tempfile.TemporaryDirectory() as tmp:
         src = os.path.join(tmp, "in")
@@ -1666,11 +1671,21 @@ def _video_codec(data: bytes) -> str | None:
         try:
             out = subprocess.run(
                 [exe, "-v", "error", "-select_streams", "v:0",
-                 "-show_entries", "stream=codec_name", "-of", "default=nk=1:nw=1", src],
+                 "-show_entries", "stream=codec_name,pix_fmt", "-of", "default=nk=1:nw=1", src],
                 capture_output=True, timeout=60, check=True)
-            return (out.stdout.decode(errors="replace").strip().lower() or None)
+            parts = out.stdout.decode(errors="replace").split()
+            codec = parts[0].lower() if len(parts) >= 1 else None
+            pix = parts[1].lower() if len(parts) >= 2 else None
+            return (codec, pix)
         except Exception:
-            return None
+            return (None, None)
+
+
+def _video_is_ios_ready(data: bytes) -> bool:
+    """True only for 8-bit 4:2:0 H.264 — the combo iOS plays. HEVC and 10-bit /
+    4:2:2 H.264 return False so they get transcoded."""
+    codec, pix = _video_stream_info(data)
+    return codec == "h264" and pix in _IOS_SAFE_PIX
 
 
 def _video_to_h264(data: bytes) -> bytes | None:
@@ -1702,10 +1717,11 @@ def _video_to_h264(data: bytes) -> bytes | None:
 
 
 def _transcode_video_now(db: Session, row: TrainingFile) -> str:
-    """Transcode one training file to H.264 (stored as the inline-preview stream)
-    if it's a non-H.264 video. Returns 'done' | 'skipped' | 'failed'. Runs
-    synchronously so the result is persisted before returning; the original is
-    kept for download and left intact on failure."""
+    """Transcode one training file to iOS-playable 8-bit H.264 (stored as the
+    inline-preview stream) unless it already is one. HEVC and 10-bit / 4:2:2
+    H.264 are transcoded; only 8-bit 4:2:0 H.264 is left as-is. Returns
+    'done' | 'skipped' | 'failed'. Runs synchronously so the result is persisted
+    before returning; the original is kept for download and left intact on failure."""
     import logging
     ct = (row.content_type or "").lower()
     if not ct.startswith("video/"):
@@ -1714,8 +1730,8 @@ def _transcode_video_now(db: Session, row: TrainingFile) -> str:
         return "done"                                          # already transcoded
     if row.file_size and row.file_size > _VIDEO_MAX_TRANSCODE_MB * 1024 * 1024:
         return "skipped"                                       # too large
-    if _video_codec(row.data) == "h264":
-        return "skipped"                                       # original already plays everywhere
+    if _video_is_ios_ready(row.data):
+        return "skipped"                                       # already 8-bit 4:2:0 H.264 — plays on iOS
     h264 = _video_to_h264(row.data)
     if not h264:
         logging.getLogger("training").warning(
