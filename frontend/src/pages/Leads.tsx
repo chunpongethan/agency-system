@@ -27,6 +27,16 @@ export default function Leads() {
   const [error, setError] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  // Board cards start collapsed; a click expands one to reveal details + actions.
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const toggleExpand = (id: number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  // On mobile the columns become tabs; this is the visible stage.
+  const [mobileStage, setMobileStage] = useState<string>(LEAD_STAGES[0]);
 
   const cases = useQuery({
     queryKey: ["cases", showClosed, mineOnly],
@@ -219,9 +229,19 @@ export default function Leads() {
       </div>
 
       {view === "board" && (
+      <>
+      <div className="stage-tabs" role="tablist">
+        {LEAD_STAGES.map((stage) => (
+          <button key={stage} role="tab" aria-selected={mobileStage === stage}
+            className={mobileStage === stage ? "primary" : "ghost"}
+            onClick={() => setMobileStage(stage)}>
+            {stageLabel(stage)} ({byStage(stage).length})
+          </button>
+        ))}
+      </div>
       <div className="board">
         {LEAD_STAGES.map((stage) => (
-          <div key={stage}
+          <div key={stage} data-active={String(stage === mobileStage)}
             className={`col card ${dragOver === stage ? "drag-over" : ""}`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(stage); }}
             onDragLeave={() => setDragOver((s) => (s === stage ? null : s))}
@@ -235,15 +255,35 @@ export default function Leads() {
             )}
             {byStage(stage).map((c) => {
               const editable = canEdit(c);
+              const isOpen = expanded.has(c.id);
               return (
-                <div key={c.id} className={`lead-card ${draggingId === c.id ? "dragging" : ""}`}
+                <div key={c.id} className={`lead-card ${draggingId === c.id ? "dragging" : ""} ${isOpen ? "open" : ""}`}
                   draggable={editable}
                   onDragStart={(e) => { e.dataTransfer.setData("text/plain", String(c.id)); setDraggingId(c.id); }}
                   onDragEnd={() => setDraggingId(null)}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 6 }}>
-                    <strong>{c.prospect_name}</strong>
-                    <span className="muted" style={{ fontSize: 11 }}>{c.ref}</span>
+                  <div className="lead-card-head" onClick={() => toggleExpand(c.id)}
+                    role="button" tabIndex={0} aria-expanded={isOpen}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleExpand(c.id); } }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                      <span className="lead-caret muted" aria-hidden>{isOpen ? "▾" : "▸"}</span>
+                      <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.prospect_name}</strong>
+                    </span>
+                    <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{c.ref}</span>
                   </div>
+                  {!isOpen && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4, alignItems: "center" }}>
+                      {c.expected_afyp != null && (
+                        <span className="muted" style={{ fontSize: 12 }}>{moneyFixed(c.expected_afyp, "HKD")}</span>
+                      )}
+                      {c.case_types && c.case_types.length > 0 && (
+                        <span className="badge dc">{caseTypeLabel(c.case_types[0])}{c.case_types.length > 1 ? ` +${c.case_types.length - 1}` : ""}</span>
+                      )}
+                      {c.outcome !== "open" && (
+                        <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
+                      )}
+                    </div>
+                  )}
+                  {isOpen && (<>
                   {c.client_name && (
                     <div style={{ fontSize: 12 }}>
                       <Link to={`/clients/${c.client_id}`}>{c.client_name}</Link>
@@ -302,12 +342,14 @@ export default function Leads() {
                       </div>
                     </>
                   )}
+                  </>)}
                 </div>
               );
             })}
           </div>
         ))}
       </div>
+      </>
       )}
 
       {view === "table" && (

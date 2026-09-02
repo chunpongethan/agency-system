@@ -120,6 +120,18 @@ tr.subtotal-row { font-weight: 600; background: var(--accent-soft); }
 }
 .lead-card:last-child { margin-bottom: 0; }
 .lead-card.dragging { opacity: .5; }
+.lead-card.open { border-color: var(--accent); }
+.lead-card-head { display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; }
+.lead-caret { font-size: 10px; width: 10px; flex: none; }
+/* Stage tabs replace the horizontal board on small screens. */
+.stage-tabs { display: none; }
+@media (max-width: 768px) {
+  .stage-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+  .stage-tabs button { white-space: nowrap; padding: 6px 12px; }
+  .board { display: block; overflow: visible; }
+  .board .col { min-width: 0; width: 100%; flex: none; }
+  .board .col[data-active="false"] { display: none; }
+}
 tr.subtotal-row td { border-top: 1px solid #bfdbfe; color: #1e3a8a; }
 
 label { display: block; font-size: 13px; margin: 12px 0 4px; color: #374151; font-weight: 500; }
