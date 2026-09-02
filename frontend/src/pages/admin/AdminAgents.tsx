@@ -22,7 +22,7 @@ export default function AdminAgents() {
 
   // --- Create agent ---
   const [agentForm, setAgentForm] = useState({
-    code: "", name: "", email: "", upline_id: "", unit_code: "",
+    code: "", name: "", email: "", upline_id: "", unit_code: "", wecom_external_userid: "",
     title: "business_manager" as Title, role: "agent" as Role, password: "demo1234",
     direct_client: false,
   });
@@ -40,6 +40,7 @@ export default function AdminAgents() {
         upline_id: agentForm.upline_id ? Number(agentForm.upline_id) : null,
         role: agentForm.role, title: agentForm.title,
         unit_code: agentForm.unit_code || null,
+        wecom_external_userid: agentForm.wecom_external_userid || null,
         direct_client: agentForm.direct_client,
         password: agentForm.password || undefined,
       }),
@@ -55,7 +56,7 @@ export default function AdminAgents() {
 
   // --- Edit agent (the 職級/title is changed here, not inline in the table) ---
   const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", password: "", direct_client: false });
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", wecom_external_userid: "", password: "", direct_client: false });
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateAgent = useMutation({
     mutationFn: () =>
@@ -63,6 +64,7 @@ export default function AdminAgents() {
         name: editForm.name, email: editForm.email, role: editForm.role,
         title: (editForm.title || null) as Title | null,
         unit_code: editForm.unit_code || null,
+        wecom_external_userid: editForm.wecom_external_userid || null,
         direct_client: editForm.direct_client,
         password: editForm.password || undefined,
       }),
@@ -81,7 +83,7 @@ export default function AdminAgents() {
 
   function startEdit(a: Agent) {
     setEditId(a.id);
-    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", password: "", direct_client: a.direct_client });
+    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", wecom_external_userid: a.wecom_external_userid ?? "", password: "", direct_client: a.direct_client });
     setEditErr(null);
   }
   function terminate(a: Agent) {
@@ -89,6 +91,38 @@ export default function AdminAgents() {
       setActive.mutate({ id: a.id, active: false });
     }
   }
+
+  // --- WeChat broadcast via 企業微信「客戶聯繫」 ---
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeText, setComposeText] = useState("");
+  const [wecomMsg, setWecomMsg] = useState<string | null>(null);
+  const [wecomErr, setWecomErr] = useState<string | null>(null);
+
+  function toggleSelected(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+  const allSelected = rosterAgents.length > 0 && rosterAgents.every((a) => selectedIds.has(a.id));
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(rosterAgents.map((a) => a.id)));
+  }
+  const selectedAgents = rosterAgents.filter((a) => selectedIds.has(a.id));
+  const missingWecom = selectedAgents.filter((a) => !a.wecom_external_userid);
+
+  const wecomBroadcast = useMutation({
+    mutationFn: () => api.wecomBroadcast([...selectedIds], composeText),
+    onSuccess: (r) => {
+      setWecomErr(null);
+      setWecomMsg(t("admin.agents.wecomResult", { sent: r.sent.length, skipped: r.skipped_no_wechat.length }));
+      setComposeText(""); setComposeOpen(false); setSelectedIds(new Set());
+      setTimeout(() => setWecomMsg(null), 6000);
+    },
+    onError: (e) => { setWecomErr(errorText(e, t) || t("admin.agents.wecomFailed")); setWecomMsg(null); },
+  });
 
   return (
     <div>
@@ -98,16 +132,28 @@ export default function AdminAgents() {
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <h2 style={{ margin: 0 }}>{t("admin.agents.roster")}</h2>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 400, margin: 0, cursor: "pointer" }}>
-            <input type="checkbox" style={{ width: "auto" }} checked={includeTerminated}
-              onChange={(e) => setIncludeTerminated(e.target.checked)} />
-            {t("admin.agents.includeTerminated", { count: terminatedCount })}
-          </label>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <button className="primary" type="button" disabled={selectedIds.size === 0}
+              onClick={() => { setComposeOpen(true); setWecomErr(null); setWecomMsg(null); }}>
+              {t("admin.agents.sendWechat", { count: selectedIds.size })}
+            </button>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 400, margin: 0, cursor: "pointer" }}>
+              <input type="checkbox" style={{ width: "auto" }} checked={includeTerminated}
+                onChange={(e) => setIncludeTerminated(e.target.checked)} />
+              {t("admin.agents.includeTerminated", { count: terminatedCount })}
+            </label>
+          </div>
         </div>
         {rowMsg && <div className="error">{rowMsg}</div>}
+        {wecomMsg && <div className="success">{wecomMsg}</div>}
+        {wecomErr && <div className="error">{wecomErr}</div>}
         <table>
           <thead>
             <tr>
+              <th style={{ width: 28 }}>
+                <input type="checkbox" style={{ width: "auto" }} checked={allSelected}
+                  onChange={toggleAll} aria-label={t("admin.agents.selectAll")} />
+              </th>
               <th>{t("common.code")}</th><th>{t("common.name")}</th><th>{t("admin.agents.thDepth")}</th><th>{t("common.role")}</th><th>{t("common.title")}</th>
               <th>{t("common.unit")}</th><th>{t("admin.agents.thDirectClient")}</th><th>{t("admin.agents.thUpline")}</th><th>{t("common.status")}</th><th>{t("admin.agents.thLastLogin")}</th><th></th>
             </tr>
@@ -117,6 +163,10 @@ export default function AdminAgents() {
               const upline = agents.data?.find((u) => u.id === a.upline_id);
               return (
                 <tr key={a.id} style={a.is_active ? undefined : { opacity: 0.55 }}>
+                  <td>
+                    <input type="checkbox" style={{ width: "auto" }} checked={selectedIds.has(a.id)}
+                      onChange={() => toggleSelected(a.id)} aria-label={a.name} />
+                  </td>
                   <td>{a.code}</td>
                   <td>{a.name}</td>
                   <td>L{a.level}</td>
@@ -152,6 +202,33 @@ export default function AdminAgents() {
         </table>
       </div>
 
+      {composeOpen && (
+        <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); wecomBroadcast.mutate(); }}>
+          <h2>{t("admin.agents.wecomCompose")}</h2>
+          <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>{t("admin.agents.wecomNote")}</p>
+          {wecomErr && <div className="error">{wecomErr}</div>}
+          <div style={{ fontSize: 13, marginBottom: 8 }}>
+            {t("admin.agents.wecomRecipients", { count: selectedAgents.length })}
+            {": "}
+            {selectedAgents.map((a) => a.name).join("、")}
+          </div>
+          {missingWecom.length > 0 && (
+            <div className="muted" style={{ fontSize: 12, marginBottom: 8, color: "var(--bad)" }}>
+              {t("admin.agents.wecomMissing", { count: missingWecom.length, names: missingWecom.map((a) => a.name).join("、") })}
+            </div>
+          )}
+          <textarea value={composeText} required rows={5} style={{ width: "100%" }}
+            placeholder={t("admin.agents.wecomPlaceholder")}
+            onChange={(e) => setComposeText(e.target.value)} />
+          <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+            <button className="primary" type="submit" disabled={wecomBroadcast.isPending || !composeText.trim()}>
+              {wecomBroadcast.isPending ? t("common.saving") : t("admin.agents.wecomSend")}
+            </button>
+            <button className="ghost" type="button" onClick={() => setComposeOpen(false)}>{t("common.cancel")}</button>
+          </div>
+        </form>
+      )}
+
       {editId != null && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateAgent.mutate(); }}>
           <h2>{t("admin.agents.editTitle", { code: agents.data?.find((a) => a.id === editId)?.code ?? "" })}</h2>
@@ -179,6 +256,9 @@ export default function AdminAgents() {
             <div><label>{t("admin.agents.unitCode")}</label>
               <input value={editForm.unit_code} placeholder="e.g. U-LEO"
                 onChange={(e) => setEditForm({ ...editForm, unit_code: e.target.value })} /></div>
+            <div><label>{t("admin.agents.wecomId")}</label>
+              <input value={editForm.wecom_external_userid} placeholder={t("admin.agents.wecomIdPlaceholder")}
+                onChange={(e) => setEditForm({ ...editForm, wecom_external_userid: e.target.value })} /></div>
             <div><label>{t("admin.agents.newPassword")}</label>
               <input type="text" value={editForm.password} autoComplete="new-password"
                 onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} /></div>
@@ -246,6 +326,9 @@ export default function AdminAgents() {
           <div><label>{t("admin.agents.unitCode")}</label>
             <input value={agentForm.unit_code} placeholder="e.g. U-LEO"
               onChange={(e) => setAgentForm({ ...agentForm, unit_code: e.target.value })} /></div>
+          <div><label>{t("admin.agents.wecomId")}</label>
+            <input value={agentForm.wecom_external_userid} placeholder={t("admin.agents.wecomIdPlaceholder")}
+              onChange={(e) => setAgentForm({ ...agentForm, wecom_external_userid: e.target.value })} /></div>
           <div><label>{t("admin.agents.password")}</label>
             <input type="text" value={agentForm.password}
               onChange={(e) => setAgentForm({ ...agentForm, password: e.target.value })} /></div>

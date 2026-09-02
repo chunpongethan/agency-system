@@ -67,6 +67,7 @@ class AgentIn(BaseModel):
     role: str = "agent"
     title: str | None = None
     unit_code: str | None = None
+    wecom_external_userid: str | None = None
     direct_client: bool = False
     password: str | None = None
 
@@ -76,6 +77,7 @@ class AgentUpdate(BaseModel):
     email: EmailStr | None = None
     title: str | None = None
     unit_code: str | None = None
+    wecom_external_userid: str | None = None
     role: str | None = None
     is_active: bool | None = None
     direct_client: bool | None = None
@@ -94,9 +96,15 @@ class AgentOut(BaseModel):
     role: str
     title: str | None = None
     unit_code: str | None = None
+    wecom_external_userid: str | None = None
     direct_client: bool = False
     is_active: bool
     last_login_at: datetime | None = None
+
+
+class WecomBroadcastIn(BaseModel):
+    agent_ids: list[int]
+    text: str
 
 
 # --- Clients ----------------------------------------------------------------

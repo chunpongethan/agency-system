@@ -113,8 +113,11 @@ export const api = {
   downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
   createAgent: (payload: Partial<Agent> & { password?: string }) =>
     request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
-  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "role" | "is_active" | "direct_client">> & { password?: string }) =>
+  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "wecom_external_userid" | "role" | "is_active" | "direct_client">> & { password?: string }) =>
     request<Agent>(`/agents/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  wecomBroadcast: (agentIds: number[], text: string) =>
+    request<{ requested: number; sent: number[]; skipped_no_wechat: number[]; msgid: string | null }>(
+      "/agents/wecom/broadcast", { method: "POST", body: JSON.stringify({ agent_ids: agentIds, text }) }),
 
   // Clients
   clients: () => request<Client[]>("/clients"),

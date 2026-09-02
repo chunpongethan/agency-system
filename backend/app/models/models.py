@@ -122,6 +122,10 @@ class Agent(Base):
     title: Mapped[Title | None] = mapped_column(Enum(Title), nullable=True)
     # Unit/team code — a manager heads a unit identified by this code.
     unit_code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # 企業微信「客戶聯繫」external_userid for this agent's personal WeChat, as seen
+    # by the sender member. Set once the agent has added the sender member; lets the
+    # admin push messages to their personal WeChat (see services/wecom.py).
+    wecom_external_userid: Mapped[str | None] = mapped_column(String(64), nullable=True)
     upline_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # "直客" eligible: may receive manually-assigned overrides on direct-client deals.

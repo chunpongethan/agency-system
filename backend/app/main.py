@@ -34,7 +34,7 @@ from app.security import (
 )
 from app.services import (
     commission_engine, reports, agent_service, scoping,
-    periods, payouts, exports, audit, mailer,
+    periods, payouts, exports, audit, mailer, wecom,
 )
 from app.services.sanitize import sanitize_html
 from app.services.zh_convert import to_traditional, convert_in
@@ -67,6 +67,8 @@ def _ensure_columns() -> None:
     ddl: list[str] = []
     if "last_login_at" not in cols("agents"):
         ddl.append("ALTER TABLE agents ADD COLUMN last_login_at TIMESTAMP")
+    if "wecom_external_userid" not in cols("agents") and "agents" in insp.get_table_names():
+        ddl.append("ALTER TABLE agents ADD COLUMN wecom_external_userid VARCHAR(64)")
     # Tenant company column on the agent + the four global config/aggregate tables.
     agents_got_company = "company" not in cols("agents")
     for table in ("agents", "override_rules", "title_targets", "payouts", "periods"):
@@ -599,6 +601,67 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
                  before=before, after=data)
     db.commit(); db.refresh(agent)
     return agent
+
+
+@app.post("/agents/wecom/broadcast")
+def wecom_broadcast(payload: schemas.WecomBroadcastIn, db: Session = Depends(get_db),
+                    current: Agent = Depends(require_admin)):
+    """Push a plain-text message to the personal WeChat of one or many agents via the
+    企業微信「客戶聯繫」bridge. Agents without a bound wecom_external_userid are skipped.
+    Returns a per-agent outcome so the UI can report sent vs skipped precisely."""
+    text = (payload.text or "").strip()
+    if not text:
+        raise err(400, "empty_message", "message text is required")
+    if not payload.agent_ids:
+        raise err(400, "no_recipients", "select at least one agent")
+    if not wecom._enabled():
+        raise err(503, "wecom_not_configured",
+                  "WeCom messaging is not configured on the server")
+
+    # Company-scope the recipients to what this admin may see.
+    visible = set(scoping.visible_agent_ids(db, current))
+    agents = db.execute(
+        select(Agent).where(Agent.id.in_(payload.agent_ids))
+    ).scalars().all()
+
+    sent_ids: list[int] = []
+    skipped_no_wechat: list[int] = []
+    ext_by_agent: dict[str, int] = {}
+    for a in agents:
+        if a.id not in visible:
+            raise err(403, "forbidden", "cross-company access is not allowed")
+        if a.wecom_external_userid:
+            ext_by_agent[a.wecom_external_userid] = a.id
+            sent_ids.append(a.id)
+        else:
+            skipped_no_wechat.append(a.id)
+
+    result: dict = {"requested": len(payload.agent_ids), "sent": [],
+                    "skipped_no_wechat": skipped_no_wechat, "msgid": None}
+    if ext_by_agent:
+        try:
+            resp = wecom.send_text(list(ext_by_agent.keys()), text)
+        except wecom.WecomError as e:
+            raise err(502, "wecom_send_failed", str(e))
+        result["sent"] = sent_ids
+        result["msgid"] = resp.get("msgid")
+        audit.record(db, current.id, "wecom_broadcast", "agent", None,
+                     after={"agent_ids": sent_ids, "msgid": resp.get("msgid")})
+        db.commit()
+    return result
+
+
+@app.get("/agents/wecom/customers")
+def wecom_customers(current: Agent = Depends(require_admin)):
+    """External contacts of the sender member, for binding an agent to its WeChat
+    without pasting an opaque external_userid."""
+    if not wecom._enabled():
+        raise err(503, "wecom_not_configured",
+                  "WeCom messaging is not configured on the server")
+    try:
+        return {"customers": wecom.list_customers()}
+    except wecom.WecomError as e:
+        raise err(502, "wecom_send_failed", str(e))
 
 
 @app.get("/agents/{agent_id}/downlines", response_model=list[schemas.AgentOut])

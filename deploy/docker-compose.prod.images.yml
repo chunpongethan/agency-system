@@ -51,6 +51,10 @@ services:
       SMTP_TLS: ${SMTP_TLS:-true}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5}
+      # WeChat messaging via 企業微信「客戶聯繫」(optional).
+      WECOM_CORP_ID: ${WECOM_CORP_ID:-}
+      WECOM_CONTACT_SECRET: ${WECOM_CONTACT_SECRET:-}
+      WECOM_SENDER_USERID: ${WECOM_SENDER_USERID:-}
     depends_on:
       db:
         condition: service_healthy
