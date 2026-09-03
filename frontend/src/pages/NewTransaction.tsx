@@ -79,8 +79,13 @@ export default function NewTransaction() {
     deal_type: form.deal_type,
     direct_overrides: overridePayload(),
   });
-  // Clients belonging to the chosen closing agent.
-  const clientOptions = (clients.data ?? []).filter((c) => c.agent_id === agentId);
+  // Clients owned by any of the deal's role agents (Lead / SDR / Closing). The
+  // client's owner is usually the Lead (new clients are created under the Lead),
+  // while the Closer is often a specialist who doesn't own the client — so keying
+  // only off the closing agent would hide the client. Any selected role reveals it.
+  const roleAgentIds = [Number(form.lead_agent_id) || 0,
+                        Number(form.sales_dev_agent_id) || 0, agentId].filter(Boolean);
+  const clientOptions = (clients.data ?? []).filter((c) => roleAgentIds.includes(c.agent_id));
   const agentName = (id: number) => agents.data?.find((a) => a.id === id)?.name ?? `#${id}`;
 
   const selectedProduct = useMemo(
@@ -356,10 +361,10 @@ export default function NewTransaction() {
             </div>
           ) : (
             <>
-              <label>{t("newTxn.client")} {form.agent_id && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
-              <select value={form.client_id} disabled={!form.agent_id}
+              <label>{t("newTxn.client")} {roleAgentIds.length > 0 && clientOptions.length === 0 ? t("newTxn.agentNoClients") : ""}</label>
+              <select value={form.client_id} disabled={roleAgentIds.length === 0}
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}>
-                <option value="">{form.agent_id ? t("newTxn.selectClient") : t("newTxn.pickAgentFirst")}</option>
+                <option value="">{roleAgentIds.length > 0 ? t("newTxn.selectClient") : t("newTxn.pickAgentFirst")}</option>
                 {clientOptions.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.ref})</option>
                 ))}
