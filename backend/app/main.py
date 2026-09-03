@@ -588,11 +588,42 @@ def agents_assignable(db: Session = Depends(get_db),
              "unit_code": a.unit_code, "is_closer": a.is_closer} for a in rows]
 
 
+def _reparent_agent(db: Session, agent: Agent, new_upline_id: int | None) -> None:
+    """Move `agent` under a new upline (or None = make it a root), recomputing the
+    agent's depth and shifting every descendant's depth by the same delta. Validates
+    that the upline exists, is in the same company, and does not create a cycle."""
+    if new_upline_id is None:
+        new_level = 1
+    else:
+        upline = db.get(Agent, new_upline_id)
+        if upline is None:
+            raise err(404, "agent_not_found", "upline not found")
+        new_level = int(upline.level) + 1
+    try:
+        agent_service.validate_agent(db, new_level, new_upline_id,
+                                     agent_id=agent.id, company=agent.company)
+    except agent_service.ValidationError as e:
+        raise err(422, "invalid_upline", str(e))
+    delta = new_level - int(agent.level)
+    agent.upline_id = new_upline_id
+    agent.level = new_level
+    if delta:
+        # Descendants keep their relative depth — shift the whole subtree by delta.
+        frontier = [agent.id]
+        while frontier:
+            children = db.execute(
+                select(Agent).where(Agent.upline_id.in_(frontier))).scalars().all()
+            for c in children:
+                c.level = int(c.level) + delta
+            frontier = [c.id for c in children]
+
+
 @app.patch("/agents/{agent_id}", response_model=schemas.AgentOut)
 def update_agent(agent_id: int, payload: schemas.AgentUpdate,
                  db: Session = Depends(get_db),
                  current: Agent = Depends(require_admin)):
-    """Admin assigns a title / role / active flag to an existing agent."""
+    """Admin edits an agent's details, role, upline, and flags. Moving the upline
+    reparents the agent and re-levels its whole subtree."""
     agent = db.get(Agent, agent_id)
     if agent is None:
         raise HTTPException(404, "agent not found")
@@ -600,7 +631,8 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
         raise err(403, "forbidden", "cross-company access is not allowed")
     before = {"name": agent.name, "email": agent.email,
               "title": agent.title.value if agent.title else None,
-              "role": agent.role.value, "is_active": agent.is_active}
+              "role": agent.role.value, "is_active": agent.is_active,
+              "upline_id": agent.upline_id, "level": agent.level}
     data = payload.model_dump(exclude_unset=True)
     if "email" in data and data["email"] != agent.email:
         clash = db.execute(
@@ -608,6 +640,9 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
         ).scalars().first()
         if clash is not None:
             raise err(409, "email_in_use", "email already in use")
+    # Reparent (and re-level the subtree) when the upline is being changed.
+    if "upline_id" in data:
+        _reparent_agent(db, agent, data.pop("upline_id"))
     # Admin manual password reset: hash it, and never echo the raw value.
     new_password = data.pop("password", None)
     if new_password:

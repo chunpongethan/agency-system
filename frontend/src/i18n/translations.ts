@@ -236,6 +236,7 @@ export const translations: Record<string, Translation> = {
   "error.no_recipients": { "zh-Hant": "請至少選擇一位代理人", en: "Select at least one agent" },
   "error.not_closer": { "zh-Hant": "所選代理未被標記為「成交（Closer）」", en: "The selected agent is not Closer-eligible" },
   "error.not_assignable": { "zh-Hant": "您只能指派自己或您的下線為招攬 / 業務拓展", en: "You may only assign yourself or your downline as Lead / SDR" },
+  "error.invalid_upline": { "zh-Hant": "上線無效（不可造成循環）", en: "Invalid upline (would create a cycle)" },
   "error.file_too_large": { "zh-Hant": "檔案過大，超出上限", en: "File exceeds the size limit" },
   "error.empty_file": { "zh-Hant": "檔案是空的", en: "The file is empty" },
   "error.validation": { "zh-Hant": "輸入的資料無效", en: "Invalid input" },
@@ -499,8 +500,8 @@ export const translations: Record<string, Translation> = {
   "admin.agents.titleNone": { "zh-Hant": "— 無 —", en: "— none —" },
   "admin.agents.unitCode": { "zh-Hant": "單位編號（團隊）", en: "Unit code (team)" },
   "admin.agents.editNote": {
-    "zh-Hant": "層級與上線在此固定；經理的單位編號用作團隊名稱。如需停用請使用「終止」。",
-    en: "Depth and upline are fixed here; a manager's unit code names their team. Use Terminate to deactivate.",
+    "zh-Hant": "更改上線會自動重新計算其層級及整個下線的層級（不可選擇自己或其下線）；經理的單位編號用作團隊名稱。如需停用請使用「終止」。",
+    en: "Changing the upline auto-recomputes this agent's depth and its whole downline's (you can't pick itself or its own downline); a manager's unit code names their team. Use Terminate to deactivate.",
   },
   "admin.agents.saveChanges": { "zh-Hant": "儲存變更", en: "Save changes" },
   "admin.agents.add": { "zh-Hant": "新增代理人", en: "Add agent" },

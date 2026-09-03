@@ -78,6 +78,7 @@ class AgentUpdate(BaseModel):
     email: EmailStr | None = None
     title: str | None = None
     unit_code: str | None = None
+    upline_id: int | None = None
     wecom_external_userid: str | None = None
     role: str | None = None
     is_active: bool | None = None

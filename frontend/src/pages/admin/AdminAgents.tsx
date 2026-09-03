@@ -57,7 +57,7 @@ export default function AdminAgents() {
 
   // --- Edit agent (the 職級/title is changed here, not inline in the table) ---
   const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", wecom_external_userid: "", password: "", direct_client: false, is_closer: false });
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", wecom_external_userid: "", password: "", direct_client: false, is_closer: false, upline_id: "" });
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateAgent = useMutation({
     mutationFn: () =>
@@ -66,6 +66,7 @@ export default function AdminAgents() {
         title: (editForm.title || null) as Title | null,
         unit_code: editForm.unit_code || null,
         wecom_external_userid: editForm.wecom_external_userid || null,
+        upline_id: editForm.upline_id ? Number(editForm.upline_id) : null,
         direct_client: editForm.direct_client,
         is_closer: editForm.is_closer,
         password: editForm.password || undefined,
@@ -85,7 +86,7 @@ export default function AdminAgents() {
 
   function startEdit(a: Agent) {
     setEditId(a.id);
-    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", wecom_external_userid: a.wecom_external_userid ?? "", password: "", direct_client: a.direct_client, is_closer: a.is_closer });
+    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", wecom_external_userid: a.wecom_external_userid ?? "", password: "", direct_client: a.direct_client, is_closer: a.is_closer, upline_id: a.upline_id ? String(a.upline_id) : "" });
     setEditErr(null);
   }
   function terminate(a: Agent) {
@@ -125,6 +126,26 @@ export default function AdminAgents() {
     },
     onError: (e) => { setWecomErr(errorText(e, t) || t("admin.agents.wecomFailed")); setWecomMsg(null); },
   });
+
+  // Upline options for the edit form: exclude the agent itself and its descendants
+  // (that would be a cycle) plus admins/terminated; the derived level previews the move.
+  function descendantsOf(rootId: number): Set<number> {
+    const all = agents.data ?? [];
+    const out = new Set<number>();
+    const stack = [rootId];
+    while (stack.length) {
+      const id = stack.pop()!;
+      all.filter((a) => a.upline_id === id).forEach((c) => {
+        if (!out.has(c.id)) { out.add(c.id); stack.push(c.id); }
+      });
+    }
+    return out;
+  }
+  const editExcluded = editId != null ? descendantsOf(editId) : new Set<number>();
+  const editUplineOptions = (agents.data ?? []).filter(
+    (a) => a.role !== "admin" && a.is_active && a.id !== editId && !editExcluded.has(a.id));
+  const editSelectedUpline = (agents.data ?? []).find((a) => a.id === Number(editForm.upline_id));
+  const editDerivedLevel = editSelectedUpline ? editSelectedUpline.level + 1 : 1;
 
   return (
     <div>
@@ -247,6 +268,18 @@ export default function AdminAgents() {
             <div><label>{t("common.email")}</label>
               <input type="email" value={editForm.email} required
                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} /></div>
+          </div>
+          <div className="row">
+            <div><label>{t("admin.agents.thUpline")}</label>
+              <select value={editForm.upline_id}
+                onChange={(e) => setEditForm({ ...editForm, upline_id: e.target.value })}>
+                <option value="">{t("admin.agents.uplineNone")}</option>
+                {editUplineOptions.map((u) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.code}) · L{u.level}</option>
+                ))}
+              </select></div>
+            <div><label>{t("admin.agents.thDepth")}</label>
+              <input value={`L${editDerivedLevel}`} disabled readOnly /></div>
           </div>
           <div className="row">
             <div><label>{t("admin.agents.roleScope")}</label>

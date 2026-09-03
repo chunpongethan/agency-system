@@ -114,7 +114,7 @@ export const api = {
   downlines: (id: number) => request<Agent[]>(`/agents/${id}/downlines`),
   createAgent: (payload: Partial<Agent> & { password?: string }) =>
     request<Agent>("/agents", { method: "POST", body: JSON.stringify(payload) }),
-  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "wecom_external_userid" | "role" | "is_active" | "direct_client" | "is_closer">> & { password?: string }) =>
+  updateAgent: (id: number, payload: Partial<Pick<Agent, "name" | "email" | "title" | "unit_code" | "wecom_external_userid" | "upline_id" | "role" | "is_active" | "direct_client" | "is_closer">> & { password?: string }) =>
     request<Agent>(`/agents/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   wecomBroadcast: (agentIds: number[], text: string) =>
     request<{ requested: number; sent: number[]; skipped_no_wechat: number[]; msgid: string | null }>(
