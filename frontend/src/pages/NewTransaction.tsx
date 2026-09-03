@@ -35,6 +35,8 @@ export default function NewTransaction() {
     product_id: "",
     notional: "100000",
     policy_no: "",
+    policy_date: "",
+    effective_date: "",
     currency: "USD",
     lead_pct: "33.4",
     sales_dev_pct: "33.3",
@@ -145,6 +147,8 @@ export default function NewTransaction() {
         agent_id: agentId,
         notional: form.notional,
         policy_no: isInsurance && form.policy_no ? form.policy_no : undefined,
+        policy_date: isInsurance && form.policy_date ? form.policy_date : undefined,
+        effective_date: isInsurance && form.effective_date ? form.effective_date : undefined,
         currency: form.currency,
         ...rolePayload(),
         ...dealPayload(),
@@ -377,7 +381,7 @@ export default function NewTransaction() {
           <div className="row">
             <div style={{ flex: 3 }}>
               <label>{t("common.notional")}</label>
-              <input type="number" value={form.notional} min="0" step="1000"
+              <input type="number" value={form.notional} min="0" step="1"
                 onChange={(e) => setForm({ ...form, notional: e.target.value })} />
             </div>
             <div style={{ flex: 1 }}>
@@ -394,6 +398,18 @@ export default function NewTransaction() {
               <label>{t("newTxn.policyNo")}</label>
               <input value={form.policy_no}
                 onChange={(e) => setForm({ ...form, policy_no: e.target.value })} />
+              <div className="row">
+                <div>
+                  <label>{t("newTxn.policyDate")}</label>
+                  <input type="date" value={form.policy_date}
+                    onChange={(e) => setForm({ ...form, policy_date: e.target.value })} />
+                </div>
+                <div>
+                  <label>{t("newTxn.effectiveDate")}</label>
+                  <input type="date" value={form.effective_date}
+                    onChange={(e) => setForm({ ...form, effective_date: e.target.value })} />
+                </div>
+              </div>
             </>
           )}
 

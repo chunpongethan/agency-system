@@ -192,6 +192,8 @@ export interface Transaction {
   deal_type?: string;
   notional: string;
   policy_no?: string | null;
+  policy_date?: string | null;
+  effective_date?: string | null;
   currency: string;
   status: string;
   trade_date: string;

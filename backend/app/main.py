@@ -84,6 +84,11 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE transactions ADD COLUMN locked_base_rate NUMERIC(6,4)")
     if "locked_year_commissions" not in cols("transactions"):
         ddl.append(f"ALTER TABLE transactions ADD COLUMN locked_year_commissions {json_type}")
+    # Insurance policy dates on transactions.
+    if "policy_date" not in cols("transactions") and "transactions" in insp.get_table_names():
+        ddl.append("ALTER TABLE transactions ADD COLUMN policy_date DATE")
+    if "effective_date" not in cols("transactions") and "transactions" in insp.get_table_names():
+        ddl.append("ALTER TABLE transactions ADD COLUMN effective_date DATE")
     # Training: per-company visibility + per-file metadata (multi-file support).
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")

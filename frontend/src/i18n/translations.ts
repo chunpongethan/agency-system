@@ -382,6 +382,8 @@ export const translations: Record<string, Translation> = {
   "newTxn.selectProduct": { "zh-Hant": "選擇產品…", en: "Select a product…" },
   "newTxn.currency": { "zh-Hant": "貨幣", en: "Currency" },
   "newTxn.policyNo": { "zh-Hant": "保單號碼", en: "Policy No." },
+  "newTxn.policyDate": { "zh-Hant": "保單日期", en: "Policy date" },
+  "newTxn.effectiveDate": { "zh-Hant": "生效日期", en: "Effective date" },
   "newTxn.insuranceDetails": { "zh-Hant": "保險產品詳情", en: "Insurance product details" },
   "newTxn.adminReadonly": { "zh-Hant": "由管理員維護 · 唯讀", en: "maintained by admin · read-only" },
   "newTxn.paymentTenor": { "zh-Hant": "供款年期", en: "Payment tenor" },
