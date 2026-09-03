@@ -67,6 +67,8 @@ export default function NewTransaction() {
   // For a 直客 deal only 直客-flagged agents may be assigned to the three roles;
   // a 代理 deal may assign any active agent.
   const roleAgents = isDirectClient ? dcAgents : closerOptions;
+  // The closing agent (the "closer") must be a Closer-flagged agent.
+  const closingAgents = roleAgents.filter((a) => a.is_closer);
   const overridePayload = () =>
     overrides.filter((o) => o.agent_id && o.pct).map((o) => ({ agent_id: Number(o.agent_id), pct: o.pct }));
   // Manual override levels are honoured for both deal types; a 代理 deal with an
@@ -240,10 +242,13 @@ export default function NewTransaction() {
           <select value={form.agent_id} required
             onChange={(e) => setForm({ ...form, agent_id: e.target.value, client_id: "" })}>
             <option value="">{t("newTxn.selectAgent")}</option>
-            {roleAgents.map((a) => (
+            {closingAgents.map((a) => (
               <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>
             ))}
           </select>
+          {closingAgents.length === 0 && (
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("newTxn.noClosers")}</div>
+          )}
 
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid var(--line)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>

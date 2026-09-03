@@ -24,7 +24,7 @@ export default function AdminAgents() {
   const [agentForm, setAgentForm] = useState({
     code: "", name: "", email: "", upline_id: "", unit_code: "", wecom_external_userid: "",
     title: "business_manager" as Title, role: "agent" as Role, password: "demo1234",
-    direct_client: false,
+    direct_client: false, is_closer: false,
   });
   const [agentErr, setAgentErr] = useState<string | null>(null);
   const [agentMsg, setAgentMsg] = useState<string | null>(null);
@@ -42,6 +42,7 @@ export default function AdminAgents() {
         unit_code: agentForm.unit_code || null,
         wecom_external_userid: agentForm.wecom_external_userid || null,
         direct_client: agentForm.direct_client,
+        is_closer: agentForm.is_closer,
         password: agentForm.password || undefined,
       }),
     onSuccess: (a) => {
@@ -56,7 +57,7 @@ export default function AdminAgents() {
 
   // --- Edit agent (the 職級/title is changed here, not inline in the table) ---
   const [editId, setEditId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", wecom_external_userid: "", password: "", direct_client: false });
+  const [editForm, setEditForm] = useState({ name: "", email: "", role: "agent" as Role, title: "", unit_code: "", wecom_external_userid: "", password: "", direct_client: false, is_closer: false });
   const [editErr, setEditErr] = useState<string | null>(null);
   const updateAgent = useMutation({
     mutationFn: () =>
@@ -66,6 +67,7 @@ export default function AdminAgents() {
         unit_code: editForm.unit_code || null,
         wecom_external_userid: editForm.wecom_external_userid || null,
         direct_client: editForm.direct_client,
+        is_closer: editForm.is_closer,
         password: editForm.password || undefined,
       }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["agents"] }); setEditId(null); setEditErr(null); },
@@ -83,7 +85,7 @@ export default function AdminAgents() {
 
   function startEdit(a: Agent) {
     setEditId(a.id);
-    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", wecom_external_userid: a.wecom_external_userid ?? "", password: "", direct_client: a.direct_client });
+    setEditForm({ name: a.name, email: a.email, role: a.role, title: a.title ?? "", unit_code: a.unit_code ?? "", wecom_external_userid: a.wecom_external_userid ?? "", password: "", direct_client: a.direct_client, is_closer: a.is_closer });
     setEditErr(null);
   }
   function terminate(a: Agent) {
@@ -177,7 +179,12 @@ export default function AdminAgents() {
                       : <span className="muted">—</span>}
                   </td>
                   <td className="muted">{a.unit_code ?? "—"}</td>
-                  <td>{a.direct_client ? <span className="badge unit">直客</span> : <span className="muted">—</span>}</td>
+                  <td>
+                    {a.direct_client && <span className="badge unit">直客</span>}
+                    {a.direct_client && a.is_closer && " "}
+                    {a.is_closer && <span className="badge title">{t("admin.agents.closerBadge")}</span>}
+                    {!a.direct_client && !a.is_closer && <span className="muted">—</span>}
+                  </td>
                   <td className="muted">{upline ? `${upline.name} (${upline.code})` : "—"}</td>
                   <td>
                     <span className={`badge ${a.is_active ? "settled" : "cancelled"}`}>
@@ -265,6 +272,9 @@ export default function AdminAgents() {
             <div><label>{t("admin.agents.directClient")}</label>
               <input type="checkbox" checked={editForm.direct_client} style={{ width: "auto" }}
                 onChange={(e) => setEditForm({ ...editForm, direct_client: e.target.checked })} /></div>
+            <div><label>{t("admin.agents.closer")}</label>
+              <input type="checkbox" checked={editForm.is_closer} style={{ width: "auto" }}
+                onChange={(e) => setEditForm({ ...editForm, is_closer: e.target.checked })} /></div>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             {t("admin.agents.editNote")}
@@ -335,6 +345,9 @@ export default function AdminAgents() {
           <div><label>{t("admin.agents.directClient")}</label>
             <input type="checkbox" checked={agentForm.direct_client} style={{ width: "auto" }}
               onChange={(e) => setAgentForm({ ...agentForm, direct_client: e.target.checked })} /></div>
+          <div><label>{t("admin.agents.closer")}</label>
+            <input type="checkbox" checked={agentForm.is_closer} style={{ width: "auto" }}
+              onChange={(e) => setAgentForm({ ...agentForm, is_closer: e.target.checked })} /></div>
           <div className="shrink" style={{ alignSelf: "flex-end" }}>
             <button className="primary" type="submit" disabled={createAgent.isPending}>
               {createAgent.isPending ? t("admin.agents.creating") : t("admin.agents.create")}

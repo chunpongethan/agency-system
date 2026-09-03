@@ -100,6 +100,8 @@ export const translations: Record<string, Translation> = {
   "reset.toLogin": { "zh-Hant": "前往登入", en: "Go to sign in" },
   "admin.agents.newPassword": { "zh-Hant": "新密碼（留空 = 不變）", en: "New password (blank = keep)" },
   "admin.agents.directClient": { "zh-Hant": "直客", en: "直客 (direct client)" },
+  "admin.agents.closer": { "zh-Hant": "成交（Closer）", en: "Closer" },
+  "admin.agents.closerBadge": { "zh-Hant": "成交", en: "Closer" },
   "admin.agents.thDirectClient": { "zh-Hant": "直客", en: "直客" },
 
   // --- Common ----------------------------------------------------------------
@@ -232,6 +234,8 @@ export const translations: Record<string, Translation> = {
   "error.wecom_send_failed": { "zh-Hant": "企業微信發送失敗", en: "WeChat (WeCom) send failed" },
   "error.empty_message": { "zh-Hant": "訊息內容不可為空", en: "Message text is required" },
   "error.no_recipients": { "zh-Hant": "請至少選擇一位代理人", en: "Select at least one agent" },
+  "error.not_closer": { "zh-Hant": "所選代理未被標記為「成交（Closer）」", en: "The selected agent is not Closer-eligible" },
+  "error.not_assignable": { "zh-Hant": "您只能指派自己或您的下線為招攬 / 業務拓展", en: "You may only assign yourself or your downline as Lead / SDR" },
   "error.file_too_large": { "zh-Hant": "檔案過大，超出上限", en: "File exceeds the size limit" },
   "error.empty_file": { "zh-Hant": "檔案是空的", en: "The file is empty" },
   "error.validation": { "zh-Hant": "輸入的資料無效", en: "Invalid input" },
@@ -365,6 +369,7 @@ export const translations: Record<string, Translation> = {
   "newTxn.pctSalesDev": { "zh-Hant": "Sales Dev %", en: "Sales Dev %" },
   "newTxn.pctClosing": { "zh-Hant": "Closing %", en: "Closing %" },
   "newTxn.selectAgent": { "zh-Hant": "選擇代理…", en: "Select an agent…" },
+  "newTxn.noClosers": { "zh-Hant": "尚未有成交代理 — 請先在「代理人」頁面標記「成交」。", en: "No Closer-eligible agents — flag agents as Closer on the Agents page first." },
   "newTxn.client": { "zh-Hant": "客戶", en: "Client" },
   "newTxn.newClient": { "zh-Hant": "新客戶", en: "New client" },
   "newTxn.newClientNote": { "zh-Hant": "此新客戶將分配給 Lead 代理：{name}", en: "This new client will be assigned to the Lead agent: {name}" },
@@ -707,6 +712,7 @@ export const translations: Record<string, Translation> = {
   "leads.closerAgent": { "zh-Hant": "成交（Closer）", en: "Closer" },
   "leads.linkClient": { "zh-Hant": "連結客戶（可選）", en: "Link client (optional)" },
   "leads.noClient": { "zh-Hant": "（不連結）", en: "(none)" },
+  "leads.noClosers": { "zh-Hant": "尚未有成交代理 — 請管理員在「代理人」頁面標記「成交」。", en: "No Closer-eligible agents — an admin can flag agents as Closer on the Agents page." },
   "leads.notes": { "zh-Hant": "備註", en: "Remarks" },
   "leads.followUp": { "zh-Hant": "跟進事項", en: "Follow-up" },
   "leads.caseTypes": { "zh-Hant": "案件類型（可多選）", en: "Case type (multiple)" },

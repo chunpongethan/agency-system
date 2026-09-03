@@ -69,6 +69,7 @@ class AgentIn(BaseModel):
     unit_code: str | None = None
     wecom_external_userid: str | None = None
     direct_client: bool = False
+    is_closer: bool = False
     password: str | None = None
 
 
@@ -81,6 +82,7 @@ class AgentUpdate(BaseModel):
     role: str | None = None
     is_active: bool | None = None
     direct_client: bool | None = None
+    is_closer: bool | None = None
     password: str | None = None  # admin manual reset; blank = keep current
 
 
@@ -98,6 +100,7 @@ class AgentOut(BaseModel):
     unit_code: str | None = None
     wecom_external_userid: str | None = None
     direct_client: bool = False
+    is_closer: bool = False
     is_active: bool
     last_login_at: datetime | None = None
 

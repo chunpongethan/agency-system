@@ -34,6 +34,7 @@ export interface Agent {
   unit_code: string | null;
   wecom_external_userid: string | null;
   direct_client: boolean;
+  is_closer: boolean;
   is_active: boolean;
   last_login_at: string | null;
 }
@@ -119,6 +120,7 @@ export interface AgentDirectory {
   name: string;
   level: number;
   unit_code: string | null;
+  is_closer: boolean;
 }
 
 // Enriched case row returned by GET /cases (for the pipeline board).

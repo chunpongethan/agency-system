@@ -130,6 +130,9 @@ class Agent(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     # "直客" eligible: may receive manually-assigned overrides on direct-client deals.
     direct_client: Mapped[bool] = mapped_column(Boolean, default=False)
+    # "成交" (Closer) eligible: may be assigned as the closer on a case / the closing
+    # agent on a transaction. Only Closer-flagged agents appear in those pickers.
+    is_closer: Mapped[bool] = mapped_column(Boolean, default=False)
     joined_at: Mapped[date] = mapped_column(Date, default=date.today)
 
     # --- Auth (Phase 2). password_hash lives on the agent; role drives scoping. ---

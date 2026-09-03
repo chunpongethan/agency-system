@@ -69,6 +69,9 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE agents ADD COLUMN last_login_at TIMESTAMP")
     if "wecom_external_userid" not in cols("agents") and "agents" in insp.get_table_names():
         ddl.append("ALTER TABLE agents ADD COLUMN wecom_external_userid VARCHAR(64)")
+    if "is_closer" not in cols("agents") and "agents" in insp.get_table_names():
+        bool_false = "false" if engine.dialect.name == "postgresql" else "0"
+        ddl.append(f"ALTER TABLE agents ADD COLUMN is_closer BOOLEAN DEFAULT {bool_false}")
     # Tenant company column on the agent + the four global config/aggregate tables.
     agents_got_company = "company" not in cols("agents")
     for table in ("agents", "override_rules", "title_targets", "payouts", "periods"):
@@ -556,17 +559,33 @@ def list_agents(db: Session = Depends(get_db),
 @app.get("/agents/directory")
 def agents_directory(db: Session = Depends(get_db),
                      current: Agent = Depends(get_current_agent)):
-    """Minimal roster of active, non-admin agents for assignment selectors (e.g.
-    picking the Lead / SDR / Closer on a case). Any authenticated user may read
-    it — GET /agents is scoped to self for a plain agent, so it can't populate
-    cross-agent pickers."""
+    """Minimal roster of active, non-admin agents for company-wide selectors (e.g.
+    picking the Closer on a case — the closer pool is company-wide). Any
+    authenticated user may read it — GET /agents is scoped to self for a plain
+    agent, so it can't populate cross-agent pickers."""
     rows = db.execute(
         select(Agent).where(Agent.is_active.is_(True), Agent.role != Role.ADMIN,
                             Agent.company == current.company)
         .order_by(Agent.level, Agent.code)
     ).scalars().all()
-    return [{"id": a.id, "code": a.code, "name": a.name,
-             "level": a.level, "unit_code": a.unit_code} for a in rows]
+    return [{"id": a.id, "code": a.code, "name": a.name, "level": a.level,
+             "unit_code": a.unit_code, "is_closer": a.is_closer} for a in rows]
+
+
+@app.get("/agents/assignable")
+def agents_assignable(db: Session = Depends(get_db),
+                      current: Agent = Depends(get_current_agent)):
+    """Agents the caller may assign as Lead / SDR on a case: an agent may pick only
+    themselves, a manager their whole downline (self included), an admin anyone in
+    the company. (The Closer picker is separate and company-wide — see /directory.)"""
+    ids = scoping.visible_agent_ids(db, current)
+    rows = db.execute(
+        select(Agent).where(Agent.id.in_(ids), Agent.is_active.is_(True),
+                            Agent.role != Role.ADMIN)
+        .order_by(Agent.level, Agent.code)
+    ).scalars().all()
+    return [{"id": a.id, "code": a.code, "name": a.name, "level": a.level,
+             "unit_code": a.unit_code, "is_closer": a.is_closer} for a in rows]
 
 
 @app.patch("/agents/{agent_id}", response_model=schemas.AgentOut)
@@ -1378,6 +1397,27 @@ def _validate_case_refs(db: Session, agent_ids, client_id) -> None:
         raise HTTPException(404, "client not found")
 
 
+def _validate_case_assignees(db: Session, current: Agent,
+                             lead_id: int | None, sdr_id: int | None,
+                             closer_id: int | None) -> None:
+    """Enforce assignment rules for a case. Lead/SDR must be within the caller's
+    production scope (an agent → self only; a manager → self + downline; an admin →
+    anyone in the company). The Closer must be a Closer-flagged agent in the same
+    company (the closer pool is company-wide, not scope-restricted). Only provided
+    (non-None) ids are checked, so partial updates validate just what changes."""
+    if not scoping.is_admin(current):
+        visible = scoping.visible_agent_ids(db, current)
+        for aid in (lead_id, sdr_id):
+            if aid is not None and aid not in visible:
+                raise err(403, "not_assignable",
+                          "you may only assign yourself or your downline as Lead / SDR")
+    if closer_id is not None:
+        closer = db.get(Agent, closer_id)
+        if closer is None or closer.company != current.company or not closer.is_closer:
+            raise err(400, "not_closer",
+                      "the selected closer must be a Closer-eligible agent")
+
+
 @app.get("/cases")
 def list_cases(stage: str | None = None, outcome: str | None = None,
                agent_id: int | None = None, q: str | None = None,
@@ -1446,9 +1486,11 @@ def create_case(payload: schemas.CaseIn, db: Session = Depends(get_db),
     _validate_case_refs(
         db, (payload.lead_agent_id, payload.sdr_agent_id, payload.closer_agent_id),
         payload.client_id)
-    assigned = {payload.lead_agent_id, payload.sdr_agent_id, payload.closer_agent_id}
-    if not scoping.is_admin(current) and current.id not in assigned:
-        raise err(403, "forbidden", "you may only create cases you are assigned to")
+    # Lead/SDR must be within the caller's scope (self / self+downline / all); the
+    # closer must be a Closer-flagged agent. A required, in-scope Lead already ties
+    # the case to the caller's team, so no separate "must be an assignee" check.
+    _validate_case_assignees(db, current, payload.lead_agent_id,
+                             payload.sdr_agent_id, payload.closer_agent_id)
     try:
         stage = PipelineStage(payload.stage or "lead")
     except ValueError:
@@ -1583,6 +1625,8 @@ def update_case(case_id: int, payload: schemas.CaseUpdate,
     _validate_case_refs(
         db, (data.get("lead_agent_id"), data.get("sdr_agent_id"), data.get("closer_agent_id")),
         data.get("client_id"))
+    _validate_case_assignees(db, current, data.get("lead_agent_id"),
+                             data.get("sdr_agent_id"), data.get("closer_agent_id"))
     if data.get("stage") is not None:
         try:
             data["stage"] = PipelineStage(data["stage"])

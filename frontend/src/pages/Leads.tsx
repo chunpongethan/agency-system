@@ -45,7 +45,11 @@ export default function Leads() {
       agent_id: mineOnly ? me!.id : undefined,
     }),
   });
+  // Closer pool is company-wide (directory, filtered to is_closer); Lead/SDR are
+  // scoped to who the caller may assign (self / self+downline / all).
   const directory = useQuery({ queryKey: ["agentDirectory"], queryFn: () => api.agentDirectory() });
+  const assignable = useQuery({ queryKey: ["agentAssignable"], queryFn: () => api.agentsAssignable() });
+  const closers = (directory.data ?? []).filter((a) => a.is_closer);
   const clients = useQuery({ queryKey: ["clients"], queryFn: () => api.clients() });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["cases"] });
@@ -271,16 +275,21 @@ export default function Leads() {
                     <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{c.ref}</span>
                   </div>
                   {!isOpen && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4, alignItems: "center" }}>
-                      {c.expected_afyp != null && (
-                        <span className="muted" style={{ fontSize: 12 }}>{moneyFixed(c.expected_afyp, "HKD")}</span>
-                      )}
-                      {c.case_types && c.case_types.length > 0 && (
-                        <span className="badge dc">{caseTypeLabel(c.case_types[0])}{c.case_types.length > 1 ? ` +${c.case_types.length - 1}` : ""}</span>
-                      )}
-                      {c.outcome !== "open" && (
-                        <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
-                      )}
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ fontSize: 12 }}>
+                        <span className="muted">{t("leads.leadAgent")}：</span>{c.lead_name}
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2, alignItems: "center" }}>
+                        {c.expected_afyp != null && (
+                          <span className="muted" style={{ fontSize: 12 }}>{moneyFixed(c.expected_afyp, "HKD")}</span>
+                        )}
+                        {c.case_types && c.case_types.length > 0 && (
+                          <span className="badge dc">{caseTypeLabel(c.case_types[0])}{c.case_types.length > 1 ? ` +${c.case_types.length - 1}` : ""}</span>
+                        )}
+                        {c.outcome !== "open" && (
+                          <span className={`badge ${c.outcome === "won" ? "settled" : "cancelled"}`}>{outcomeLabel(c.outcome)}</span>
+                        )}
+                      </div>
                     </div>
                   )}
                   {isOpen && (<>
@@ -431,18 +440,20 @@ export default function Leads() {
               <select value={form.lead_agent_id} required
                 onChange={(e) => setForm({ ...form, lead_agent_id: e.target.value })}>
                 <option value="">{t("leads.selectAgent")}</option>
-                {(directory.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
+                {(assignable.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
               </select></div>
             <div><label>{t("leads.sdrAgent")}</label>
               <select value={form.sdr_agent_id} onChange={(e) => setForm({ ...form, sdr_agent_id: e.target.value })}>
                 <option value="">—</option>
-                {(directory.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
+                {(assignable.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
               </select></div>
             <div><label>{t("leads.closerAgent")}</label>
               <select value={form.closer_agent_id} onChange={(e) => setForm({ ...form, closer_agent_id: e.target.value })}>
                 <option value="">—</option>
-                {(directory.data ?? []).map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
-              </select></div>
+                {closers.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.code}) · L{a.level}</option>)}
+              </select>
+              {closers.length === 0 && <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{t("leads.noClosers")}</div>}
+            </div>
           </div>
           <div className="row">
             <div><label>{t("common.status")}</label>
