@@ -81,6 +81,13 @@ export default function Transactions() {
                       {tx.product_type && <span className="badge role" style={{ marginRight: 6 }}>{productTypeLabel(tx.product_type)}</span>}
                       {productDetails(p)}
                     </div>
+                    {(tx.policy_no || tx.policy_date || tx.effective_date) && (
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        {tx.policy_no && <span>{t("newTxn.policyNo")}: {tx.policy_no}</span>}
+                        {tx.policy_date && <span>{tx.policy_no ? " · " : ""}{t("newTxn.policyDate")}: {tx.policy_date}</span>}
+                        {tx.effective_date && <span>{(tx.policy_no || tx.policy_date) ? " · " : ""}{t("newTxn.effectiveDate")}: {tx.effective_date}</span>}
+                      </div>
+                    )}
                   </td>
                   <td className="num" data-label={t("common.notional")}>{money(tx.notional, tx.currency)}</td>
                   <td className="num" data-label={t("txn.lockedRate")}>

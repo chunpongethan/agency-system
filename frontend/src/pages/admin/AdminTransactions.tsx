@@ -82,7 +82,7 @@ export default function AdminTransactions() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editRef, setEditRef] = useState("");
   const [editForm, setEditForm] = useState({
-    notional: "", trade_date: "", policy_no: "", product_id: "",
+    notional: "", trade_date: "", policy_no: "", policy_date: "", effective_date: "", product_id: "",
     agent_id: "",            // closing agent
     lead_agent_id: "", sales_dev_agent_id: "",
     lead_pct: "0", sales_dev_pct: "0", closing_pct: "100",
@@ -129,6 +129,8 @@ export default function AdminTransactions() {
       notional: editForm.notional,
       trade_date: editForm.trade_date,
       policy_no: editForm.policy_no || null,
+      policy_date: editForm.policy_date || null,
+      effective_date: editForm.effective_date || null,
       product_id: Number(editForm.product_id),
       agent_id: Number(editForm.agent_id),
       lead_agent_id: editForm.lead_agent_id ? Number(editForm.lead_agent_id) : null,
@@ -153,6 +155,7 @@ export default function AdminTransactions() {
     setEditRef(r.ref);
     setEditForm({
       notional: r.notional, trade_date: r.trade_date, policy_no: r.policy_no ?? "",
+      policy_date: r.policy_date ?? "", effective_date: r.effective_date ?? "",
       product_id: String(r.product_id), agent_id: String(r.agent_id),
       lead_agent_id: r.lead_agent_id ? String(r.lead_agent_id) : "",
       sales_dev_agent_id: r.sales_dev_agent_id ? String(r.sales_dev_agent_id) : "",
@@ -242,6 +245,12 @@ export default function AdminTransactions() {
                   </td>
                   <td>{r.product_name}<br />
                     <span className="muted" style={{ fontSize: 12 }}>{productTypeLabel(r.product_type)}</span>
+                    {(r.policy_date || r.effective_date) && (
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        {r.policy_date && <span>{t("newTxn.policyDate")}: {r.policy_date}</span>}
+                        {r.effective_date && <span>{r.policy_date ? " · " : ""}{t("newTxn.effectiveDate")}: {r.effective_date}</span>}
+                      </div>
+                    )}
                   </td>
                   <td><RoleAgent name={r.lead_name} code={r.lead_code} pct={r.lead_pct} /></td>
                   <td><RoleAgent name={r.sdr_name} code={r.sdr_code} pct={r.sales_dev_pct} /></td>
@@ -432,6 +441,12 @@ export default function AdminTransactions() {
             <div><label>{t("adminTxn.policyNo")}</label>
               <input value={editForm.policy_no}
                 onChange={(e) => setEditForm({ ...editForm, policy_no: e.target.value })} /></div>
+            <div><label>{t("newTxn.policyDate")}</label>
+              <input type="date" value={editForm.policy_date}
+                onChange={(e) => setEditForm({ ...editForm, policy_date: e.target.value })} /></div>
+            <div><label>{t("newTxn.effectiveDate")}</label>
+              <input type="date" value={editForm.effective_date}
+                onChange={(e) => setEditForm({ ...editForm, effective_date: e.target.value })} /></div>
           </div>
 
           <div style={{ marginTop: 10, display: "flex", gap: 8 }}>

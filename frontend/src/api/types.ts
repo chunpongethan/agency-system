@@ -224,6 +224,8 @@ export interface AdminTxnRow {
   notional: string;
   currency: string;
   policy_no?: string | null;
+  policy_date?: string | null;
+  effective_date?: string | null;
   client_id: number;
   client_name: string;
   client_ref: string;
