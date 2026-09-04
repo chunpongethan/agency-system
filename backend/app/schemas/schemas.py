@@ -144,6 +144,8 @@ class CaseIn(BaseModel):
     notes: str | None = None
     client_id: int | None = None
     follow_up: str | None = None
+    follow_up_deadline: date | None = None
+    follow_up_urgent: bool = False
     case_types: list[str] | None = None
     expected_afyp: Decimal | None = None
     lead_agent_id: int
@@ -159,6 +161,8 @@ class CaseUpdate(BaseModel):
     notes: str | None = None
     client_id: int | None = None
     follow_up: str | None = None
+    follow_up_deadline: date | None = None
+    follow_up_urgent: bool | None = None
     case_types: list[str] | None = None
     expected_afyp: Decimal | None = None
     lead_agent_id: int | None = None
@@ -178,6 +182,8 @@ class CaseOut(BaseModel):
     notes: str | None = None
     client_id: int | None = None
     follow_up: str | None = None
+    follow_up_deadline: date | None = None
+    follow_up_urgent: bool = False
     case_types: list[str] | None = None
     expected_afyp: Decimal | None = None
     lead_agent_id: int

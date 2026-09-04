@@ -150,6 +150,9 @@ export const api = {
     request<CaseRow>(`/cases/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteCase: (id: number) =>
     request<{ deleted: number }>(`/cases/${id}`, { method: "DELETE" }),
+  remindCase: (id: number) =>
+    request<{ sent: number[]; skipped_no_wechat: number[]; error?: string }>(
+      `/cases/${id}/remind`, { method: "POST" }),
   // Batch lead import: download the .xlsx template, then upload a filled workbook.
   caseImportTemplatePath: () => "/cases/import-template",
   importCases: (file: File) => {

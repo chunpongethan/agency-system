@@ -5,12 +5,13 @@ import { api, downloadFile, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { stageLabel, outcomeLabel, caseTypeLabel, LEAD_STAGES, CASE_TYPES } from "../i18n/labels";
-import { moneyFixed } from "../lib/format";
+import { moneyFixed, dateShort } from "../lib/format";
 import StageBadge from "../components/StageBadge";
 import type { CaseRow, CaseImportResult } from "../api/types";
 
 const BLANK = {
   prospect_name: "", email: "", phone: "", follow_up: "", notes: "",
+  follow_up_deadline: "", follow_up_urgent: false,
   client_id: "", lead_agent_id: "", sdr_agent_id: "", closer_agent_id: "", stage: "lead",
   case_types: [] as string[], expected_afyp: "",
 };
@@ -95,6 +96,8 @@ export default function Leads() {
         email: form.email || undefined,
         phone: form.phone || undefined,
         follow_up: form.follow_up || null,
+        follow_up_deadline: form.follow_up_deadline || null,
+        follow_up_urgent: form.follow_up_urgent,
         notes: form.notes || undefined,
         client_id: form.client_id ? Number(form.client_id) : null,
         case_types: form.case_types,
@@ -120,6 +123,7 @@ export default function Leads() {
     setForm({
       prospect_name: c.prospect_name, email: c.email ?? "", phone: c.phone ?? "",
       follow_up: c.follow_up ?? "", notes: c.notes ?? "",
+      follow_up_deadline: c.follow_up_deadline ?? "", follow_up_urgent: c.follow_up_urgent,
       client_id: c.client_id ? String(c.client_id) : "",
       case_types: c.case_types ?? [],
       expected_afyp: c.expected_afyp != null ? String(c.expected_afyp) : "",
@@ -148,6 +152,45 @@ export default function Leads() {
   }, [cases.data, q]);
 
   const byStage = (stage: string) => filtered.filter((c) => c.stage === stage);
+
+  // Follow-up deadline traffic light: red = overdue, yellow = within 3 days.
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  function deadlineStatus(c: CaseRow): "overdue" | "soon" | "none" {
+    if (!c.follow_up_deadline) return "none";
+    const d = new Date(c.follow_up_deadline + "T00:00:00");
+    const diffDays = Math.round((d.getTime() - midnight.getTime()) / 86400000);
+    if (diffDays < 0) return "overdue";
+    if (diffDays <= 3) return "soon";
+    return "none";
+  }
+  function lightColor(s: "overdue" | "soon" | "none"): string {
+    return s === "overdue" ? "var(--bad)" : s === "soon" ? "var(--warn)" : "transparent";
+  }
+
+  // Reminder board: open cases that are urgent or near/over their deadline,
+  // overdue first, then soonest.
+  const reminderCases = useMemo(() => {
+    const rank = (c: CaseRow) => {
+      const s = deadlineStatus(c);
+      return s === "overdue" ? 0 : s === "soon" ? 1 : 2;
+    };
+    return filtered
+      .filter((c) => c.outcome === "open" && (c.follow_up_urgent || deadlineStatus(c) !== "none"))
+      .sort((a, b) => (rank(a) - rank(b))
+        || (a.follow_up_deadline ?? "9999-12-31").localeCompare(b.follow_up_deadline ?? "9999-12-31"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered]);
+
+  const [reminderMsg, setReminderMsg] = useState<string | null>(null);
+  const remind = useMutation({
+    mutationFn: (id: number) => api.remindCase(id),
+    onSuccess: (r) => {
+      setReminderMsg(t("leads.reminderResult", { sent: r.sent.length, skipped: r.skipped_no_wechat.length }));
+      setError(null);
+      setTimeout(() => setReminderMsg(null), 6000);
+    },
+    onError: (e) => setError(errorText(e, t) || t("leads.reminderFailed")),
+  });
 
   function onDrop(e: DragEvent, stage: string) {
     e.preventDefault();
@@ -230,7 +273,43 @@ export default function Leads() {
           </span>
         </div>
         {error && <div className="error" style={{ marginTop: 10 }}>{error}</div>}
+        {reminderMsg && <div className="success" style={{ marginTop: 10 }}>{reminderMsg}</div>}
       </div>
+
+      {view === "board" && reminderCases.length > 0 && (
+        <div className="card" style={{ borderLeft: "3px solid var(--warn)" }}>
+          <h2 style={{ margin: "0 0 8px", fontSize: 15 }}>
+            {t("leads.reminders")} <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>({reminderCases.length})</span>
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {reminderCases.map((c) => {
+              const st = deadlineStatus(c);
+              return (
+                <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
+                    fontSize: 13, borderBottom: "1px solid var(--line)", paddingBottom: 6 }}>
+                  <span title={st} style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%",
+                    background: lightColor(st), border: st === "none" ? "1px solid var(--line)" : "none", flex: "none" }} />
+                  <strong>{c.prospect_name}</strong>
+                  {c.follow_up_urgent && <span className="badge cancelled">{t("leads.urgent")}</span>}
+                  {c.follow_up_deadline && (
+                    <span className={st === "overdue" ? "" : "muted"} style={st === "overdue" ? { color: "var(--bad)" } : undefined}>
+                      {st === "overdue" ? t("leads.overdue") : t("leads.deadline")}: {dateShort(c.follow_up_deadline)}
+                    </span>
+                  )}
+                  {c.follow_up && <span className="muted" style={{ flex: 1, minWidth: 120 }}>{c.follow_up}</span>}
+                  <span className="muted" style={{ fontSize: 11 }}>
+                    {[c.lead_name, c.sdr_name, c.closer_name].filter(Boolean).join(" / ")}
+                  </span>
+                  {canEdit(c) && (
+                    <button className="ghost" style={{ padding: "2px 8px" }} disabled={remind.isPending}
+                      onClick={() => remind.mutate(c.id)}>{t("leads.sendReminder")}</button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {view === "board" && (
       <>
@@ -270,6 +349,10 @@ export default function Leads() {
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleExpand(c.id); } }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                       <span className="lead-caret muted" aria-hidden>{isOpen ? "▾" : "▸"}</span>
+                      {(deadlineStatus(c) !== "none" || c.follow_up_urgent) && (
+                        <span title={deadlineStatus(c)} style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%",
+                          flex: "none", background: deadlineStatus(c) !== "none" ? lightColor(deadlineStatus(c)) : "var(--warn)" }} />
+                      )}
                       <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.prospect_name}</strong>
                     </span>
                     <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{c.ref}</span>
@@ -280,6 +363,12 @@ export default function Leads() {
                         <span className="muted">{t("leads.leadAgent")}：</span>{c.lead_name}
                       </div>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 2, alignItems: "center" }}>
+                        {c.follow_up_urgent && <span className="badge cancelled">{t("leads.urgent")}</span>}
+                        {c.follow_up_deadline && (
+                          <span className="badge pending">
+                            {deadlineStatus(c) === "overdue" ? t("leads.overdue") : t("leads.deadline")}: {dateShort(c.follow_up_deadline)}
+                          </span>
+                        )}
                         {c.expected_afyp != null && (
                           <span className="muted" style={{ fontSize: 12 }}>{moneyFixed(c.expected_afyp, "HKD")}</span>
                         )}
@@ -319,6 +408,20 @@ export default function Leads() {
                   {c.follow_up && (
                     <div style={{ fontSize: 12, marginTop: 6, whiteSpace: "pre-wrap" }}>
                       <span className="muted">{t("leads.followUp")}：</span>{c.follow_up}
+                    </div>
+                  )}
+                  {(c.follow_up_deadline || c.follow_up_urgent) && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6, alignItems: "center" }}>
+                      {c.follow_up_urgent && <span className="badge cancelled">{t("leads.urgent")}</span>}
+                      {c.follow_up_deadline && (
+                        <span className="badge pending">
+                          {deadlineStatus(c) === "overdue" ? t("leads.overdue") : t("leads.deadline")}: {dateShort(c.follow_up_deadline)}
+                        </span>
+                      )}
+                      {editable && (
+                        <button className="ghost" style={{ padding: "2px 8px" }} disabled={remind.isPending}
+                          onClick={(e) => { e.stopPropagation(); remind.mutate(c.id); }}>{t("leads.sendReminder")}</button>
+                      )}
                     </div>
                   )}
                   {editable && (
@@ -487,6 +590,14 @@ export default function Leads() {
             onChange={(e) => setForm({ ...form, expected_afyp: e.target.value })} />
           <label>{t("leads.followUp")}</label>
           <textarea rows={2} value={form.follow_up} onChange={(e) => setForm({ ...form, follow_up: e.target.value })} />
+          <div className="row">
+            <div><label>{t("leads.deadline")}</label>
+              <input type="date" value={form.follow_up_deadline}
+                onChange={(e) => setForm({ ...form, follow_up_deadline: e.target.value })} /></div>
+            <div><label>{t("leads.urgent")}</label>
+              <input type="checkbox" checked={form.follow_up_urgent} style={{ width: "auto" }}
+                onChange={(e) => setForm({ ...form, follow_up_urgent: e.target.checked })} /></div>
+          </div>
           <label>{t("leads.notes")}</label>
           <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           <div style={{ marginTop: 12, display: "flex", gap: 8 }}>

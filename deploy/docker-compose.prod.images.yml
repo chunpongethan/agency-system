@@ -55,6 +55,8 @@ services:
       WECOM_CORP_ID: ${WECOM_CORP_ID:-}
       WECOM_CONTACT_SECRET: ${WECOM_CONTACT_SECRET:-}
       WECOM_SENDER_USERID: ${WECOM_SENDER_USERID:-}
+      WECOM_REMINDER_HOUR: ${WECOM_REMINDER_HOUR:-9}
+      DISABLE_SCHEDULER: ${DISABLE_SCHEDULER:-}
     depends_on:
       db:
         condition: service_healthy

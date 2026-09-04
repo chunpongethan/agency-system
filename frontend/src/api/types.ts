@@ -139,6 +139,8 @@ export interface CaseRow {
   phone: string | null;
   notes: string | null;
   follow_up: string | null;
+  follow_up_deadline: string | null;
+  follow_up_urgent: boolean;
   case_types: string[] | null;
   expected_afyp: number | null;
   stage: string;

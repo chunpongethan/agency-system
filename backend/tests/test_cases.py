@@ -115,6 +115,21 @@ def test_admin_sees_all_and_can_edit(client):
                         json={"stage": "m2"}).status_code == 200
 
 
+def test_follow_up_deadline_and_urgent_roundtrip(client):
+    ids = client._ids
+    ax = auth(client, "AX")
+    r = mk_case(client, ax, ids["ax"], follow_up="call back",
+                follow_up_deadline="2026-09-10", follow_up_urgent=True)
+    assert r.status_code == 200, r.text
+    cid = r.json()["id"]
+    row = next(c for c in client.get("/cases", headers=ax).json() if c["id"] == cid)
+    assert row["follow_up_deadline"] == "2026-09-10" and row["follow_up_urgent"] is True
+    # Clearing urgent via PATCH round-trips too.
+    client.patch(f"/cases/{cid}", headers=ax, json={"follow_up_urgent": False})
+    row2 = next(c for c in client.get("/cases", headers=ax).json() if c["id"] == cid)
+    assert row2["follow_up_urgent"] is False
+
+
 def test_stage_and_outcome_transitions(client):
     ids = client._ids
     ax = auth(client, "AX")

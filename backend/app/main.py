@@ -34,7 +34,7 @@ from app.security import (
 )
 from app.services import (
     commission_engine, reports, agent_service, scoping,
-    periods, payouts, exports, audit, mailer, wecom,
+    periods, payouts, exports, audit, mailer, wecom, reminders,
 )
 from app.services.sanitize import sanitize_html
 from app.services.zh_convert import to_traditional, convert_in
@@ -89,6 +89,13 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE transactions ADD COLUMN policy_date DATE")
     if "effective_date" not in cols("transactions") and "transactions" in insp.get_table_names():
         ddl.append("ALTER TABLE transactions ADD COLUMN effective_date DATE")
+    # Follow-up deadline + urgent flag on cases (kanban reminders).
+    if "cases" in insp.get_table_names():
+        if "follow_up_deadline" not in cols("cases"):
+            ddl.append("ALTER TABLE cases ADD COLUMN follow_up_deadline DATE")
+        if "follow_up_urgent" not in cols("cases"):
+            bool_false = "false" if engine.dialect.name == "postgresql" else "0"
+            ddl.append(f"ALTER TABLE cases ADD COLUMN follow_up_urgent BOOLEAN DEFAULT {bool_false}")
     # Training: per-company visibility + per-file metadata (multi-file support).
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
@@ -319,6 +326,15 @@ app.add_middleware(
 )
 
 bearer_scheme = HTTPBearer(auto_error=True)
+
+
+@app.on_event("startup")
+def _start_scheduler() -> None:
+    """Start the daily follow-up reminder scheduler (no-op if WeCom is unconfigured
+    or DISABLE_SCHEDULER is set). Runs only in the live server — pytest's TestClient
+    does not trigger startup events."""
+    from app.services import scheduler
+    scheduler.start()
 
 
 def get_db():
@@ -1512,6 +1528,7 @@ def list_cases(stage: str | None = None, outcome: str | None = None,
             "id": c.id, "ref": c.ref, "prospect_name": c.prospect_name,
             "email": c.email, "phone": c.phone, "notes": c.notes,
             "follow_up": c.follow_up, "case_types": c.case_types or [],
+            "follow_up_deadline": c.follow_up_deadline, "follow_up_urgent": c.follow_up_urgent,
             "expected_afyp": float(c.expected_afyp) if c.expected_afyp is not None else None,
             "stage": c.stage.value, "outcome": c.outcome.value,
             "client_id": c.client_id, "client_name": client_name,
@@ -1541,7 +1558,8 @@ def create_case(payload: schemas.CaseIn, db: Session = Depends(get_db),
     case = Case(
         ref=_next_case_ref(db), prospect_name=payload.prospect_name,
         email=payload.email, phone=payload.phone, notes=payload.notes,
-        follow_up=payload.follow_up, case_types=payload.case_types or None,
+        follow_up=payload.follow_up, follow_up_deadline=payload.follow_up_deadline,
+        follow_up_urgent=payload.follow_up_urgent, case_types=payload.case_types or None,
         expected_afyp=payload.expected_afyp,
         client_id=payload.client_id, lead_agent_id=payload.lead_agent_id,
         sdr_agent_id=payload.sdr_agent_id, closer_agent_id=payload.closer_agent_id,
@@ -1703,6 +1721,35 @@ def delete_case(case_id: int, db: Session = Depends(get_db),
                  before={"ref": case.ref, "prospect": case.prospect_name})
     db.delete(case); db.commit()
     return {"deleted": case_id}
+
+
+@app.post("/cases/reminders/run")
+def run_case_reminders(db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    """Admin: run the daily follow-up reminder digest now (force). For on-demand
+    sends / testing without waiting for the scheduled hour."""
+    if not wecom._enabled():
+        raise err(503, "wecom_not_configured",
+                  "WeChat messaging is not configured on the server")
+    return reminders.run_daily_reminders(db, force=True)
+
+
+@app.post("/cases/{case_id}/remind")
+def remind_case(case_id: int, db: Session = Depends(get_db),
+                current: Agent = Depends(get_current_agent)):
+    """Send this case's follow-up reminder to its Lead / SDR / Closer on WeChat.
+    Allowed for any assigned agent, their manager, or an admin."""
+    case = db.get(Case, case_id)
+    if case is None:
+        raise HTTPException(404, "case not found")
+    scoping.assert_can_edit_case(db, current, case)
+    if not wecom._enabled():
+        raise err(503, "wecom_not_configured",
+                  "WeChat messaging is not configured on the server")
+    result = reminders.remind_one_case(db, case)
+    audit.record(db, current.id, "remind", "case", case.id, after=result)
+    db.commit()
+    return result
 
 
 # --- Title targets (業績目標設定; admin sets, everyone reads their own) --------

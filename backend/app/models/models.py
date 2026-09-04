@@ -382,6 +382,10 @@ class Case(Base):
     email: Mapped[str | None] = mapped_column(String(160), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
     follow_up: Mapped[str | None] = mapped_column(Text, nullable=True)  # 跟進事項 (next action)
+    # Deadline for the 跟進事項 and an urgent flag — drive the kanban reminder board
+    # (yellow within 3 days, red overdue) and the daily WeChat reminders.
+    follow_up_deadline: Mapped[date | None] = mapped_column(Date, nullable=True)
+    follow_up_urgent: Mapped[bool] = mapped_column(Boolean, default=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)       # 備註 (remarks)
     client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     # Case categories (multi-select): 房產方案 / EAM / 分紅險 / 醫療重疾 / 香港身份 / 教育升學.
@@ -406,6 +410,16 @@ class Case(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class ReminderRun(Base):
+    """One row per day the follow-up reminder job has run — a claim marker so the
+    daily WeChat digest sends at most once per calendar day even if the scheduler
+    re-fires (e.g. after a container restart)."""
+    __tablename__ = "reminder_runs"
+
+    run_date: Mapped[date] = mapped_column(Date, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
 
 class TitleTarget(Base):
