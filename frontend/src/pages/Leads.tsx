@@ -164,7 +164,8 @@ export default function Leads() {
     return "none";
   }
   function lightColor(s: "overdue" | "soon" | "none"): string {
-    return s === "overdue" ? "var(--bad)" : s === "soon" ? "var(--warn)" : "transparent";
+    // "soon" (within 3 days) uses a lighter yellow than the amber --warn token.
+    return s === "overdue" ? "var(--bad)" : s === "soon" ? "#facc15" : "transparent";
   }
 
   // Reminder board: open cases that are urgent or near/over their deadline,
