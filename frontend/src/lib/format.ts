@@ -41,20 +41,25 @@ export function moneyFixed(n: number | string, currency: string): string {
 
 // Localized date+time for an ISO timestamp (UTC from the API → viewer's local
 // time). Returns an em dash for null/blank/invalid values.
+// Normalise an API value to a spec-valid ISO string. The API stores UTC; a value
+// with no zone is treated as UTC. A date-only value ("YYYY-MM-DD") must get a full
+// "T00:00:00Z" — appending a bare "Z" ("2026-09-10Z") is invalid and iOS Safari
+// (unlike Chrome) parses it as Invalid Date, so dates vanished on the H5 client.
+function _toUtcIso(iso: string): string {
+  if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso)) return iso;   // already zoned
+  return iso.includes("T") ? `${iso}Z` : `${iso}T00:00:00Z`;
+}
+
 export function dateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
-  // The API stores UTC; if the timestamp carries no zone, parse it as UTC so it
-  // converts correctly to the viewer's local time (not read as local already).
-  const hasZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
-  const d = new Date(hasZone ? iso : `${iso}Z`);
+  const d = new Date(_toUtcIso(iso));
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString(numberLocale(), { dateStyle: "medium", timeStyle: "short" });
 }
 
 export function dateShort(iso: string | null | undefined): string {
   if (!iso) return "—";
-  const hasZone = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(iso);
-  const d = new Date(hasZone ? iso : `${iso}Z`);
+  const d = new Date(_toUtcIso(iso));
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString(numberLocale(), { dateStyle: "medium" });
 }
