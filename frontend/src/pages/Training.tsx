@@ -202,13 +202,13 @@ export default function Training() {
 
   const categories = Array.from(new Set(rows.map((m) => m.category).filter(Boolean))).sort();
   const q = search.trim().toLowerCase();
-  const filtered = rows.filter((m) => {
-    if (category && m.category !== category) return false;
-    if (!q) return true;
-    return [m.title, m.description].some((v) => v && v.toLowerCase().includes(q));
-  });
+  // Search filter first (drives the per-type tab counts), then the active type tab.
+  const searchRows = rows.filter((m) =>
+    !q || [m.title, m.description].some((v) => v && v.toLowerCase().includes(q)));
+  const filtered = searchRows.filter((m) => !category || m.category === category);
+  const countFor = (c: string) => searchRows.filter((m) => m.category === c).length;
 
-  // Group filtered materials by category.
+  // Group filtered materials by category (used for the 全部 tab).
   const groups = new Map<string, TrainingMaterial[]>();
   for (const m of filtered) {
     const key = m.category || t("training.uncategorized");
@@ -217,6 +217,38 @@ export default function Training() {
     else groups.set(key, [m]);
   }
   const groupKeys = Array.from(groups.keys()).sort();
+
+  // One material card — shared by the grouped (全部) and single-type renderings.
+  const renderCard = (m: TrainingMaterial) => {
+    const kind = materialKind(m);
+    const ext = primaryExt(m);
+    const summary = plainSummary(m.description);
+    const fileCount = (m.files ?? []).length;
+    return (
+      // A div (not a <button>): iOS Safari doesn't give absolutely positioned
+      // children inside a <button> a containing block, which collapsed the
+      // thumbnail image on mobile.
+      <div key={m.id} className="tm-card" role="button" tabIndex={0}
+        onClick={() => setOpen(m)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(m); } }}>
+        <ThumbTile material={m} kind={kind} ext={ext} />
+        <div className="tm-body">
+          <div className="tm-title-row">
+            <strong lang={chineseVariant(m.title)}>{m.title}</strong>
+            <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</span>
+          </div>
+          {summary
+            ? <p className="tm-summary" lang={chineseVariant(summary)}>{summary}</p>
+            : <p className="tm-summary muted" style={{ fontStyle: "italic" }}>{t("training.noSummary")}</p>}
+          <div className="tm-meta">
+            {fileCount > 0 && <span className="badge unit" style={{ fontSize: 11 }}>{t("training.fileCount", { n: fileCount })}</span>}
+            {m.link_url && <span className="badge role" style={{ fontSize: 11 }}>{t("training.hasLink")}</span>}
+            <span className="tm-open">{t("training.openItem")} →</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -227,20 +259,25 @@ export default function Training() {
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}
         {dlError && <div className="error">{dlError}</div>}
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ marginBottom: 12 }}>
           <input type="search" style={{ maxWidth: 320 }} placeholder={t("training.search")}
             value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="seg">
-            <button className={category === "" ? "active" : ""} onClick={() => setCategory("")}>
-              {t("training.allCategories")}
+        </div>
+
+        {/* Material types as tabs (scrolls horizontally on H5). */}
+        <div className="tm-tabs" role="tablist">
+          <button role="tab" aria-selected={category === ""}
+            className={category === "" ? "active" : ""} onClick={() => setCategory("")}>
+            {t("training.allCategories")}
+            <span className="tm-tab-count">{searchRows.length}</span>
+          </button>
+          {categories.map((c) => (
+            <button key={c} role="tab" aria-selected={category === c}
+              className={category === c ? "active" : ""} onClick={() => setCategory(c)}>
+              <span lang={chineseVariant(c)}>{c}</span>
+              <span className="tm-tab-count">{countFor(c)}</span>
             </button>
-            {categories.map((c) => (
-              <button key={c} className={category === c ? "active" : ""} onClick={() => setCategory(c)}>{c}</button>
-            ))}
-          </div>
-          <span className="muted" style={{ fontSize: 13, marginLeft: "auto" }}>
-            {t("training.count", { count: filtered.length })}
-          </span>
+          ))}
         </div>
 
         {!materials.isLoading && rows.length === 0 && <p className="muted">{t("training.empty")}</p>}
@@ -248,48 +285,24 @@ export default function Training() {
           <p className="muted">{t("training.noMatch")}</p>
         )}
 
-        {groupKeys.map((cat) => (
-          <div key={cat} style={{ marginBottom: 20 }}>
-            <h2 style={{ fontSize: 15, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
-              <span className="badge dc">{cat}</span>
-              <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
-                {t("training.count", { count: groups.get(cat)!.length })}
-              </span>
-            </h2>
-            <div className="training-grid">
-              {groups.get(cat)!.map((m) => {
-                const kind = materialKind(m);
-                const ext = primaryExt(m);
-                const summary = plainSummary(m.description);
-                const fileCount = (m.files ?? []).length;
-                return (
-                  // A div (not a <button>): iOS Safari doesn't give absolutely
-                  // positioned children inside a <button> a containing block, which
-                  // collapsed the thumbnail image on mobile.
-                  <div key={m.id} className="tm-card" role="button" tabIndex={0}
-                    onClick={() => setOpen(m)}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(m); } }}>
-                    <ThumbTile material={m} kind={kind} ext={ext} />
-                    <div className="tm-body">
-                      <div className="tm-title-row">
-                        <strong lang={chineseVariant(m.title)}>{m.title}</strong>
-                        <span className="muted" style={{ fontSize: 11, whiteSpace: "nowrap" }}>{dateShort(m.created_at)}</span>
-                      </div>
-                      {summary
-                        ? <p className="tm-summary" lang={chineseVariant(summary)}>{summary}</p>
-                        : <p className="tm-summary muted" style={{ fontStyle: "italic" }}>{t("training.noSummary")}</p>}
-                      <div className="tm-meta">
-                        {fileCount > 0 && <span className="badge unit" style={{ fontSize: 11 }}>{t("training.fileCount", { n: fileCount })}</span>}
-                        {m.link_url && <span className="badge role" style={{ fontSize: 11 }}>{t("training.hasLink")}</span>}
-                        <span className="tm-open">{t("training.openItem")} →</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        {/* 全部 tab: keep the per-type grouped view. A specific type: one flat grid. */}
+        {category === "" ? (
+          groupKeys.map((cat) => (
+            <div key={cat} style={{ marginBottom: 20 }}>
+              <h2 style={{ fontSize: 15, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="badge dc" lang={chineseVariant(cat)}>{cat}</span>
+                <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
+                  {t("training.count", { count: groups.get(cat)!.length })}
+                </span>
+              </h2>
+              <div className="training-grid">
+                {groups.get(cat)!.map(renderCard)}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className="training-grid">{filtered.map(renderCard)}</div>
+        )}
       </div>
 
       {open && (

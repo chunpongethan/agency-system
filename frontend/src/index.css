@@ -162,6 +162,23 @@ button.ghost:hover { background: #f9fafb; }
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.active { background: var(--accent); color: #fff; font-weight: 600; }
 
+/* Training material types shown as tabs (desktop + H5). Underline-style tab bar
+   that scrolls horizontally when the types overflow the width. */
+.tm-tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.tm-tabs button {
+  border: none; background: none; padding: 9px 14px; font-size: 14px; cursor: pointer;
+  color: var(--muted); font-family: inherit; white-space: nowrap;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tm-tabs button:hover { color: var(--ink); }
+.tm-tabs button.active { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+.tm-tabs .tm-tab-count {
+  display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 600;
+  color: var(--muted); background: var(--line); border-radius: 999px; padding: 1px 7px;
+}
+.tm-tabs button.active .tm-tab-count { color: #fff; background: var(--accent); }
+@media (max-width: 768px) { .tm-tabs button { padding: 9px 12px; min-height: 40px; } }
+
 /* Year-by-year commission grid (Yr1..Yr10) */
 .year-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 @media (max-width: 700px) { .year-grid { grid-template-columns: repeat(2, 1fr); } }
