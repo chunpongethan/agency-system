@@ -177,7 +177,18 @@ button.ghost:hover { background: #f9fafb; }
   color: var(--muted); background: var(--line); border-radius: 999px; padding: 1px 7px;
 }
 .tm-tabs button.active .tm-tab-count { color: #fff; background: var(--accent); }
-@media (max-width: 768px) { .tm-tabs button { padding: 9px 12px; min-height: 40px; } }
+/* On H5 the types render as wrapping pill buttons rather than an underline tab bar. */
+@media (max-width: 768px) {
+  .tm-tabs { flex-wrap: wrap; overflow-x: visible; border-bottom: none; gap: 8px; }
+  .tm-tabs button {
+    border: 1px solid var(--line); border-radius: 8px; background: #fff;
+    margin-bottom: 0; padding: 8px 12px; min-height: 40px;
+  }
+  .tm-tabs button.active {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .tm-tabs button.active .tm-tab-count { background: rgba(255, 255, 255, .25); color: #fff; }
+}
 
 /* Year-by-year commission grid (Yr1..Yr10) */
 .year-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
