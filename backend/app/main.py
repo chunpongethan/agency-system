@@ -39,6 +39,11 @@ from app.services import (
 from app.services.sanitize import sanitize_html
 from app.services.zh_convert import to_traditional, convert_in
 
+# Training type whose content is stored exactly as entered — the automatic
+# Simplified→Traditional normalisation on save/backfill is skipped for it (its
+# copy is written in Simplified on purpose, e.g. WeChat Moments material).
+NO_ZH_CONVERT_CATEGORY = "朋友圈文案及物料"
+
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./agency.db")
 # Base URL of the web app, used to build password-reset links in emails.
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -2105,9 +2110,12 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
                              db: Session = Depends(get_db),
                              current: Agent = Depends(require_admin)):
     next_order = (db.execute(select(func.max(TrainingMaterial.sort_order))).scalar() or 0) + 1
+    # 朋友圈文案及物料 is kept exactly as entered (often Simplified for a mainland
+    # audience) — the automatic Simplified→Traditional conversion is skipped for it.
+    conv = (lambda s: s) if payload.category == NO_ZH_CONVERT_CATEGORY else to_traditional
     m = TrainingMaterial(
-        title=to_traditional(payload.title), category=to_traditional(payload.category),
-        description=to_traditional(sanitize_html(payload.description)), link_url=payload.link_url,
+        title=conv(payload.title), category=conv(payload.category),
+        description=conv(sanitize_html(payload.description)), link_url=payload.link_url,
         companies=_clean_companies(payload.companies),
         inline_preview=payload.inline_preview, sort_order=next_order, created_by=current.id,
     )
@@ -2144,6 +2152,8 @@ def convert_existing_to_traditional(db: Session = Depends(get_db),
     skipped: list[str] = []
 
     for m in db.execute(select(TrainingMaterial)).scalars():
+        if m.category == NO_ZH_CONVERT_CATEGORY:
+            continue                                     # kept as entered (Simplified on purpose)
         nt, nc, nd = to_traditional(m.title), to_traditional(m.category), to_traditional(m.description)
         if (nt, nc, nd) != (m.title, m.category, m.description):
             m.title, m.category, m.description = nt, nc, nd
@@ -2202,9 +2212,14 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     data = payload.model_dump(exclude_unset=True)
     if "companies" in data:
         data["companies"] = _clean_companies(data["companies"])
+    # Skip S→T conversion when the (new or existing) type is 朋友圈文案及物料.
+    eff_category = data.get("category", m.category)
+    conv = (lambda s: s) if eff_category == NO_ZH_CONVERT_CATEGORY else to_traditional
     if "description" in data:
-        data["description"] = to_traditional(sanitize_html(data["description"]))
-    convert_in(data, "title", "category")
+        data["description"] = conv(sanitize_html(data["description"]))
+    for k in ("title", "category"):
+        if data.get(k):
+            data[k] = conv(data[k])
     before = {"title": m.title, "category": m.category, "link_url": m.link_url}
     for k, v in data.items():
         setattr(m, k, v)

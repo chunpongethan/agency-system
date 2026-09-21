@@ -235,6 +235,22 @@ def test_simplified_input_converted_to_traditional(client):
     assert "產品優勢" in m["description"] and "产品优势" not in m["description"]
 
 
+def test_moments_category_not_converted_to_traditional(client):
+    adm = auth(client, "ADM")
+    # 朋友圈文案及物料 keeps its content exactly as entered (Simplified on purpose).
+    r = mk_material(client, adm, title="香港分红险", category="朋友圈文案及物料",
+                    description="<p>产品优势</p>")
+    assert r.status_code == 200, r.text
+    m = r.json()
+    assert m["title"] == "香港分红险"                       # unchanged (not 香港分紅險)
+    assert m["category"] == "朋友圈文案及物料"
+    assert "产品优势" in m["description"]                    # unchanged
+    # Editing it (still this category) also leaves Simplified untouched.
+    r2 = client.patch(f"/training-materials/{m['id']}", headers=adm,
+                      json={"title": "分红险文案"})
+    assert r2.status_code == 200 and r2.json()["title"] == "分红险文案"
+
+
 def test_convert_existing_backfill(client):
     from app.models.models import Product, ProductType
     adm, ax = auth(client, "ADM"), auth(client, "AX")
