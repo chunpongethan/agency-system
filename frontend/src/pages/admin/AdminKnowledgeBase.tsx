@@ -100,6 +100,8 @@ export default function AdminKnowledgeBase() {
         </form>
       )}
 
+      {/* While editing an article, show only the edit form (hide lists). */}
+      {editId == null && (
       <div className="card">
         <h2 style={{ marginTop: 0 }}>{t("kb.articles")}</h2>
         {articles.isLoading && <div className="spinner">{t("common.loading")}</div>}
@@ -128,7 +130,9 @@ export default function AdminKnowledgeBase() {
           </tbody>
         </table>
       </div>
+      )}
 
+      {editId == null && (
       <div className="card">
         <h2 style={{ marginTop: 0 }}>{t("kb.documents")}</h2>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
@@ -152,6 +156,7 @@ export default function AdminKnowledgeBase() {
           {(documents.data ?? []).length === 0 && <p className="muted" style={{ margin: 0 }}>—</p>}
         </div>
       </div>
+      )}
     </div>
   );
 }

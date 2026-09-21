@@ -256,6 +256,8 @@ export default function AdminProducts() {
       <h1 className="page-title">{t("admin.products.title")}</h1>
       <p className="page-sub">{t("admin.products.subtitle")}</p>
 
+      {/* While editing a product, show only the edit form (hide the catalogue). */}
+      {editId == null && (
       <div className="card">
         <h2>{t("admin.products.catalogue")}</h2>
         {actionMsg && <div className={actionOk ? "success" : "error"}>{actionMsg}</div>}
@@ -267,6 +269,7 @@ export default function AdminProducts() {
           </>
         )} />
       </div>
+      )}
 
       {editId != null && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateProduct.mutate(); }}>
@@ -282,6 +285,7 @@ export default function AdminProducts() {
         </form>
       )}
 
+      {editId == null && (
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createProduct.mutate(); }}>
         <h2>{t("admin.products.add")}</h2>
         {createErr && <div className="error">{createErr}</div>}
@@ -290,6 +294,7 @@ export default function AdminProducts() {
           <button className="primary" type="submit" disabled={createProduct.isPending}>{t("admin.products.add")}</button>
         </div>
       </form>
+      )}
     </div>
   );
 }

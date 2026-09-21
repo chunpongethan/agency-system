@@ -152,6 +152,8 @@ export default function AdminAgents() {
       <h1 className="page-title">{t("admin.agents.title")}</h1>
       <p className="page-sub">{t("admin.agents.subtitle")}</p>
 
+      {/* While editing an agent, show only the edit form (hide roster + add form). */}
+      {editId == null && (
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
           <h2 style={{ margin: 0 }}>{t("admin.agents.roster")}</h2>
@@ -229,6 +231,7 @@ export default function AdminAgents() {
           </tbody>
         </table>
       </div>
+      )}
 
       {composeOpen && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); wecomBroadcast.mutate(); }}>
@@ -321,6 +324,7 @@ export default function AdminAgents() {
         </form>
       )}
 
+      {editId == null && (
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createAgent.mutate(); }}>
         <h2>{t("admin.agents.add")}</h2>
         {agentErr && <div className="error">{agentErr}</div>}
@@ -391,6 +395,7 @@ export default function AdminAgents() {
           {t("admin.agents.addNote", { level: derivedLevel })}
         </p>
       </form>
+      )}
     </div>
   );
 }

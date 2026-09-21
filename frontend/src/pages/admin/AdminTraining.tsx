@@ -296,6 +296,8 @@ export default function AdminTraining() {
         </form>
       )}
 
+      {/* While editing a material, show only the edit form (hide types + list). */}
+      {editId == null && (
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
           <h2 style={{ margin: 0 }}>{t("training.types")}</h2>
@@ -329,7 +331,9 @@ export default function AdminTraining() {
           </div>
         </div>
       </div>
+      )}
 
+      {editId == null && (
       <div className="card">
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}
         {listError && <div className="error">{listError}</div>}
@@ -396,6 +400,7 @@ export default function AdminTraining() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

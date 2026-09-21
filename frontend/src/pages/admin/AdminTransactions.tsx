@@ -190,6 +190,8 @@ export default function AdminTransactions() {
       <h1 className="page-title">{t("adminTxn.title")}</h1>
       <p className="page-sub">{t("adminTxn.subtitle")}</p>
 
+      {/* While editing a transaction, show only the edit form (hide the list). */}
+      {editId == null && (
       <div className="card">
         <div className="row" style={{ alignItems: "flex-end" }}>
           <div style={{ flex: 2 }}>
@@ -288,6 +290,7 @@ export default function AdminTransactions() {
           </table>
         </div>
       </div>
+      )}
 
       {approveId != null && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); submitApprove(); }}>

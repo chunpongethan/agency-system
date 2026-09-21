@@ -75,6 +75,8 @@ export default function AdminRules() {
       <h1 className="page-title">{t("admin.rules.title")}</h1>
       <p className="page-sub">{t("admin.rules.subtitle")}</p>
 
+      {/* While editing a rule, show only the edit form (hide the list). */}
+      {editId == null && (
       <div className="card">
         <h2>{t("admin.rules.current")}</h2>
         {rowMsg && <div className="error">{rowMsg}</div>}
@@ -102,6 +104,7 @@ export default function AdminRules() {
           </tbody>
         </table>
       </div>
+      )}
 
       {editId != null && editingRule && (
         <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); updateRule.mutate(); }}>
@@ -127,6 +130,7 @@ export default function AdminRules() {
         </form>
       )}
 
+      {editId == null && (
       <form className="card" onSubmit={(e: FormEvent) => { e.preventDefault(); createRule.mutate(); }}>
         <h2>{t("admin.rules.add")}</h2>
         {ruleErr && <div className="error">{ruleErr}</div>}
@@ -152,6 +156,7 @@ export default function AdminRules() {
           <button className="primary" type="submit" disabled={createRule.isPending}>{t("admin.rules.add")}</button>
         </div>
       </form>
+      )}
     </div>
   );
 }
