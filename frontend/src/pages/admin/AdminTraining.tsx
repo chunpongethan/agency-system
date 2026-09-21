@@ -122,6 +122,7 @@ export default function AdminTraining() {
   const [catEdits, setCatEdits] = useState<Record<number, string>>({});
   const [newCat, setNewCat] = useState("");
   const [catError, setCatError] = useState<string | null>(null);
+  const [catsOpen, setCatsOpen] = useState(false);   // 培訓類別 CRUD collapsed by default
   const onCatErr = (e: unknown) => setCatError(errorText(e, t) || t("training.saveFailed"));
   useEffect(() => {
     const m: Record<number, string> = {};
@@ -300,9 +301,15 @@ export default function AdminTraining() {
       {editId == null && (
       <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
-          <h2 style={{ margin: 0 }}>{t("training.types")}</h2>
+          <button type="button" onClick={() => setCatsOpen((o) => !o)} aria-expanded={catsOpen}
+            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="muted" aria-hidden style={{ fontSize: 12 }}>{catsOpen ? "▾" : "▸"}</span>
+            <h2 style={{ margin: 0 }}>{t("training.types")}</h2>
+            <span className="muted" style={{ fontSize: 13, fontWeight: 400 }}>（{cats.length}）</span>
+          </button>
           <span className="muted" style={{ fontSize: 13 }}>{t("training.typesHint")}</span>
         </div>
+        {catsOpen && (<>
         {catError && <div className="error">{catError}</div>}
         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
           {cats.map((c) => (
@@ -330,6 +337,7 @@ export default function AdminTraining() {
             </button>
           </div>
         </div>
+        </>)}
       </div>
       )}
 
