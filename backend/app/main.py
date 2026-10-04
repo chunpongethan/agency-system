@@ -133,12 +133,24 @@ def _ensure_columns() -> None:
         with engine.begin() as conn:
             for stmt in ddl:
                 conn.execute(text(stmt))
-    # Backfill each existing agent's company from its code prefix.
+    # Postgres stores Role by member NAME in a native enum type; a new member must
+    # be added to that type. ADD VALUE can't run inside a transaction, so use an
+    # autocommit connection. Idempotent (IF NOT EXISTS); best-effort on dialect/name.
+    if engine.dialect.name == "postgresql":
+        import logging
+        try:
+            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                conn.execute(text("ALTER TYPE role ADD VALUE IF NOT EXISTS 'STUDENT'"))
+        except Exception:
+            logging.getLogger("startup").warning("could not add STUDENT to the role enum", exc_info=True)
+    # Backfill each existing agent's company from its code prefix (cpm / b / heritree).
     if agents_got_company:
         with engine.begin() as conn:
             conn.execute(text(
-                "UPDATE agents SET company = CASE WHEN lower(code) LIKE 'cpm%' "
-                "THEN 'cpm' ELSE 'heritree' END"
+                "UPDATE agents SET company = CASE "
+                "WHEN lower(code) LIKE 'cpm%' THEN 'cpm' "
+                "WHEN lower(code) LIKE 'b%' THEN 'bschool' "
+                "ELSE 'heritree' END"
             ))
     _drop_legacy_title_unique(insp)
     _migrate_training_files(insp)
@@ -414,10 +426,14 @@ def _value_error_handler(request, exc: ValueError):
 
 
 # --- Auth --------------------------------------------------------------------
-def get_current_agent(
+def get_training_viewer(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> Agent:
+    """Identity + active check for ANY authenticated principal, including a 學員
+    (student). Used by the endpoints a student legitimately needs — their own
+    profile, the menu config, and the training-read endpoints. Every other
+    endpoint uses get_current_agent, which additionally rejects students."""
     try:
         payload = decode_token(credentials.credentials)
     except jwt.PyJWTError:
@@ -427,6 +443,15 @@ def get_current_agent(
     if agent is None or not agent.is_active:
         raise HTTPException(401, "unknown or inactive principal")
     return agent
+
+
+def get_current_agent(current: Agent = Depends(get_training_viewer)) -> Agent:
+    """The default principal dependency. Default-deny for 學員 students: they may
+    only reach the handful of endpoints that depend on get_training_viewer
+    directly (profile, menu, training reads); everything else is 403 for them."""
+    if current.role == Role.STUDENT:
+        raise HTTPException(403, "students may only access training materials")
+    return current
 
 
 def get_agent_for_media(request: Request, token: str | None = None,
@@ -494,7 +519,7 @@ def login(payload: schemas.LoginIn, background: BackgroundTasks,
 
 
 @app.get("/auth/me", response_model=schemas.MeOut)
-def me(current: Agent = Depends(get_current_agent)):
+def me(current: Agent = Depends(get_training_viewer)):   # students need their profile
     return current
 
 
@@ -547,9 +572,10 @@ def reset_password(payload: schemas.ResetPasswordIn, db: Session = Depends(get_d
 def create_agent(payload: schemas.AgentIn, db: Session = Depends(get_db),
                  current: Agent = Depends(require_admin)):
     # A company-scoped admin may only create agents in their own company: the code
-    # prefix must resolve to the admin's company, and the upline must match too.
+    # prefix must resolve to the admin's company. Exception: the shared 商學院 (B-code)
+    # student pool may be created by any admin.
     company = scoping.company_for_code(payload.code)
-    if company != current.company:
+    if company != current.company and company != scoping.BSCHOOL:
         raise err(400, "wrong_company_prefix",
                   "agent code prefix must match your company")
     agent_service.validate_agent(db, payload.level, payload.upline_id, company=company)
@@ -607,7 +633,7 @@ def agents_assignable(db: Session = Depends(get_db),
     ids = scoping.visible_agent_ids(db, current)
     rows = db.execute(
         select(Agent).where(Agent.id.in_(ids), Agent.is_active.is_(True),
-                            Agent.role != Role.ADMIN)
+                            Agent.role.notin_([Role.ADMIN, Role.STUDENT]))
         .order_by(Agent.level, Agent.code)
     ).scalars().all()
     return [{"id": a.id, "code": a.code, "name": a.name, "level": a.level,
@@ -653,7 +679,8 @@ def update_agent(agent_id: int, payload: schemas.AgentUpdate,
     agent = db.get(Agent, agent_id)
     if agent is None:
         raise HTTPException(404, "agent not found")
-    if agent.company != current.company:
+    # Own company, or the shared 商學院 student pool (any admin may manage it).
+    if agent.company != current.company and agent.company != scoping.BSCHOOL:
         raise err(403, "forbidden", "cross-company access is not allowed")
     before = {"name": agent.name, "email": agent.email,
               "title": agent.title.value if agent.title else None,
@@ -1797,7 +1824,7 @@ def set_title_target(title: str, payload: schemas.TitleTargetIn,
 TRAINING_MAX_UPLOAD_MB = int(os.getenv("TRAINING_MAX_UPLOAD_MB", "25"))
 
 
-TRAINING_COMPANIES = ("heritree", "cpm")
+TRAINING_COMPANIES = ("heritree", "cpm", "bschool")   # bschool = 商學院 (學員 audience)
 # Types safe to render inline in the browser for on-screen preview. SVG/HTML are
 # deliberately excluded (they can execute script from the app origin).
 _PREVIEW_TYPES = {"application/pdf", "image/png", "image/jpeg", "image/jpg",
@@ -2080,9 +2107,9 @@ def _visible_to_company(m: TrainingMaterial, company: str) -> bool:
 @app.get("/training-materials", response_model=list[schemas.TrainingMaterialOut])
 def list_training_materials(category: str | None = None, q: str | None = None,
                             db: Session = Depends(get_db),
-                            current: Agent = Depends(get_current_agent)):
+                            current: Agent = Depends(get_training_viewer)):
     """Training materials (newest first). Admins see all (to manage per-company
-    visibility); agents/managers see only those shown to their company."""
+    visibility); agents/managers/學員 see only those shown to their company."""
     stmt = select(TrainingMaterial)
     if category:
         stmt = stmt.where(TrainingMaterial.category == category)
@@ -2388,7 +2415,7 @@ def transcode_training_video(material_id: int, file_id: int, db: Session = Depen
 
 @app.get("/training-materials/{material_id}/files/{file_id}/thumb")
 def get_training_thumb(material_id: int, file_id: int, db: Session = Depends(get_db),
-                       current: Agent = Depends(get_current_agent)):
+                       current: Agent = Depends(get_training_viewer)):
     """Serve a file's small JPEG thumbnail for the material list. Generated at
     upload; for files that predate thumbnails it's generated once here and cached.
     404 when the file isn't thumbnailable (the UI then shows a type tile)."""
@@ -2720,7 +2747,7 @@ def kb_usage(start: date | None = None, end: date | None = None,
 
 # --- Left-menu settings (選單設定; admins customise the sidebar globally) ------
 @app.get("/menu-settings", response_model=list[schemas.MenuSettingOut])
-def list_menu_settings(current: Agent = Depends(get_current_agent),
+def list_menu_settings(current: Agent = Depends(get_training_viewer),   # students load the menu
                        db: Session = Depends(get_db)):
     """Global sidebar show/hide + order. Any authed user reads it to render the
     menu; an empty list means 'use the frontend defaults'."""

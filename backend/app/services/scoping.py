@@ -17,10 +17,15 @@ Two distinct layers of access:
 """
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.orm import Session
 
 from app.models.models import Agent, Client, Case, Role
+
+# Company (tenant) keys. 商學院 is a training-only audience: its 學員 students are
+# managed by the existing admins (any admin may create/see them), unlike the
+# heritree/cpm tenants which stay isolated.
+BSCHOOL = "bschool"
 
 
 def is_admin(current: Agent) -> bool:
@@ -28,12 +33,18 @@ def is_admin(current: Agent) -> bool:
 
 
 # --- Tenant (company) ---------------------------------------------------------
-# The two companies share one deployment. A user's company is encoded in their
-# agent code prefix; it is stored on Agent.company (set at creation / backfilled)
-# and is the source of truth thereafter.
+# The companies share one deployment. A user's company is encoded in their agent
+# code prefix; it is stored on Agent.company (set at creation / backfilled) and is
+# the source of truth thereafter. Prefix rule (mirror in main.py's SQL backfill and
+# scripts/bootstrap_admin.py): cpm… -> cpm, b… -> 商學院 (bschool), else heritree.
 def company_for_code(code: str | None) -> str:
     """Derive the company from an agent code prefix."""
-    return "cpm" if (code or "").lower().startswith("cpm") else "heritree"
+    c = (code or "").lower()
+    if c.startswith("cpm"):
+        return "cpm"
+    if c.startswith("b"):
+        return BSCHOOL
+    return "heritree"
 
 
 def assert_same_company(current: Agent, other: Agent | None) -> None:
@@ -47,10 +58,12 @@ def visible_agent_ids(session: Session, current: Agent) -> set[int]:
     """The set of agent ids `current` is allowed to see (always within their own
     company — hierarchies never cross companies, and an admin is company-scoped)."""
     if current.role == Role.ADMIN:
-        rows = session.execute(select(Agent.id).where(Agent.company == current.company))
+        # Own company, plus the shared 商學院 student pool (managed by any admin).
+        rows = session.execute(select(Agent.id).where(
+            or_(Agent.company == current.company, Agent.company == BSCHOOL)))
         return {row[0] for row in rows}
 
-    if current.role == Role.AGENT:
+    if current.role in (Role.AGENT, Role.STUDENT):
         return {current.id}
 
     # manager: own id + entire subtree via a single recursive CTE.

@@ -14,7 +14,8 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const homeFor = (role?: string) => (role === "admin" ? "/admin" : "/");
+  const homeFor = (role?: string) =>
+    role === "admin" ? "/admin" : role === "student" ? "/training" : "/";
 
   if (me) {
     navigate(homeFor(me.role), { replace: true });

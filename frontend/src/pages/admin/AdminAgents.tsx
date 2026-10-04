@@ -143,7 +143,7 @@ export default function AdminAgents() {
   }
   const editExcluded = editId != null ? descendantsOf(editId) : new Set<number>();
   const editUplineOptions = (agents.data ?? []).filter(
-    (a) => a.role !== "admin" && a.is_active && a.id !== editId && !editExcluded.has(a.id));
+    (a) => a.role !== "admin" && a.role !== "student" && a.is_active && a.id !== editId && !editExcluded.has(a.id));
   const editSelectedUpline = (agents.data ?? []).find((a) => a.id === Number(editForm.upline_id));
   const editDerivedLevel = editSelectedUpline ? editSelectedUpline.level + 1 : 1;
 
@@ -349,7 +349,7 @@ export default function AdminAgents() {
             <select value={agentForm.upline_id}
               onChange={(e) => setAgentForm({ ...agentForm, upline_id: e.target.value })}>
               <option value="">{t("admin.agents.uplineNone")}</option>
-              {(agents.data ?? []).filter((u) => u.role !== "admin" && u.is_active).map((u) => (
+              {(agents.data ?? []).filter((u) => u.role !== "admin" && u.role !== "student" && u.is_active).map((u) => (
                 <option key={u.id} value={u.id}>{u.name} ({u.code}) · L{u.level}</option>
               ))}
             </select>

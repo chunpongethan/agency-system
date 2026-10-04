@@ -8,7 +8,7 @@ import { chineseVariant } from "../../lib/zh";
 import HtmlEditor from "../../components/HtmlEditor";
 import type { TrainingMaterial } from "../../api/types";
 
-const COMPANIES = ["heritree", "cpm"];
+const COMPANIES = ["heritree", "cpm", "bschool"];
 const BLANK = { title: "", category: "", description: "", link_url: "",
                 companies: [...COMPANIES] };
 

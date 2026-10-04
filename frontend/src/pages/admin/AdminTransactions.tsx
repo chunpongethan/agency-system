@@ -98,7 +98,7 @@ export default function AdminTransactions() {
   // Agents pickable for a role (exclude admins; keep inactive so an existing
   // assignment still renders). 直客 overrides are limited to 直客-flagged agents;
   // 代理 overrides may go to any active agent.
-  const roleOptions = (agents.data ?? []).filter((a) => a.role !== "admin");
+  const roleOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.role !== "student");
   const dcAgents = roleOptions.filter((a) => a.direct_client && a.is_active);
   const isDirectClient = editForm.deal_type === "direct_client";
   const overrideAgents = isDirectClient ? dcAgents : roleOptions.filter((a) => a.is_active);

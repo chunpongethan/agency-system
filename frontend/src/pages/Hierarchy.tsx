@@ -202,7 +202,7 @@ export default function Hierarchy() {
     (production.data ?? []).map((r) => [r.agent_id, r]),
   );
   // Admins are not part of the selling hierarchy; terminated agents are hidden.
-  const sellingAgents = (agents.data ?? []).filter((a) => a.role !== "admin" && a.is_active);
+  const sellingAgents = (agents.data ?? []).filter((a) => a.role !== "admin" && a.role !== "student" && a.is_active);
   const roots = buildTree(sellingAgents, prodMap);
   const allNodes = roots.flatMap((r) => flatten(r));
   const selected = selectedId != null ? allNodes.find((n) => n.id === selectedId) : undefined;

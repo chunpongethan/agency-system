@@ -33,7 +33,13 @@ from app.security import hash_password
 
 
 def _company_for_code(code: str) -> str:
-    return "cpm" if (code or "").lower().startswith("cpm") else "heritree"
+    # Mirror of scoping.company_for_code: cpm… -> cpm, b… -> 商學院 (bschool), else heritree.
+    c = (code or "").lower()
+    if c.startswith("cpm"):
+        return "cpm"
+    if c.startswith("b"):
+        return "bschool"
+    return "heritree"
 
 
 def _ensure_admin(db, code: str, name: str, email: str, password: str) -> None:

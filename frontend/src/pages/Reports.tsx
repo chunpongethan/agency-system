@@ -52,7 +52,7 @@ export default function Reports() {
   const summaryRows = useMemo<AgencySummaryRow[]>(() => {
     const prod = new Map((summary.data ?? []).map((r) => [r.agent_id, r]));
     return (agents.data ?? [])
-      .filter((a) => a.is_active && a.role !== "admin")
+      .filter((a) => a.is_active && a.role !== "admin" && a.role !== "student")
       .map((a) => {
         const p = prod.get(a.id);
         return {

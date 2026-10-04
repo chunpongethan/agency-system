@@ -1,6 +1,6 @@
 // Types mirroring the FastAPI Pydantic schemas.
 
-export type Role = "admin" | "manager" | "agent";
+export type Role = "admin" | "manager" | "agent" | "student";
 
 export type Title =
   | "business_manager"

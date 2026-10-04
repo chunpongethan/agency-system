@@ -151,8 +151,10 @@ export const translations: Record<string, Translation> = {
   "enum.role.admin": { "zh-Hant": "管理員", en: "admin" },
   "enum.role.manager": { "zh-Hant": "經理", en: "manager" },
   "enum.role.agent": { "zh-Hant": "代理人", en: "agent" },
+  "enum.role.student": { "zh-Hant": "學員", en: "student" },
   "enum.company.heritree": { "zh-Hant": "承瑞 Heritree", en: "Heritree" },
   "enum.company.cpm": { "zh-Hant": "CPM", en: "CPM" },
+  "enum.company.bschool": { "zh-Hant": "商學院", en: "Business School" },
 
   "enum.status.pending": { "zh-Hant": "待核准", en: "pending" },
   "enum.status.approved": { "zh-Hant": "已核准", en: "approved" },

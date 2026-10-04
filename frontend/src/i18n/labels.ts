@@ -71,4 +71,4 @@ export const RISK_PROFILES = ["Conservative", "Balanced", "Growth", "Aggressive"
 export const SCHEDULES = ["upfront", "trail"];
 export const FREQUENCIES = ["monthly", "quarterly", "annual"];
 export const PRODUCT_TYPES = ["insurance", "fund", "eam_account", "other"];
-export const ROLES = ["admin", "manager", "agent"];
+export const ROLES = ["admin", "manager", "agent", "student"];

@@ -1,6 +1,6 @@
 import type { MenuSetting } from "../api/types";
 
-export type Role = "admin" | "manager" | "agent";
+export type Role = "admin" | "manager" | "agent" | "student";
 
 export interface MenuItem {
   key: string;
@@ -19,7 +19,7 @@ export const MENU: MenuItem[] = [
   { key: "dashboard", to: "/", labelKey: "nav.dashboard", roles: ["agent", "manager"], group: "main", end: true },
   { key: "clients", to: "/clients", labelKey: "nav.clients", roles: ["agent", "manager", "admin"], group: "main" },
   { key: "leads", to: "/leads", labelKey: "nav.leads", roles: ["agent", "manager", "admin"], group: "main" },
-  { key: "training", to: "/training", labelKey: "nav.training", roles: ["agent", "manager", "admin"], group: "main" },
+  { key: "training", to: "/training", labelKey: "nav.training", roles: ["agent", "manager", "admin", "student"], group: "main" },
   { key: "knowledgeBase", to: "/knowledge-base", labelKey: "nav.knowledgeBase", roles: ["agent", "manager", "admin"], group: "main" },
   { key: "products", to: "/products", labelKey: "nav.products", roles: ["agent", "manager"], group: "main" },
   { key: "myTxns", to: "/my-transactions", labelKey: "nav.myTxns", roles: ["agent", "manager"], group: "main" },

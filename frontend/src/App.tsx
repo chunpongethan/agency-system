@@ -32,7 +32,9 @@ import type { ReactElement } from "react";
 // Where each role lands by default. Admins are not sellers, so their home is the
 // first admin section, not the seller dashboard.
 function homeFor(role: string | undefined): string {
-  return role === "admin" ? "/admin/agents" : "/";
+  if (role === "admin") return "/admin/agents";
+  if (role === "student") return "/training";   // 學員 only has the training page
+  return "/";
 }
 
 function RequireAuth({ children }: { children: ReactElement }) {
@@ -92,7 +94,7 @@ export default function App() {
         <Route
           path="/training"
           element={
-            <RequireRole roles={["agent", "manager", "admin"]}>
+            <RequireRole roles={["agent", "manager", "admin", "student"]}>
               <Training />
             </RequireRole>
           }

@@ -76,6 +76,9 @@ class Role(str, enum.Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     AGENT = "agent"
+    # 學員: a training-only principal (商學院). May view training materials and
+    # nothing else — every other endpoint rejects this role (see get_current_agent).
+    STUDENT = "student"
 
 
 class TxnStatus(str, enum.Enum):

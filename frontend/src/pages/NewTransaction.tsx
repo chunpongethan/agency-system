@@ -61,7 +61,7 @@ export default function NewTransaction() {
   const isDirectClient = form.deal_type === "direct_client";
 
   // Non-admin active agents are eligible for any role.
-  const closerOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.is_active);
+  const closerOptions = (agents.data ?? []).filter((a) => a.role !== "admin" && a.role !== "student" && a.is_active);
   // Only 直客-flagged agents can receive direct-client overrides; 代理 overrides
   // may go to any active agent (defaults loaded from the hierarchy).
   const dcAgents = closerOptions.filter((a) => a.direct_client);
