@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
@@ -65,27 +65,44 @@ function firstRemarkImage(html: string | null | undefined): string | null {
 function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: Kind; ext: string | null }) {
   const file = thumbFile(material);
   const remarkImg = file ? null : firstRemarkImage(material.description);
+  const tileRef = useRef<HTMLDivElement>(null);
+  // Defer the thumbnail fetch until the tile scrolls near the viewport, so the grid
+  // paints immediately instead of firing one request per material at once (the
+  // main cause of the list feeling slow, especially on H5). Fall back to eager when
+  // IntersectionObserver is unavailable.
+  const [visible, setVisible] = useState(typeof IntersectionObserver === "undefined");
   const [url, setUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (!file) return;
+    if (visible) return;
+    const el = tileRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { setVisible(true); io.disconnect(); }
+    }, { rootMargin: "300px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visible]);
+
+  useEffect(() => {
+    if (!file || !visible) return;
     let cancelled = false;
     let objectUrl: string | null = null;
     fetchBlobUrl(api.trainingThumbPath(material.id, file.id))
       .then((u) => { if (cancelled) { URL.revokeObjectURL(u); return; } objectUrl = u; setUrl(u); })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [file, material.id]);
+  }, [file, material.id, visible]);
 
   // Priority: server thumbnail of the attachment → an image in the remark →
   // a glyph (a file exists but has no thumbnail yet, e.g. video sans ffmpeg) →
   // a text cover with the title (a plain note with no attachment).
   const imgSrc = (url && !failed) ? url : remarkImg;
   return (
-    <div className="tm-thumb" style={{ background: THUMB[kind].bg }}>
+    <div className="tm-thumb" ref={tileRef} style={{ background: THUMB[kind].bg }}>
       {imgSrc
-        ? <img className="tm-thumb-img" src={imgSrc} alt="" />
+        ? <img className="tm-thumb-img" src={imgSrc} alt="" decoding="async" />
         : file
           ? <span aria-hidden>{THUMB[kind].glyph}</span>
           : <span className="tm-thumb-text" lang={chineseVariant(material.title)}>{material.title}</span>}
@@ -172,7 +189,9 @@ export default function Training() {
     }
   }
 
-  const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
+  // Cache the list so returning to the page shows instantly (no spinner refetch);
+  // AdminTraining invalidates ["training"] on every edit, so changes still refresh.
+  const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining(), staleTime: 60_000 });
   const rows = materials.data ?? [];
 
   // Keep the open material in sync if the list refetches.
