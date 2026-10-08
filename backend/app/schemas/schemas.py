@@ -252,11 +252,13 @@ class TrainingMaterialOut(BaseModel):
 class TrainingCategoryIn(BaseModel):
     name: str
     sort_order: int = 0
+    section: str = "training"
 
 
 class TrainingCategoryUpdate(BaseModel):
     name: str | None = None
     sort_order: int | None = None
+    section: str | None = None
 
 
 class TrainingCategoryOut(BaseModel):
@@ -264,6 +266,7 @@ class TrainingCategoryOut(BaseModel):
     id: int
     name: str
     sort_order: int
+    section: str = "training"
 
 
 # --- Products ---------------------------------------------------------------

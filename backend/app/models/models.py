@@ -513,6 +513,9 @@ class TrainingCategory(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(80), unique=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    # Which agent-facing section this type (and its materials) appears under:
+    # "training" (培訓資料, default) or "promo" (宣傳資料).
+    section: Mapped[str] = mapped_column(String(16), default="training")
 
 
 class KbArticle(Base):

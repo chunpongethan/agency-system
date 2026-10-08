@@ -15,6 +15,7 @@ export const translations: Record<string, Translation> = {
   "nav.clients": { "zh-Hant": "客戶", en: "Clients" },
   "nav.leads": { "zh-Hant": "潛在客戶", en: "Leads" },
   "nav.training": { "zh-Hant": "培訓資料", en: "Training" },
+  "nav.promo": { "zh-Hant": "宣傳資料", en: "Promotional" },
   "nav.trainingAdmin": { "zh-Hant": "培訓資料維護", en: "Training materials" },
   "nav.knowledgeBase": { "zh-Hant": "AI 知識庫", en: "AI Knowledge Base" },
   "nav.knowledgeBaseAdmin": { "zh-Hant": "知識庫維護", en: "Knowledge base" },
@@ -753,6 +754,14 @@ export const translations: Record<string, Translation> = {
     "zh-Hant": "產品、銷售、合規及系統操作的培訓資源，依類別分類。",
     en: "Product, sales, compliance and system training resources, grouped by category.",
   },
+  "promo.title": { "zh-Hant": "宣傳資料", en: "Promotional Materials" },
+  "promo.subtitle": {
+    "zh-Hant": "可用於客戶的宣傳文案及物料，依類別分類。",
+    en: "Client-facing promotional copy and materials, grouped by category.",
+  },
+  "admin.training.section": { "zh-Hant": "所屬區段", en: "Section" },
+  "enum.trainingSection.training": { "zh-Hant": "培訓資料", en: "Training" },
+  "enum.trainingSection.promo": { "zh-Hant": "宣傳資料", en: "Promotional" },
   "training.adminTitle": { "zh-Hant": "培訓資料維護", en: "Training Materials" },
   "training.adminSubtitle": {
     "zh-Hant": "新增、編輯或刪除培訓資料；可附上連結及／或上傳檔案。",

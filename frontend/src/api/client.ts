@@ -171,8 +171,8 @@ export const api = {
     request<{ deleted: number }>(`/products/${id}`, { method: "DELETE" }),
 
   // Training materials (培訓資料)
-  listTraining: (params?: { category?: string; q?: string }) =>
-    request<TrainingMaterial[]>(`/training-materials${qs({ category: params?.category, q: params?.q })}`),
+  listTraining: (params?: { category?: string; q?: string; section?: string }) =>
+    request<TrainingMaterial[]>(`/training-materials${qs({ category: params?.category, q: params?.q, section: params?.section })}`),
   getTraining: (id: number) => request<TrainingMaterial>(`/training-materials/${id}`),
   createTraining: (payload: Record<string, unknown>) =>
     request<TrainingMaterial>("/training-materials", { method: "POST", body: JSON.stringify(payload) }),
@@ -232,7 +232,7 @@ export const api = {
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),
   createTrainingCategory: (payload: { name: string; sort_order?: number }) =>
     request<TrainingCategory>("/training-categories", { method: "POST", body: JSON.stringify(payload) }),
-  updateTrainingCategory: (id: number, payload: { name?: string; sort_order?: number }) =>
+  updateTrainingCategory: (id: number, payload: { name?: string; sort_order?: number; section?: string }) =>
     request<TrainingCategory>(`/training-categories/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteTrainingCategory: (id: number) =>
     request<{ deleted: number }>(`/training-categories/${id}`, { method: "DELETE" }),

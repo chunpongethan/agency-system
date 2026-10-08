@@ -95,7 +95,15 @@ export default function App() {
           path="/training"
           element={
             <RequireRole roles={["agent", "manager", "admin", "student"]}>
-              <Training />
+              <Training section="training" />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/promo"
+          element={
+            <RequireRole roles={["agent", "manager", "admin", "student"]}>
+              <Training section="promo" />
             </RequireRole>
           }
         />

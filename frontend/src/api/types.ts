@@ -113,6 +113,7 @@ export interface TrainingCategory {
   id: number;
   name: string;
   sort_order: number;
+  section: string;          // "training" (培訓資料) or "promo" (宣傳資料)
 }
 
 export interface AgentDirectory {

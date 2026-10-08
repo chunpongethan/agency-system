@@ -178,8 +178,9 @@ function FilePreview({ previewPath, name, type, onDownload }:
 
 // Agent-facing training portal: a light thumbnail+summary grid; clicking an item
 // opens the full remark and its file previews (loaded only then).
-export default function Training() {
+export default function Training({ section = "training" }: { section?: "training" | "promo" }) {
   const { t } = useI18n();
+  const isPromo = section === "promo";
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("");
   const [dlError, setDlError] = useState<string | null>(null);
@@ -197,7 +198,7 @@ export default function Training() {
 
   // Cache the list so returning to the page shows instantly (no spinner refetch);
   // AdminTraining invalidates ["training"] on every edit, so changes still refresh.
-  const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining(), staleTime: 60_000 });
+  const materials = useQuery({ queryKey: ["training", section], queryFn: () => api.listTraining({ section }), staleTime: 60_000 });
   const rows = materials.data ?? [];
 
   // The list strips base64 images from descriptions; when a card is opened and it
@@ -229,12 +230,18 @@ export default function Training() {
 
   // Deep-link: ?material=<id> (e.g. from a knowledge-base search result) opens
   // that material's detail modal, then clears the param so it can be re-opened.
+  // The material may live in the other section, so fetch it if it isn't listed here.
   useEffect(() => {
     const mid = params.get("material");
-    if (!mid || rows.length === 0) return;
+    if (!mid) return;
     const m = rows.find((x) => String(x.id) === mid);
-    if (m) { setOpen(m); setParams({}, { replace: true }); }
-  }, [rows, params]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (m) { setOpen(m); setParams({}, { replace: true }); return; }
+    if (!materials.isLoading) {
+      api.getTraining(Number(mid))
+        .then((full) => { setOpen(full); setParams({}, { replace: true }); })
+        .catch(() => setParams({}, { replace: true }));
+    }
+  }, [rows, params, materials.isLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const categories = Array.from(new Set(rows.map((m) => m.category).filter(Boolean))).sort();
   const q = search.trim().toLowerCase();
@@ -288,8 +295,8 @@ export default function Training() {
 
   return (
     <div>
-      <h1 className="page-title">{t("training.title")}</h1>
-      <p className="page-sub">{t("training.subtitle")}</p>
+      <h1 className="page-title">{t(isPromo ? "promo.title" : "training.title")}</h1>
+      <p className="page-sub">{t(isPromo ? "promo.subtitle" : "training.subtitle")}</p>
 
       <div className="card">
         {materials.isLoading && <div className="spinner">{t("common.loading")}</div>}

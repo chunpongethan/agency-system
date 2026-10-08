@@ -115,6 +115,9 @@ def _ensure_columns() -> None:
         # fine with either. Use the SQL boolean literal.
         bool_false = "false" if engine.dialect.name == "postgresql" else "0"
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN inline_preview BOOLEAN DEFAULT {bool_false}")
+    # 培訓類別 section: 培訓資料 (training, default) or 宣傳資料 (promo).
+    if "section" not in cols("training_categories") and "training_categories" in insp.get_table_names():
+        ddl.append("ALTER TABLE training_categories ADD COLUMN section VARCHAR(16) DEFAULT 'training'")
     tf_cols = cols("training_files")
     if tf_cols and "file_name" not in tf_cols:
         ddl.append("ALTER TABLE training_files ADD COLUMN file_name VARCHAR(255) DEFAULT 'file'")
@@ -1829,6 +1832,12 @@ TRAINING_MAX_UPLOAD_MB = int(os.getenv("TRAINING_MAX_UPLOAD_MB", "25"))
 
 
 TRAINING_COMPANIES = ("heritree", "cpm", "bschool")   # bschool = 商學院 (學員 audience)
+TRAINING_SECTIONS = ("training", "promo")             # 培訓資料 / 宣傳資料
+
+
+def _clean_section(section: str | None) -> str:
+    """Normalise a 培訓類別 section; anything unknown falls back to 培訓資料."""
+    return section if section in TRAINING_SECTIONS else "training"
 # Types safe to render inline in the browser for on-screen preview. SVG/HTML are
 # deliberately excluded (they can execute script from the app origin).
 _PREVIEW_TYPES = {"application/pdf", "image/png", "image/jpeg", "image/jpg",
@@ -2145,10 +2154,13 @@ def _visible_to_company(m: TrainingMaterial, company: str) -> bool:
 
 @app.get("/training-materials", response_model=list[schemas.TrainingMaterialOut])
 def list_training_materials(category: str | None = None, q: str | None = None,
+                            section: str | None = None,
                             db: Session = Depends(get_db),
                             current: Agent = Depends(get_training_viewer)):
     """Training materials (newest first). Admins see all (to manage per-company
-    visibility); agents/managers/學員 see only those shown to their company."""
+    visibility); agents/managers/學員 see only those shown to their company. An
+    optional `section` (培訓資料/宣傳資料) keeps only materials whose 培訓類別 is in
+    that section (unmanaged/legacy categories count as 培訓資料)."""
     stmt = select(TrainingMaterial)
     if category:
         stmt = stmt.where(TrainingMaterial.category == category)
@@ -2160,6 +2172,10 @@ def list_training_materials(category: str | None = None, q: str | None = None,
     rows = db.execute(stmt).scalars().all()
     if not scoping.is_admin(current):
         rows = [m for m in rows if _visible_to_company(m, current.company)]
+    if section in TRAINING_SECTIONS:
+        name_to_section = {c.name: c.section for c in
+                           db.execute(select(TrainingCategory)).scalars()}
+        rows = [m for m in rows if name_to_section.get(m.category, "training") == section]
     return [_training_out(db, m) for m in rows]
 
 
@@ -2544,7 +2560,8 @@ def create_training_category(payload: schemas.TrainingCategoryIn,
         raise err(422, "validation", "name is required")
     if db.execute(select(TrainingCategory).where(TrainingCategory.name == name)).first():
         raise err(409, "duplicate", "a training type with this name already exists")
-    cat = TrainingCategory(name=name, sort_order=payload.sort_order)
+    cat = TrainingCategory(name=name, sort_order=payload.sort_order,
+                           section=_clean_section(payload.section))
     db.add(cat); db.flush()
     audit.record(db, current.id, "create", "training_category", cat.id, after={"name": name})
     db.commit(); db.refresh(cat)
@@ -2570,6 +2587,8 @@ def update_training_category(category_id: int, payload: schemas.TrainingCategory
         if clash:
             raise err(409, "duplicate", "a training type with this name already exists")
         data["name"] = new_name
+    if "section" in data:
+        data["section"] = _clean_section(data["section"])
     for k, v in data.items():
         setattr(cat, k, v)
     db.flush()

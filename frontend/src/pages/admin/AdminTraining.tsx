@@ -146,6 +146,15 @@ export default function AdminTraining() {
     onSuccess: () => { invalidateCats(); setCatError(null); },
     onError: onCatErr,
   });
+  const setCatSection = useMutation({
+    mutationFn: (v: { id: number; section: string }) => api.updateTrainingCategory(v.id, { section: v.section }),
+    onSuccess: () => {
+      invalidateCats();
+      qc.invalidateQueries({ queryKey: ["training"] });   // materials move between sections
+      setCatError(null);
+    },
+    onError: onCatErr,
+  });
 
   // Options for the material form's type picker: managed types, plus the current
   // material's category if it's a legacy value not in the managed list.
@@ -328,6 +337,12 @@ export default function AdminTraining() {
               <button className="ghost" style={{ padding: "3px 10px" }}
                 disabled={renameCat.isPending || !(catEdits[c.id] ?? "").trim() || catEdits[c.id] === c.name}
                 onClick={() => renameCat.mutate(c.id)}>{t("training.save")}</button>
+              <select value={c.section || "training"} style={{ width: "auto", padding: "3px 8px" }}
+                title={t("admin.training.section")} disabled={setCatSection.isPending}
+                onChange={(e) => setCatSection.mutate({ id: c.id, section: e.target.value })}>
+                <option value="training">{t("enum.trainingSection.training")}</option>
+                <option value="promo">{t("enum.trainingSection.promo")}</option>
+              </select>
               <button className="ghost" style={{ padding: "3px 10px", color: "var(--bad)" }}
                 disabled={delCat.isPending}
                 onClick={() => { if (window.confirm(t("training.confirmDeleteType", { name: c.name }))) delCat.mutate(c.id); }}>

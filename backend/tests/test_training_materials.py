@@ -281,6 +281,31 @@ def test_list_strips_inline_images_and_serves_cover(client):
     assert client.get(f"/training-materials/{tid}/cover", headers=adm).status_code == 404
 
 
+def test_category_sections_filter_materials(client):
+    adm = auth(client, "ADM")
+    promo = client.post("/training-categories", headers=adm,
+                        json={"name": "宣傳A", "section": "promo"}).json()
+    assert promo["section"] == "promo"
+    client.post("/training-categories", headers=adm, json={"name": "培訓A", "section": "training"})
+    mk_material(client, adm, title="PromoMat", category="宣傳A")
+    mk_material(client, adm, title="TrainMat", category="培訓A")
+    mk_material(client, adm, title="LegacyMat", category="未管理")   # no managed category row
+
+    def titles(section=None):
+        p = f"?section={section}" if section else ""
+        return {m["title"] for m in client.get(f"/training-materials{p}", headers=adm).json()}
+
+    assert titles("promo") == {"PromoMat"}
+    assert {"TrainMat", "LegacyMat"} <= titles("training")        # legacy counts as 培訓資料
+    assert "PromoMat" not in titles("training")
+    assert {"PromoMat", "TrainMat", "LegacyMat"} <= titles()      # no filter = all sections
+
+    # Moving the category to 培訓資料 moves its material too.
+    client.patch(f"/training-categories/{promo['id']}", headers=adm, json={"section": "training"})
+    assert titles("promo") == set()
+    assert "PromoMat" in titles("training")
+
+
 def test_convert_existing_backfill(client):
     from app.models.models import Product, ProductType
     adm, ax = auth(client, "ADM"), auth(client, "AX")
