@@ -248,20 +248,12 @@ export default function Training({ section = "training" }: { section?: "training
   // Search filter first (drives the per-type tab counts), then the active type tab.
   const searchRows = rows.filter((m) =>
     !q || [m.title, m.description].some((v) => v && v.toLowerCase().includes(q)));
-  const filtered = searchRows.filter((m) => !category || m.category === category);
+  // No "all" tab — show one type at a time, defaulting to the first available.
+  const activeCategory = category || categories[0] || "";
+  const filtered = searchRows.filter((m) => m.category === activeCategory);
   const countFor = (c: string) => searchRows.filter((m) => m.category === c).length;
 
-  // Group filtered materials by category (used for the 全部 tab).
-  const groups = new Map<string, TrainingMaterial[]>();
-  for (const m of filtered) {
-    const key = m.category || t("training.uncategorized");
-    const arr = groups.get(key);
-    if (arr) arr.push(m);
-    else groups.set(key, [m]);
-  }
-  const groupKeys = Array.from(groups.keys()).sort();
-
-  // One material card — shared by the grouped (全部) and single-type renderings.
+  // One material card.
   const renderCard = (m: TrainingMaterial) => {
     const kind = materialKind(m);
     const ext = primaryExt(m);
@@ -309,14 +301,9 @@ export default function Training({ section = "training" }: { section?: "training
 
         {/* Material types as tabs (scrolls horizontally on H5). */}
         <div className="tm-tabs" role="tablist">
-          <button role="tab" aria-selected={category === ""}
-            className={category === "" ? "active" : ""} onClick={() => setCategory("")}>
-            {t("training.allCategories")}
-            <span className="tm-tab-count">{searchRows.length}</span>
-          </button>
           {categories.map((c) => (
-            <button key={c} role="tab" aria-selected={category === c}
-              className={category === c ? "active" : ""} onClick={() => setCategory(c)}>
+            <button key={c} role="tab" aria-selected={activeCategory === c}
+              className={activeCategory === c ? "active" : ""} onClick={() => setCategory(c)}>
               <span lang={chineseVariant(c)}>{c}</span>
               <span className="tm-tab-count">{countFor(c)}</span>
             </button>
@@ -328,24 +315,7 @@ export default function Training({ section = "training" }: { section?: "training
           <p className="muted">{t("training.noMatch")}</p>
         )}
 
-        {/* 全部 tab: keep the per-type grouped view. A specific type: one flat grid. */}
-        {category === "" ? (
-          groupKeys.map((cat) => (
-            <div key={cat} style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 15, margin: "0 0 10px", display: "flex", alignItems: "center", gap: 8 }}>
-                <span className="badge dc" lang={chineseVariant(cat)}>{cat}</span>
-                <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
-                  {t("training.count", { count: groups.get(cat)!.length })}
-                </span>
-              </h2>
-              <div className="training-grid">
-                {groups.get(cat)!.map(renderCard)}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="training-grid">{filtered.map(renderCard)}</div>
-        )}
+        <div className="training-grid">{filtered.map(renderCard)}</div>
       </div>
 
       {open && (
