@@ -251,6 +251,36 @@ def test_moments_category_not_converted_to_traditional(client):
     assert r2.status_code == 200 and r2.json()["title"] == "分红险文案"
 
 
+def test_list_strips_inline_images_and_serves_cover(client):
+    adm = auth(client, "ADM")
+    png = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
+           "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
+    desc = f'<p>hello world</p><img src="data:image/png;base64,{png}">'
+    mid = mk_material(client, adm, title="WithImg", description=desc).json()["id"]
+
+    # List payload: base64 stripped, text kept, has_cover flagged.
+    row = next(m for m in client.get("/training-materials", headers=adm).json() if m["id"] == mid)
+    assert "data:image" not in (row["description"] or "")
+    assert "hello world" in (row["description"] or "")
+    assert row["has_cover"] is True
+
+    # Full single-material GET keeps the inline image.
+    full = client.get(f"/training-materials/{mid}", headers=adm).json()
+    assert "data:image/png;base64," in (full["description"] or "")
+
+    # Cover endpoint returns a cached JPEG.
+    r1 = client.get(f"/training-materials/{mid}/cover", headers=adm)
+    assert r1.status_code == 200 and r1.headers["content-type"] == "image/jpeg" and len(r1.content) > 0
+    r2 = client.get(f"/training-materials/{mid}/cover", headers=adm)
+    assert r2.status_code == 200 and r2.content == r1.content      # served from cache
+
+    # A text-only material has no cover and no stripping.
+    tid = mk_material(client, adm, title="PlainText", description="<p>just text</p>").json()["id"]
+    trow = next(m for m in client.get("/training-materials", headers=adm).json() if m["id"] == tid)
+    assert trow["has_cover"] is False
+    assert client.get(f"/training-materials/{tid}/cover", headers=adm).status_code == 404
+
+
 def test_convert_existing_backfill(client):
     from app.models.models import Product, ProductType
     adm, ax = auth(client, "ADM"), auth(client, "AX")

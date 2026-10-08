@@ -98,10 +98,11 @@ export interface TrainingMaterial {
   id: number;
   title: string;
   category: string;
-  description: string | null;
+  description: string | null;   // base64 images stripped in list responses
   link_url: string | null;
   companies: string[] | null;   // which companies see it; null = all
   inline_preview: boolean;      // preview embedded in the card, no popup
+  has_cover: boolean;           // a server cover thumbnail is available (/cover)
   files: TrainingFile[];
   has_file: boolean;
   created_at: string;

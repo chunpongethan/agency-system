@@ -242,6 +242,7 @@ class TrainingMaterialOut(BaseModel):
     link_url: str | None = None
     companies: list[str] | None = None
     inline_preview: bool = False
+    has_cover: bool = False
     files: list[TrainingFileOut] = []
     has_file: bool = False
     created_at: datetime

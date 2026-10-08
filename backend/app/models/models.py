@@ -462,6 +462,11 @@ class TrainingMaterial(Base):
     # Which companies see this material in the agent portal, e.g. ["heritree",
     # "cpm"]. NULL/empty is treated as "all companies" (legacy rows).
     companies: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    # Cached small JPEG cover thumbnail for a material whose cover is a pasted
+    # (base64) image in the description and that has no file. Generated on first
+    # request and cleared when the description changes. Keeps the list payload
+    # light (base64 images are stripped from the list response).
+    cover_thumbnail: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     # When true, agents preview the files embedded in the card instead of a popup.
     inline_preview: Mapped[bool] = mapped_column(Boolean, default=False)
     # Admin-controlled display order (ascending); ties fall back to created_at.

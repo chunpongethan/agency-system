@@ -65,6 +65,12 @@ function firstRemarkImage(html: string | null | undefined): string | null {
 function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: Kind; ext: string | null }) {
   const file = thumbFile(material);
   const remarkImg = file ? null : firstRemarkImage(material.description);
+  // What to fetch for this tile: the file's thumbnail, or — for a description-only
+  // material whose cover is a pasted image (stripped from the list) — the server
+  // cover thumbnail. External-URL covers (remarkImg) render without a fetch.
+  const thumbPath = file
+    ? api.trainingThumbPath(material.id, file.id)
+    : (!remarkImg && material.has_cover ? api.trainingCoverPath(material.id) : null);
   const tileRef = useRef<HTMLDivElement>(null);
   // Defer the thumbnail fetch until the tile scrolls near the viewport, so the grid
   // paints immediately instead of firing one request per material at once (the
@@ -86,14 +92,14 @@ function ThumbTile({ material, kind, ext }: { material: TrainingMaterial; kind: 
   }, [visible]);
 
   useEffect(() => {
-    if (!file || !visible) return;
+    if (!thumbPath || !visible) return;
     let cancelled = false;
     let objectUrl: string | null = null;
-    fetchBlobUrl(api.trainingThumbPath(material.id, file.id))
+    fetchBlobUrl(thumbPath)
       .then((u) => { if (cancelled) { URL.revokeObjectURL(u); return; } objectUrl = u; setUrl(u); })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [file, material.id, visible]);
+  }, [thumbPath, visible]);
 
   // Priority: server thumbnail of the attachment → an image in the remark →
   // a glyph (a file exists but has no thumbnail yet, e.g. video sans ffmpeg) →
@@ -193,6 +199,17 @@ export default function Training() {
   // AdminTraining invalidates ["training"] on every edit, so changes still refresh.
   const materials = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining(), staleTime: 60_000 });
   const rows = materials.data ?? [];
+
+  // The list strips base64 images from descriptions; when a card is opened and it
+  // had inline images (has_cover), fetch the full version so the popup shows them.
+  const detail = useQuery({
+    queryKey: ["trainingFull", open?.id],
+    queryFn: () => api.getTraining(open!.id),
+    enabled: open != null && !!open.has_cover,
+    staleTime: 60_000,
+  });
+  const openDescription = open?.has_cover ? (detail.data?.description ?? null) : (open?.description ?? null);
+  const descLoading = !!open?.has_cover && detail.isLoading;
 
   // Keep the open material in sync if the list refetches.
   useEffect(() => {
@@ -338,9 +355,10 @@ export default function Training() {
               <button className="ghost" style={{ padding: "3px 10px" }} onClick={() => setOpen(null)}>✕</button>
             </div>
             <div className="modal-body detail">
-              {open.description && (
-                <div className="training-remark" style={{ fontSize: 14 }} lang={chineseVariant(open.description)}
-                  dangerouslySetInnerHTML={{ __html: open.description }} />
+              {descLoading && <div className="preview-loading"><span className="spin" aria-hidden />{t("common.loading")}</div>}
+              {!descLoading && openDescription && (
+                <div className="training-remark" style={{ fontSize: 14 }} lang={chineseVariant(openDescription)}
+                  dangerouslySetInnerHTML={{ __html: openDescription }} />
               )}
               {open.link_url && (
                 <div style={{ marginTop: 10 }}>

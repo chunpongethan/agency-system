@@ -173,6 +173,7 @@ export const api = {
   // Training materials (培訓資料)
   listTraining: (params?: { category?: string; q?: string }) =>
     request<TrainingMaterial[]>(`/training-materials${qs({ category: params?.category, q: params?.q })}`),
+  getTraining: (id: number) => request<TrainingMaterial>(`/training-materials/${id}`),
   createTraining: (payload: Record<string, unknown>) =>
     request<TrainingMaterial>("/training-materials", { method: "POST", body: JSON.stringify(payload) }),
   updateTraining: (id: number, payload: Record<string, unknown>) =>
@@ -192,6 +193,7 @@ export const api = {
     `/training-materials/${id}/files/${fileId}${download ? "?download=1" : ""}`,
   trainingThumbPath: (id: number, fileId: number) =>
     `/training-materials/${id}/files/${fileId}/thumb`,
+  trainingCoverPath: (id: number) => `/training-materials/${id}/cover`,
   transcodePendingVideos: () =>
     request<{ scheduled: number }>("/training-materials/transcode-pending", { method: "POST" }),
   transcodeVideoFile: (id: number, fileId: number) =>

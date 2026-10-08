@@ -101,6 +101,10 @@ def _ensure_columns() -> None:
         if "follow_up_urgent" not in cols("cases"):
             bool_false = "false" if engine.dialect.name == "postgresql" else "0"
             ddl.append(f"ALTER TABLE cases ADD COLUMN follow_up_urgent BOOLEAN DEFAULT {bool_false}")
+    # Cached cover thumbnail for description-only materials (list stays light).
+    if "cover_thumbnail" not in cols("training_materials") and "training_materials" in insp.get_table_names():
+        blob_type = "BYTEA" if engine.dialect.name == "postgresql" else "BLOB"
+        ddl.append(f"ALTER TABLE training_materials ADD COLUMN cover_thumbnail {blob_type}")
     # Training: per-company visibility + per-file metadata (multi-file support).
     if "companies" not in cols("training_materials"):
         ddl.append(f"ALTER TABLE training_materials ADD COLUMN companies {json_type}")
@@ -2078,17 +2082,52 @@ def _make_thumbnail(content_type: str, data: bytes, preview_data: bytes | None) 
     return None
 
 
-def _training_out(db: Session, m: TrainingMaterial) -> dict:
-    """Serialise a material for the API (file bytes never included)."""
+import re as _re
+# Matches an <img …> whose src is a data: URI (the base64 blobs the editor embeds).
+_DATA_IMG_RE = _re.compile(r"<img\b[^>]*\bsrc=[\"']data:[^\"']*[\"'][^>]*>", _re.IGNORECASE)
+
+
+def _strip_inline_images(html: str | None) -> tuple[str | None, bool]:
+    """Remove base64 <img> tags from description HTML for the LIST payload (keeps
+    all text and external-URL images). Returns (stripped_html, had_data_image)."""
+    if not html or "data:" not in html:
+        return html, False
+    stripped = _DATA_IMG_RE.sub("", html)
+    return stripped, stripped != html
+
+
+def _first_data_image_bytes(html: str | None) -> bytes | None:
+    """Decode the first base64 data:image embedded in the description, or None."""
+    if not html:
+        return None
+    m = _re.search(r"src=[\"']data:image/[^;\"']+;base64,([^\"']+)[\"']", html, _re.IGNORECASE)
+    if not m:
+        return None
+    import base64
+    try:
+        return base64.b64decode(m.group(1))
+    except Exception:
+        return None
+
+
+def _training_out(db: Session, m: TrainingMaterial, full: bool = False) -> dict:
+    """Serialise a material for the API (file bytes never included). For the list
+    (full=False) the description's base64 images are stripped to keep the payload
+    small; `has_cover` tells the client a server cover thumbnail is available."""
     files = db.execute(
         select(TrainingFile).where(TrainingFile.material_id == m.id)
         .order_by(TrainingFile.id)
     ).scalars().all()
+    if full:
+        description, has_cover = m.description, bool(_first_data_image_bytes(m.description))
+    else:
+        description, has_cover = _strip_inline_images(m.description)
     return {
         "id": m.id, "title": m.title, "category": m.category,
-        "description": m.description, "link_url": m.link_url,
+        "description": description, "link_url": m.link_url,
         "companies": m.companies or None,
         "inline_preview": bool(m.inline_preview),
+        "has_cover": has_cover,
         "files": [{"id": f.id, "file_name": f.file_name,
                    "content_type": f.content_type, "file_size": f.file_size,
                    "preview_content_type": f.preview_content_type}
@@ -2122,6 +2161,37 @@ def list_training_materials(category: str | None = None, q: str | None = None,
     if not scoping.is_admin(current):
         rows = [m for m in rows if _visible_to_company(m, current.company)]
     return [_training_out(db, m) for m in rows]
+
+
+@app.get("/training-materials/{material_id}", response_model=schemas.TrainingMaterialOut)
+def get_training_material(material_id: int, db: Session = Depends(get_db),
+                          current: Agent = Depends(get_training_viewer)):
+    """Full material including the description HTML with its inline images — fetched
+    when a card is opened or edited (the list strips base64 images to stay light)."""
+    m = db.get(TrainingMaterial, material_id)
+    if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
+        raise HTTPException(404, "training material not found")
+    return _training_out(db, m, full=True)
+
+
+@app.get("/training-materials/{material_id}/cover")
+def get_training_cover(material_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(get_training_viewer)):
+    """Small JPEG cover for a description-only material whose cover is a pasted
+    image. Generated once from the first inline image, then cached on the row."""
+    m = db.get(TrainingMaterial, material_id)
+    if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
+        raise HTTPException(404, "training material not found")
+    data = m.cover_thumbnail
+    if not data:
+        raw = _first_data_image_bytes(m.description)
+        data = _jpeg_thumb_from_image_bytes(raw) if raw else None
+        if not data:
+            raise HTTPException(404, "no cover image")
+        m.cover_thumbnail = data
+        db.commit()
+    return Response(content=data, media_type="image/jpeg",
+                    headers={"Cache-Control": "private, max-age=86400"})
 
 
 def _clean_companies(companies: list[str] | None) -> list[str] | None:
@@ -2244,6 +2314,7 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     conv = (lambda s: s) if eff_category == NO_ZH_CONVERT_CATEGORY else to_traditional
     if "description" in data:
         data["description"] = conv(sanitize_html(data["description"]))
+        m.cover_thumbnail = None            # regenerate the cover from the new image
     for k in ("title", "category"):
         if data.get(k):
             data[k] = conv(data[k])

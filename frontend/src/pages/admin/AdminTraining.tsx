@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText, downloadFile } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
@@ -33,6 +33,7 @@ export default function AdminTraining() {
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  const editReq = useRef(0);   // guards against a stale full-description fetch
   const [form, setForm] = useState<typeof BLANK>({ ...BLANK });
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -186,11 +187,19 @@ export default function AdminTraining() {
   function openCreate() {
     setEditId(null); setForm({ ...BLANK }); setFiles([]); setError(null); setShowForm(true);
   }
-  function openEdit(m: TrainingMaterial) {
+  async function openEdit(m: TrainingMaterial) {
+    const token = ++editReq.current;
     setEditId(m.id);
+    // The list strips base64 images from descriptions — fetch the full one to edit.
     setForm({ title: m.title, category: m.category, description: m.description ?? "",
               link_url: m.link_url ?? "", companies: m.companies ?? [...COMPANIES] });
     setFiles([]); setError(null); setShowForm(true);
+    if (m.has_cover) {
+      try {
+        const full = await api.getTraining(m.id);
+        if (editReq.current === token) setForm((f) => ({ ...f, description: full.description ?? "" }));
+      } catch (e) { if (editReq.current === token) setError(errorText(e, t)); }
+    }
   }
   function closeForm() { setShowForm(false); setEditId(null); setFiles([]); }
 
