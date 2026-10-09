@@ -561,7 +561,7 @@ def _mk_bschool(client, code="b1"):
     s.add(a); s.commit(); s.close()
 
 
-def test_training_video_views_logged_for_bschool_only(client):
+def test_training_video_views_logged_for_every_viewer(client):
     adm = auth(client, "ADM")
     _mk_bschool(client, "b1")
     b, ax = auth(client, "b1"), auth(client, "AX")
@@ -571,20 +571,21 @@ def test_training_video_views_logged_for_bschool_only(client):
     fid = _upload(client, adm, mid, ("v.mp4", data, "video/mp4")).json()["files"][0]["id"]
     view = f"/training-materials/{mid}/files/{fid}/view"
 
-    # 商學院 viewer: first flush opens a viewing session; later flush adds to it.
+    # First flush opens a viewing session; a later flush adds to the same session.
     assert client.post(view, headers=b, json={"seconds": 30, "new_session": True}).status_code == 204
     assert client.post(view, headers=b, json={"seconds": 15, "new_session": False}).status_code == 204
     # Reopening the video = a second session.
     assert client.post(view, headers=b, json={"seconds": 5, "new_session": True}).status_code == 204
-    # Non-商學院 viewer is a no-op (still 204) and never recorded.
+    # A non-商學院 agent is logged too (now every viewer counts).
     assert client.post(view, headers=ax, json={"seconds": 99, "new_session": True}).status_code == 204
 
     # Report is admin-only and aggregates per agent × video.
     assert client.get("/admin/training-video-views", headers=ax).status_code == 403
     rep = client.get("/admin/training-video-views", headers=adm).json()
-    assert len(rep["rows"]) == 1
-    row = rep["rows"][0]
-    assert row["agent_code"] == "b1" and row["company"] == "bschool"
-    assert row["material_title"] == "Onboarding 101" and row["file_name"] == "v.mp4"
-    assert row["watched_seconds"] == 50 and row["view_count"] == 2
-    assert rep["total_seconds"] == 50 and rep["total_views"] == 2
+    assert len(rep["rows"]) == 2
+    byc = {r["agent_code"]: r for r in rep["rows"]}
+    assert byc["b1"]["company"] == "bschool"
+    assert byc["b1"]["watched_seconds"] == 50 and byc["b1"]["view_count"] == 2
+    assert byc["b1"]["material_title"] == "Onboarding 101" and byc["b1"]["file_name"] == "v.mp4"
+    assert byc["AX"]["watched_seconds"] == 99 and byc["AX"]["view_count"] == 1
+    assert rep["total_seconds"] == 149 and rep["total_views"] == 3

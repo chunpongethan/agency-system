@@ -2529,10 +2529,9 @@ def get_training_thumb(material_id: int, file_id: int, db: Session = Depends(get
 def record_training_view(material_id: int, file_id: int, payload: schemas.TrainingViewIn,
                          db: Session = Depends(get_db),
                          current: Agent = Depends(get_training_viewer)):
-    """Accumulate a 商學院 agent's actual watch time for a training video (one aggregate
-    row per agent×video). No-op for non-商學院 viewers — the report is 商學院-only."""
-    if current.company != scoping.BSCHOOL:
-        return
+    """Accumulate a viewer's actual watch time for a training video (one aggregate
+    row per agent×video). Logs every viewer who can see the material (agent / 學員 /
+    manager / admin), across all companies."""
     m = db.get(TrainingMaterial, material_id)
     if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
         raise HTTPException(404, "training material not found")

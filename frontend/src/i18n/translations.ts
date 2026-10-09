@@ -19,7 +19,7 @@ export const translations: Record<string, Translation> = {
   "nav.trainingAdmin": { "zh-Hant": "培訓資料維護", en: "Training materials" },
   "nav.trainingViews": { "zh-Hant": "商學院課程觀看紀錄", en: "Course views" },
   "trainingViews.title": { "zh-Hant": "商學院課程觀看紀錄", en: "Course viewing log" },
-  "trainingViews.subtitle": { "zh-Hant": "商學院學員／代理觀看課程影片的次數與實際播放時間", en: "Business-school agents' video views and actual play time" },
+  "trainingViews.subtitle": { "zh-Hant": "代理／學員觀看課程影片的次數與實際播放時間", en: "Agents' and students' video views and actual play time" },
   "trainingViews.totalTime": { "zh-Hant": "總觀看時間", en: "Total watch time" },
   "trainingViews.totalViews": { "zh-Hant": "總觀看次數", en: "Total views" },
   "trainingViews.rows": { "zh-Hant": "紀錄筆數", en: "Records" },

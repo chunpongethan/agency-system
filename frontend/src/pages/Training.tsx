@@ -161,13 +161,12 @@ function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [previewPath, isVideo]);
 
-  // 商學院 video-watch logging: accumulate ACTUAL play time (sum of currentTime
-  // deltas between timeupdate events; a jump ≥2s is a seek, not playback, so it
-  // is ignored) and flush the whole seconds to the server periodically and on
-  // pause/unmount. Only bschool viewers are tracked (admins/other companies are
-  // excluded server-side too). new_session marks the first flush of this mount,
-  // so a reopened video counts as one more view.
-  const track = isVideo && me?.company === "bschool";
+  // Video-watch logging: accumulate ACTUAL play time (sum of currentTime deltas
+  // between timeupdate events; a jump ≥2s is a seek, not playback, so it is
+  // ignored) and flush the whole seconds to the server periodically and on
+  // pause/unmount. Every viewer is logged. new_session marks the first flush of
+  // this mount, so a reopened video counts as one more view.
+  const track = isVideo && !!me;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const pending = useRef(0);          // played seconds not yet sent (fractional)
   const lastTime = useRef<number | null>(null);
