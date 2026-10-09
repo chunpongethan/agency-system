@@ -552,3 +552,39 @@ def test_category_crud_and_gating(client):
                         json={"name": "產品培訓"}).json()["name"] == "產品培訓"
     assert client.delete(f"/training-categories/{cid}", headers=adm).status_code == 200
     assert all(c["id"] != cid for c in client.get("/training-categories", headers=ax).json())
+
+
+def _mk_bschool(client, code="b1"):
+    s = client._Session()
+    a = Agent(code=code, name=code, email=f"{code}@x.com", level=1, role=Role.AGENT,
+              company="bschool", password_hash=hash_password("pw"))
+    s.add(a); s.commit(); s.close()
+
+
+def test_training_video_views_logged_for_bschool_only(client):
+    adm = auth(client, "ADM")
+    _mk_bschool(client, "b1")
+    b, ax = auth(client, "b1"), auth(client, "AX")
+
+    mid = mk_material(client, adm).json()["id"]
+    data = b"\x00\x00\x00\x18ftypmp42" + b"A" * 500
+    fid = _upload(client, adm, mid, ("v.mp4", data, "video/mp4")).json()["files"][0]["id"]
+    view = f"/training-materials/{mid}/files/{fid}/view"
+
+    # 商學院 viewer: first flush opens a viewing session; later flush adds to it.
+    assert client.post(view, headers=b, json={"seconds": 30, "new_session": True}).status_code == 204
+    assert client.post(view, headers=b, json={"seconds": 15, "new_session": False}).status_code == 204
+    # Reopening the video = a second session.
+    assert client.post(view, headers=b, json={"seconds": 5, "new_session": True}).status_code == 204
+    # Non-商學院 viewer is a no-op (still 204) and never recorded.
+    assert client.post(view, headers=ax, json={"seconds": 99, "new_session": True}).status_code == 204
+
+    # Report is admin-only and aggregates per agent × video.
+    assert client.get("/admin/training-video-views", headers=ax).status_code == 403
+    rep = client.get("/admin/training-video-views", headers=adm).json()
+    assert len(rep["rows"]) == 1
+    row = rep["rows"][0]
+    assert row["agent_code"] == "b1" and row["company"] == "bschool"
+    assert row["material_title"] == "Onboarding 101" and row["file_name"] == "v.mp4"
+    assert row["watched_seconds"] == 50 and row["view_count"] == 2
+    assert rep["total_seconds"] == 50 and rep["total_views"] == 2

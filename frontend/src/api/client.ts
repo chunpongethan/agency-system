@@ -7,7 +7,7 @@ import type {
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
-  KbChatTurn, MenuSetting, KbUsageSummary,
+  KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -194,6 +194,9 @@ export const api = {
   trainingThumbPath: (id: number, fileId: number) =>
     `/training-materials/${id}/files/${fileId}/thumb`,
   trainingCoverPath: (id: number) => `/training-materials/${id}/cover`,
+  recordTrainingView: (id: number, fileId: number, body: { seconds: number; new_session: boolean }) =>
+    request<void>(`/training-materials/${id}/files/${fileId}/view`, { method: "POST", body: JSON.stringify(body) }),
+  trainingVideoViews: () => request<TrainingVideoViews>("/admin/training-video-views"),
   transcodePendingVideos: () =>
     request<{ scheduled: number }>("/training-materials/transcode-pending", { method: "POST" }),
   transcodeVideoFile: (id: number, fileId: number) =>

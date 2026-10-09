@@ -451,3 +451,21 @@ export interface KbUsageSummary {
   model: string;
   ai_enabled: boolean;
 }
+
+export interface TrainingVideoViewRow {
+  agent_id: number;
+  agent_code: string;
+  agent_name: string;
+  company: string;
+  material_id: number;
+  material_title: string;
+  file_name: string;
+  view_count: number;
+  watched_seconds: number;
+  last_viewed_at: string;
+}
+export interface TrainingVideoViews {
+  rows: TrainingVideoViewRow[];
+  total_seconds: number;
+  total_views: number;
+}

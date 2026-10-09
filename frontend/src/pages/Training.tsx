@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
+import { useAuth } from "../auth/AuthContext";
 import { useI18n } from "../i18n/LanguageContext";
 import { dateShort } from "../lib/format";
 import { chineseVariant } from "../lib/zh";
@@ -140,9 +141,11 @@ function embed(url: string, type: string, name: string) {
 
 // One file's preview inside the detail modal. Fetched eagerly (the user opened
 // the item on purpose), and the object URL is revoked on unmount.
-function FilePreview({ previewPath, name, type, onDownload }:
-  { previewPath: string; name: string; type: string; onDownload: () => void }) {
+function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }:
+  { previewPath: string; name: string; type: string; onDownload: () => void;
+    materialId: number; fileId: number }) {
   const { t } = useI18n();
+  const { me } = useAuth();
   // Video streams directly from a ranged URL (no blob) so it plays on iOS and can
   // seek; other types are fetched as an auth'd blob for inline preview.
   const isVideo = (type || "").toLowerCase().startsWith("video/");
@@ -157,6 +160,46 @@ function FilePreview({ previewPath, name, type, onDownload }:
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [previewPath, isVideo]);
+
+  // 商學院 video-watch logging: accumulate ACTUAL play time (sum of currentTime
+  // deltas between timeupdate events; a jump ≥2s is a seek, not playback, so it
+  // is ignored) and flush the whole seconds to the server periodically and on
+  // pause/unmount. Only bschool viewers are tracked (admins/other companies are
+  // excluded server-side too). new_session marks the first flush of this mount,
+  // so a reopened video counts as one more view.
+  const track = isVideo && me?.company === "bschool";
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const pending = useRef(0);          // played seconds not yet sent (fractional)
+  const lastTime = useRef<number | null>(null);
+  const newSession = useRef(true);
+  const flush = useCallback(() => {
+    if (!track) return;
+    const whole = Math.floor(pending.current);
+    if (whole < 1 && !newSession.current) return;
+    pending.current -= whole;
+    const body = { seconds: whole, new_session: newSession.current };
+    newSession.current = false;
+    api.recordTrainingView(materialId, fileId, body).catch(() => {});
+  }, [track, materialId, fileId]);
+  useEffect(() => {
+    if (!track) return;
+    const id = window.setInterval(flush, 20000);
+    const onHide = () => { if (document.visibilityState === "hidden") flush(); };
+    document.addEventListener("visibilitychange", onHide);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", onHide); flush(); };
+  }, [track, flush]);
+  const onPlay = () => { lastTime.current = videoRef.current?.currentTime ?? null; };
+  const onPauseOrEnd = () => { lastTime.current = null; flush(); };
+  const onTimeUpdate = () => {
+    const ct = videoRef.current?.currentTime;
+    if (ct == null) return;
+    if (lastTime.current != null) {
+      const d = ct - lastTime.current;
+      if (d > 0 && d < 2) pending.current += d;   // normal playback; ignore seeks
+    }
+    lastTime.current = ct;
+  };
+
   return (
     <div style={{ marginTop: 12 }}>
       <div className="muted" style={{ fontSize: 12, marginBottom: 4, display: "flex",
@@ -169,7 +212,11 @@ function FilePreview({ previewPath, name, type, onDownload }:
       </div>
       {!failed && (url
         ? <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
-            {embed(url, type, name)}
+            {isVideo
+              ? <video ref={videoRef} src={url} controls playsInline preload="metadata"
+                  onPlay={onPlay} onPause={onPauseOrEnd} onEnded={onPauseOrEnd} onTimeUpdate={onTimeUpdate}
+                  style={{ width: "100%", maxHeight: 520, background: "#000", display: "block" }} />
+              : embed(url, type, name)}
           </div>
         : <div className="preview-loading"><span className="spin" aria-hidden />{t("common.loading")}</div>)}
     </div>
@@ -359,6 +406,7 @@ export default function Training({ section = "training" }: { section?: "training
               {/* Previewable files render in place, loaded now. */}
               {(open.files ?? []).filter(canPreview).map((f) => (
                 <FilePreview key={f.id} previewPath={api.trainingFilePath(open.id, f.id)}
+                  materialId={open.id} fileId={f.id}
                   name={f.file_name} type={previewType(f)} onDownload={() => onDownloadFile(open, f)} />
               ))}
               {(open.files ?? []).length === 0 && !open.link_url && !open.description && (

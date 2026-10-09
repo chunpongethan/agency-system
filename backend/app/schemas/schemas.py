@@ -249,6 +249,11 @@ class TrainingMaterialOut(BaseModel):
     updated_at: datetime
 
 
+class TrainingViewIn(BaseModel):
+    seconds: int = 0          # actual play seconds since the last report
+    new_session: bool = False  # true on the first report of a viewing session
+
+
 class TrainingCategoryIn(BaseModel):
     name: str
     sort_order: int = 0

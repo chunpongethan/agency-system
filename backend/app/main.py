@@ -25,7 +25,7 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, now_utc,
+    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -2523,6 +2523,58 @@ def get_training_thumb(material_id: int, file_id: int, db: Session = Depends(get
         content=row.thumbnail, media_type=row.thumbnail_content_type or "image/jpeg",
         headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"},
     )
+
+
+@app.post("/training-materials/{material_id}/files/{file_id}/view", status_code=204)
+def record_training_view(material_id: int, file_id: int, payload: schemas.TrainingViewIn,
+                         db: Session = Depends(get_db),
+                         current: Agent = Depends(get_training_viewer)):
+    """Accumulate a 商學院 agent's actual watch time for a training video (one aggregate
+    row per agent×video). No-op for non-商學院 viewers — the report is 商學院-only."""
+    if current.company != scoping.BSCHOOL:
+        return
+    m = db.get(TrainingMaterial, material_id)
+    if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
+        raise HTTPException(404, "training material not found")
+    f = db.get(TrainingFile, file_id)
+    if f is None or f.material_id != material_id:
+        raise HTTPException(404, "file not found")
+    seconds = max(0, min(int(payload.seconds or 0), 3600))   # clamp a single report
+    row = db.execute(select(TrainingVideoView).where(
+        TrainingVideoView.agent_id == current.id,
+        TrainingVideoView.file_id == file_id)).scalars().first()
+    if row is None:
+        row = TrainingVideoView(agent_id=current.id, material_id=material_id, file_id=file_id)
+        db.add(row)
+    row.watched_seconds = (row.watched_seconds or 0) + seconds
+    if payload.new_session:
+        row.view_count = (row.view_count or 0) + 1
+    row.last_viewed_at = now_utc()
+    db.commit()
+
+
+@app.get("/admin/training-video-views")
+def admin_training_video_views(db: Session = Depends(get_db),
+                               current: Agent = Depends(require_admin)):
+    """商學院課程觀看紀錄: total actual watch time + session count per 商學院 agent × video."""
+    Ag = aliased(Agent)
+    rows = db.execute(
+        select(TrainingVideoView, Ag.code, Ag.name, Ag.company,
+               TrainingMaterial.title, TrainingFile.file_name)
+        .join(Ag, TrainingVideoView.agent_id == Ag.id)
+        .join(TrainingMaterial, TrainingVideoView.material_id == TrainingMaterial.id)
+        .join(TrainingFile, TrainingVideoView.file_id == TrainingFile.id)
+        .order_by(Ag.code, TrainingVideoView.watched_seconds.desc())
+    ).all()
+    out = [{
+        "agent_id": v.agent_id, "agent_code": code, "agent_name": name, "company": company,
+        "material_id": v.material_id, "material_title": title, "file_name": fname,
+        "view_count": v.view_count, "watched_seconds": v.watched_seconds,
+        "last_viewed_at": v.last_viewed_at,
+    } for v, code, name, company, title, fname in rows]
+    return {"rows": out,
+            "total_seconds": sum(r["watched_seconds"] for r in out),
+            "total_views": sum(r["view_count"] for r in out)}
 
 
 @app.delete("/training-materials/{material_id}/files/{file_id}", response_model=schemas.TrainingMaterialOut)

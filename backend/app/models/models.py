@@ -548,6 +548,22 @@ class KbUsage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
 
 
+class TrainingVideoView(Base):
+    """Aggregate watch record for a 商學院 (bschool) agent watching a training video:
+    one row per (agent, video file), accumulating actual play seconds and the number
+    of viewing sessions. Powers the admin 商學院課程觀看 report."""
+    __tablename__ = "training_video_views"
+    __table_args__ = (UniqueConstraint("agent_id", "file_id", name="uq_training_view_agent_file"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"), index=True)
+    material_id: Mapped[int] = mapped_column(ForeignKey("training_materials.id"))
+    file_id: Mapped[int] = mapped_column(ForeignKey("training_files.id"), index=True)
+    view_count: Mapped[int] = mapped_column(Integer, default=0)     # number of viewing sessions
+    watched_seconds: Mapped[int] = mapped_column(Integer, default=0)  # total actual play time
+    last_viewed_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
 class MenuSetting(Base):
     """Global left-menu customisation: one row per sidebar item with a show/hide
     flag and sort order. The set of valid keys is defined by the frontend menu
