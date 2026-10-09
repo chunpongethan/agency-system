@@ -71,12 +71,22 @@ On the VM you then only need **three files** — `docker-compose.prod.images.yml
 `Caddyfile`, and `.env` (set `IMAGE_PREFIX`, e.g.
 `ghcr.io/chunpongethan/agency-system`):
 
+Copy **`deploy.sh`** alongside them and deploy with it — it pulls, restarts,
+**and prunes old images** (a build is ~1 GB and every pull leaves the previous
+one behind; once the disk fills, Postgres crash-loops with `No space left on
+device`, so pruning is part of a safe deploy):
+
 ```bash
-docker compose -f docker-compose.prod.images.yml --env-file .env pull
-docker compose -f docker-compose.prod.images.yml --env-file .env up -d
-# update to a newer build:
+chmod +x deploy.sh      # once
+sudo ./deploy.sh        # pull + up -d + prune, every deploy
+```
+
+Or the raw commands (remember the prune — volumes are never touched by it):
+
+```bash
 docker compose -f docker-compose.prod.images.yml --env-file .env pull && \
-docker compose -f docker-compose.prod.images.yml --env-file .env up -d
+docker compose -f docker-compose.prod.images.yml --env-file .env up -d && \
+docker image prune -af
 ```
 
 ## Notes
