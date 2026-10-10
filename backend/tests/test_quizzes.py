@@ -64,22 +64,26 @@ def test_submit_scores_passes_and_keeps_latest(client):
     assert row["attempt_count"] == 2 and row["quiz_title"] == "考核 A"
 
 
-def test_quiz_visibility_follows_course(client):
+def test_quiz_visibility_by_company(client):
     adm = auth(client, "ADM")
     _mk_bschool(client, "b1")
     b, ax = auth(client, "b1"), auth(client, "AX")
+    mid = mk_material(client, adm).json()["id"]
 
-    # Course visible to bschool only → quiz is 404 for a heritree agent, takeable by bschool + 學員.
-    mid = mk_material(client, adm, companies=["bschool"]).json()["id"]
-    qid = _mk_quiz(client, adm, mid).json()["id"]
-
+    # A quiz limited to bschool → 404 for a heritree agent, takeable by bschool + 學員.
+    qid = _mk_quiz(client, adm, mid, companies=["bschool"]).json()["id"]
     assert client.get(f"/quizzes/{qid}", headers=ax).status_code == 404
     assert client.post(f"/quizzes/{qid}/submit", headers=ax, json={"answers": [1, 1]}).status_code == 404
     assert client.get(f"/quizzes/{qid}", headers=b).status_code == 200
     assert qid in [q["id"] for q in client.get("/quizzes", headers=b).json()]
     assert qid not in [q["id"] for q in client.get("/quizzes", headers=ax).json()]
 
-    # A 學員 (student) may take it too.
+    # A quiz with no company list (null) is visible to ALL companies.
+    qall = _mk_quiz(client, adm, mid).json()["id"]
+    assert client.get(f"/quizzes/{qall}", headers=ax).status_code == 200
+    assert qall in [q["id"] for q in client.get("/quizzes", headers=ax).json()]
+
+    # A 學員 (student) may take the bschool quiz too.
     s = client._Session()
     s.add(Agent(code="b500", name="stu", email="stu@x.com", level=1, role=Role.STUDENT,
                 company="bschool", password_hash=hash_password("pw")))

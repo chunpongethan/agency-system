@@ -137,6 +137,9 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE training_files ADD COLUMN extracted_text TEXT")
     if "label" not in cols("menu_settings") and "menu_settings" in insp.get_table_names():
         ddl.append("ALTER TABLE menu_settings ADD COLUMN label VARCHAR(80)")
+    # 課程考核 per-quiz company visibility (NULL = all companies).
+    if "companies" not in cols("quizzes") and "quizzes" in insp.get_table_names():
+        ddl.append(f"ALTER TABLE quizzes ADD COLUMN companies {json_type}")
     if ddl:
         with engine.begin() as conn:
             for stmt in ddl:
@@ -2609,14 +2612,13 @@ def _quiz_material_title(db: Session, material_id: int) -> str | None:
 
 
 def _quiz_visible(db: Session, quiz: Quiz, current: Agent) -> bool:
-    """A quiz is visible to a taker when it is active and the linked course is
-    visible to the taker's company. Admins see everything."""
+    """A quiz is visible to a taker when it is active and the quiz's own company
+    list allows the taker's company (NULL/empty = all). Admins see everything."""
     if scoping.is_admin(current):
         return True
     if not quiz.is_active:
         return False
-    m = db.get(TrainingMaterial, quiz.material_id)
-    return m is not None and _visible_to_company(m, current.company)
+    return not quiz.companies or current.company in quiz.companies
 
 
 def _quiz_take_out(db: Session, quiz: Quiz) -> dict:
@@ -2633,6 +2635,7 @@ def _quiz_take_out(db: Session, quiz: Quiz) -> dict:
 def _quiz_admin_out(db: Session, quiz: Quiz) -> dict:
     out = _quiz_take_out(db, quiz)
     out["is_active"] = quiz.is_active
+    out["companies"] = quiz.companies
     out["questions"] = [{
         "text": q.get("text", ""), "options": q.get("options", []),
         "correct_index": q.get("correct_index", 0), "explanation": q.get("explanation"),
@@ -2649,7 +2652,7 @@ def admin_list_quizzes(db: Session = Depends(get_db), current: Agent = Depends(r
     return [{
         "id": q.id, "title": q.title, "material_id": q.material_id,
         "material_title": _quiz_material_title(db, q.material_id),
-        "pass_pct": q.pass_pct, "is_active": q.is_active,
+        "pass_pct": q.pass_pct, "is_active": q.is_active, "companies": q.companies,
         "question_count": len(q.questions or []), "attempt_count": counts.get(q.id, 0),
     } for q in quizzes]
 

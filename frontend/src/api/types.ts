@@ -488,6 +488,7 @@ export interface QuizSummary {
   material_title: string | null;
   pass_pct: number;
   is_active: boolean;
+  companies: string[] | null;   // null/empty = all companies
   question_count: number;
   attempt_count: number;
 }
@@ -498,6 +499,7 @@ export interface QuizAdmin {
   description: string | null;
   pass_pct: number;
   is_active: boolean;
+  companies: string[] | null;   // null/empty = all companies
   material_id: number;
   material_title: string | null;
   questions: QuizQuestionFull[];

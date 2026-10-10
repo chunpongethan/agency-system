@@ -288,6 +288,7 @@ class QuizIn(BaseModel):
     description: str | None = None
     pass_pct: int = 60
     is_active: bool = True
+    companies: list[str] | None = None   # NULL/empty = all companies
     questions: list[QuizQuestionIn] = []
 
 
@@ -297,6 +298,7 @@ class QuizUpdate(BaseModel):
     description: str | None = None
     pass_pct: int | None = None
     is_active: bool | None = None
+    companies: list[str] | None = None
     questions: list[QuizQuestionIn] | None = None
 
 

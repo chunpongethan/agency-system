@@ -191,6 +191,7 @@ def main():
         quiz.description = _t("共 20 题单项选择题，每题 5 分，满分 100 分；及格 80 分。请在看完对应视频后作答。")
         quiz.pass_pct = PASS_PCT
         quiz.is_active = True
+        quiz.companies = None   # visible to all companies
         quiz.questions = build_questions()
         db.commit()
         print(f"seed_quiz: {verb} quiz id={quiz.id} {quiz.title!r} "

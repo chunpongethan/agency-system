@@ -64,6 +64,8 @@ export const translations: Record<string, Translation> = {
   "quiz.fCourse": { "zh-Hant": "連結課程", en: "Linked course" },
   "quiz.fPassPct": { "zh-Hant": "及格百分比", en: "Pass %" },
   "quiz.fActive": { "zh-Hant": "啟用", en: "Active" },
+  "quiz.fCompanies": { "zh-Hant": "可見公司（全選＝所有公司）", en: "Visible to companies (all = everyone)" },
+  "quiz.errCompanies": { "zh-Hant": "請至少選擇一間公司", en: "Pick at least one company" },
   "quiz.fDescription": { "zh-Hant": "說明（選填）", en: "Description (optional)" },
   "quiz.questions": { "zh-Hant": "題目", en: "Questions" },
   "quiz.question": { "zh-Hant": "題目", en: "Question" },

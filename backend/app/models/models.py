@@ -575,6 +575,8 @@ class Quiz(Base):
     material_id: Mapped[int] = mapped_column(ForeignKey("training_materials.id"), index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     pass_pct: Mapped[int] = mapped_column(Integer, default=60)   # passing percentage
+    # Per-company visibility (independent of the linked course); NULL/empty = all.
+    companies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     questions: Mapped[list] = mapped_column(JSON, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)

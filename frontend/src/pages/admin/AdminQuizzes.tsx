@@ -2,17 +2,19 @@ import { useState, type FormEvent } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
+import { companyLabel } from "../../i18n/labels";
 
 type QForm = {
   text: string; options: string[]; correct_index: number; explanation: string;
 };
 type Form = {
   title: string; material_id: number | ""; description: string;
-  pass_pct: number; is_active: boolean; questions: QForm[];
+  pass_pct: number; is_active: boolean; companies: string[]; questions: QForm[];
 };
+const COMPANIES = ["heritree", "cpm", "bschool"];
 const BLANK_Q: QForm = { text: "", options: ["", ""], correct_index: 0, explanation: "" };
 const BLANK: Form = { title: "", material_id: "", description: "", pass_pct: 60, is_active: true,
-                      questions: [{ ...BLANK_Q, options: ["", ""] }] };
+                      companies: [...COMPANIES], questions: [{ ...BLANK_Q, options: ["", ""] }] };
 
 export default function AdminQuizzes() {
   const { t } = useI18n();
@@ -41,6 +43,7 @@ export default function AdminQuizzes() {
       setForm({
         title: q.title, material_id: q.material_id, description: q.description ?? "",
         pass_pct: q.pass_pct, is_active: q.is_active,
+        companies: q.companies && q.companies.length ? q.companies : [...COMPANIES],
         questions: q.questions.map((x) => ({
           text: x.text, options: [...x.options], correct_index: x.correct_index,
           explanation: x.explanation ?? "",
@@ -51,6 +54,9 @@ export default function AdminQuizzes() {
   function closeForm() { setShowForm(false); setEditId(null); }
 
   // --- dynamic question/option editing ---
+  const toggleCompany = (c: string) =>
+    setForm((f) => ({ ...f, companies: f.companies.includes(c)
+      ? f.companies.filter((x) => x !== c) : [...f.companies, c] }));
   const setQ = (qi: number, patch: Partial<QForm>) =>
     setForm((f) => ({ ...f, questions: f.questions.map((q, i) => (i === qi ? { ...q, ...patch } : q)) }));
   const addQuestion = () => setForm((f) => ({ ...f, questions: [...f.questions, { ...BLANK_Q, options: ["", ""] }] }));
@@ -74,6 +80,8 @@ export default function AdminQuizzes() {
         description: form.description.trim() || null,
         pass_pct: Number(form.pass_pct) || 0,
         is_active: form.is_active,
+        // All companies selected → null (visible to everyone, incl. future tenants).
+        companies: form.companies.length === COMPANIES.length ? null : form.companies,
         questions: form.questions.map((q) => ({
           text: q.text.trim(),
           options: q.options.map((o) => o.trim()),
@@ -95,6 +103,7 @@ export default function AdminQuizzes() {
   function validate(): string | null {
     if (!form.title.trim()) return t("quiz.errTitle");
     if (!form.material_id) return t("quiz.errCourse");
+    if (form.companies.length === 0) return t("quiz.errCompanies");
     if (form.questions.length === 0) return t("quiz.errNoQuestions");
     for (const q of form.questions) {
       if (!q.text.trim()) return t("quiz.errQuestionText");
@@ -147,6 +156,17 @@ export default function AdminQuizzes() {
                 onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))} />
               {t("quiz.fActive")}
             </label>
+          </div>
+          <div style={{ margin: "4px 0" }}>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 2 }}>{t("quiz.fCompanies")}</div>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              {COMPANIES.map((c) => (
+                <label key={c} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <input type="checkbox" checked={form.companies.includes(c)} onChange={() => toggleCompany(c)} />
+                  {companyLabel(c)}
+                </label>
+              ))}
+            </div>
           </div>
           <label>{t("quiz.fDescription")}
             <textarea rows={2} value={form.description}
