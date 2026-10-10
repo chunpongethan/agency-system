@@ -25,7 +25,8 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView, now_utc,
+    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView,
+    Quiz, QuizAttempt, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -2351,6 +2352,11 @@ def delete_training_material(material_id: int, db: Session = Depends(get_db),
     if m is None:
         raise HTTPException(404, "training material not found")
     db.execute(delete(TrainingFile).where(TrainingFile.material_id == material_id))
+    # Delete quizzes tied to this course (and their attempts) so they don't orphan.
+    quiz_ids = db.execute(select(Quiz.id).where(Quiz.material_id == material_id)).scalars().all()
+    if quiz_ids:
+        db.execute(delete(QuizAttempt).where(QuizAttempt.quiz_id.in_(quiz_ids)))
+        db.execute(delete(Quiz).where(Quiz.id.in_(quiz_ids)))
     audit.record(db, current.id, "delete", "training_material", material_id,
                  before={"title": m.title, "category": m.category})
     db.delete(m); db.commit()
@@ -2592,6 +2598,220 @@ def clear_training_video_views(db: Session = Depends(get_db),
                                current: Agent = Depends(require_admin)):
     """Clear all 商學院課程觀看 records (admin only)."""
     db.query(TrainingVideoView).delete()
+    db.commit()
+
+
+# --- 課程考核 (MC quiz) ------------------------------------------------------
+
+def _quiz_material_title(db: Session, material_id: int) -> str | None:
+    m = db.get(TrainingMaterial, material_id)
+    return m.title if m else None
+
+
+def _quiz_visible(db: Session, quiz: Quiz, current: Agent) -> bool:
+    """A quiz is visible to a taker when it is active and the linked course is
+    visible to the taker's company. Admins see everything."""
+    if scoping.is_admin(current):
+        return True
+    if not quiz.is_active:
+        return False
+    m = db.get(TrainingMaterial, quiz.material_id)
+    return m is not None and _visible_to_company(m, current.company)
+
+
+def _quiz_take_out(db: Session, quiz: Quiz) -> dict:
+    """Taker-facing quiz: questions carry NO correct answer or explanation."""
+    return {
+        "id": quiz.id, "title": quiz.title, "description": quiz.description,
+        "pass_pct": quiz.pass_pct, "material_id": quiz.material_id,
+        "material_title": _quiz_material_title(db, quiz.material_id),
+        "questions": [{"text": q.get("text", ""), "options": q.get("options", [])}
+                      for q in (quiz.questions or [])],
+    }
+
+
+def _quiz_admin_out(db: Session, quiz: Quiz) -> dict:
+    out = _quiz_take_out(db, quiz)
+    out["is_active"] = quiz.is_active
+    out["questions"] = [{
+        "text": q.get("text", ""), "options": q.get("options", []),
+        "correct_index": q.get("correct_index", 0), "explanation": q.get("explanation"),
+    } for q in (quiz.questions or [])]
+    return out
+
+
+@app.get("/admin/quizzes")
+def admin_list_quizzes(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    quizzes = db.execute(select(Quiz).order_by(Quiz.sort_order, Quiz.id)).scalars().all()
+    counts = dict(db.execute(
+        select(QuizAttempt.quiz_id, func.count(QuizAttempt.id)).group_by(QuizAttempt.quiz_id)
+    ).all())
+    return [{
+        "id": q.id, "title": q.title, "material_id": q.material_id,
+        "material_title": _quiz_material_title(db, q.material_id),
+        "pass_pct": q.pass_pct, "is_active": q.is_active,
+        "question_count": len(q.questions or []), "attempt_count": counts.get(q.id, 0),
+    } for q in quizzes]
+
+
+@app.get("/admin/quizzes/{quiz_id}")
+def admin_get_quiz(quiz_id: int, db: Session = Depends(get_db),
+                   current: Agent = Depends(require_admin)):
+    quiz = db.get(Quiz, quiz_id)
+    if quiz is None:
+        raise HTTPException(404, "quiz not found")
+    return _quiz_admin_out(db, quiz)
+
+
+def _quiz_apply(quiz: Quiz, data: dict) -> None:
+    if "questions" in data and data["questions"] is not None:
+        quiz.questions = [q.model_dump() if hasattr(q, "model_dump") else dict(q)
+                          for q in data.pop("questions")]
+    else:
+        data.pop("questions", None)
+    for k, v in data.items():
+        setattr(quiz, k, v)
+
+
+@app.post("/admin/quizzes", status_code=201)
+def admin_create_quiz(payload: schemas.QuizIn, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    if db.get(TrainingMaterial, payload.material_id) is None:
+        raise HTTPException(404, "training material not found")
+    nxt = db.execute(select(func.coalesce(func.max(Quiz.sort_order), 0))).scalar() or 0
+    quiz = Quiz(sort_order=nxt + 1)
+    _quiz_apply(quiz, payload.model_dump())
+    db.add(quiz); db.commit()
+    return _quiz_admin_out(db, quiz)
+
+
+@app.patch("/admin/quizzes/{quiz_id}")
+def admin_update_quiz(quiz_id: int, payload: schemas.QuizUpdate, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    quiz = db.get(Quiz, quiz_id)
+    if quiz is None:
+        raise HTTPException(404, "quiz not found")
+    data = payload.model_dump(exclude_unset=True)
+    if "material_id" in data and db.get(TrainingMaterial, data["material_id"]) is None:
+        raise HTTPException(404, "training material not found")
+    _quiz_apply(quiz, data)
+    db.commit()
+    return _quiz_admin_out(db, quiz)
+
+
+@app.delete("/admin/quizzes/{quiz_id}", status_code=204)
+def admin_delete_quiz(quiz_id: int, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    quiz = db.get(Quiz, quiz_id)
+    if quiz is None:
+        return
+    db.execute(delete(QuizAttempt).where(QuizAttempt.quiz_id == quiz_id))
+    db.delete(quiz); db.commit()
+
+
+@app.get("/quizzes")
+def list_quizzes(db: Session = Depends(get_db), current: Agent = Depends(get_training_viewer)):
+    """Active quizzes whose linked course the caller can see, with their own latest result."""
+    quizzes = db.execute(select(Quiz).where(Quiz.is_active.is_(True))
+                         .order_by(Quiz.sort_order, Quiz.id)).scalars().all()
+    mine = {a.quiz_id: a for a in db.execute(
+        select(QuizAttempt).where(QuizAttempt.agent_id == current.id)).scalars().all()}
+    out = []
+    for q in quizzes:
+        if not _quiz_visible(db, q, current):
+            continue
+        a = mine.get(q.id)
+        out.append({
+            "id": q.id, "title": q.title, "description": q.description,
+            "material_id": q.material_id, "material_title": _quiz_material_title(db, q.material_id),
+            "pass_pct": q.pass_pct, "question_count": len(q.questions or []),
+            "my_pct": a.pct if a else None, "my_passed": a.passed if a else None,
+            "my_attempt_count": a.attempt_count if a else 0,
+        })
+    return out
+
+
+@app.get("/quizzes/{quiz_id}")
+def get_quiz(quiz_id: int, db: Session = Depends(get_db),
+             current: Agent = Depends(get_training_viewer)):
+    quiz = db.get(Quiz, quiz_id)
+    if quiz is None or not _quiz_visible(db, quiz, current):
+        raise HTTPException(404, "quiz not found")
+    return _quiz_take_out(db, quiz)
+
+
+@app.post("/quizzes/{quiz_id}/submit")
+def submit_quiz(quiz_id: int, payload: schemas.QuizSubmitIn, db: Session = Depends(get_db),
+                current: Agent = Depends(get_training_viewer)):
+    """Score the submission server-side, upsert the taker's latest attempt, and return
+    the full breakdown (correct answer + explanation per question)."""
+    quiz = db.get(Quiz, quiz_id)
+    if quiz is None or not _quiz_visible(db, quiz, current):
+        raise HTTPException(404, "quiz not found")
+    questions = quiz.questions or []
+    total = len(questions)
+    answers = payload.answers or []
+    score = 0
+    qout = []
+    for i, q in enumerate(questions):
+        chosen = answers[i] if i < len(answers) else -1
+        correct = q.get("correct_index", 0)
+        is_correct = chosen == correct
+        if is_correct:
+            score += 1
+        qout.append({
+            "text": q.get("text", ""), "options": q.get("options", []),
+            "your_index": chosen, "correct_index": correct,
+            "explanation": q.get("explanation"), "is_correct": is_correct,
+        })
+    pct = round(score * 100 / total) if total else 0
+    passed = pct >= (quiz.pass_pct or 0)
+    row = db.execute(select(QuizAttempt).where(
+        QuizAttempt.agent_id == current.id, QuizAttempt.quiz_id == quiz_id)).scalars().first()
+    if row is None:
+        row = QuizAttempt(agent_id=current.id, quiz_id=quiz_id); db.add(row)
+    row.score = score; row.total = total; row.pct = pct; row.passed = passed
+    row.answers = list(answers[:total]); row.attempt_count = (row.attempt_count or 0) + 1
+    row.submitted_at = now_utc()
+    db.commit()
+    return {"score": score, "total": total, "pct": pct, "passed": passed,
+            "pass_pct": quiz.pass_pct, "questions": qout}
+
+
+@app.get("/admin/quiz-results")
+def admin_quiz_results(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """課程考核成績: each taker's latest attempt per quiz (admin only)."""
+    Ag = aliased(Agent)
+    rows = db.execute(
+        select(QuizAttempt, Ag.code, Ag.name, Ag.company, Quiz.title, Quiz.material_id)
+        .join(Ag, QuizAttempt.agent_id == Ag.id)
+        .join(Quiz, QuizAttempt.quiz_id == Quiz.id)
+        .order_by(Ag.code, Quiz.title)
+    ).all()
+    out = [{
+        "id": a.id, "agent_id": a.agent_id, "agent_code": code, "agent_name": name, "company": company,
+        "quiz_id": a.quiz_id, "quiz_title": title,
+        "material_title": _quiz_material_title(db, material_id),
+        "score": a.score, "total": a.total, "pct": a.pct, "passed": a.passed,
+        "attempt_count": a.attempt_count, "submitted_at": a.submitted_at,
+    } for a, code, name, company, title, material_id in rows]
+    return {"rows": out, "total_attempts": len(out),
+            "pass_count": sum(1 for r in out if r["passed"])}
+
+
+@app.delete("/admin/quiz-results/{attempt_id}", status_code=204)
+def delete_quiz_result(attempt_id: int, db: Session = Depends(get_db),
+                       current: Agent = Depends(require_admin)):
+    """Delete one 課程考核成績 record (admin only)."""
+    row = db.get(QuizAttempt, attempt_id)
+    if row is not None:
+        db.delete(row); db.commit()
+
+
+@app.delete("/admin/quiz-results", status_code=204)
+def clear_quiz_results(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """Clear all 課程考核成績 records (admin only)."""
+    db.query(QuizAttempt).delete()
     db.commit()
 
 

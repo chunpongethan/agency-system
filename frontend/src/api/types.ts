@@ -470,3 +470,96 @@ export interface TrainingVideoViews {
   total_seconds: number;
   total_views: number;
 }
+
+// --- 課程考核 (MC quiz) ---
+export interface QuizQuestion {           // taker-facing: no answers
+  text: string;
+  options: string[];
+}
+export interface QuizQuestionFull extends QuizQuestion {  // admin-facing
+  correct_index: number;
+  explanation: string | null;
+}
+// What the admin list returns (one row per quiz).
+export interface QuizSummary {
+  id: number;
+  title: string;
+  material_id: number;
+  material_title: string | null;
+  pass_pct: number;
+  is_active: boolean;
+  question_count: number;
+  attempt_count: number;
+}
+// The full admin quiz (create/edit form).
+export interface QuizAdmin {
+  id: number;
+  title: string;
+  description: string | null;
+  pass_pct: number;
+  is_active: boolean;
+  material_id: number;
+  material_title: string | null;
+  questions: QuizQuestionFull[];
+}
+// What a taker sees in the quiz list (with their own latest result).
+export interface QuizListItem {
+  id: number;
+  title: string;
+  description: string | null;
+  material_id: number;
+  material_title: string | null;
+  pass_pct: number;
+  question_count: number;
+  my_pct: number | null;
+  my_passed: boolean | null;
+  my_attempt_count: number;
+}
+// The quiz to take (no answers).
+export interface QuizTake {
+  id: number;
+  title: string;
+  description: string | null;
+  pass_pct: number;
+  material_id: number;
+  material_title: string | null;
+  questions: QuizQuestion[];
+}
+// Per-question breakdown returned after submitting.
+export interface QuizResultQuestion {
+  text: string;
+  options: string[];
+  your_index: number;
+  correct_index: number;
+  explanation: string | null;
+  is_correct: boolean;
+}
+export interface QuizResult {
+  score: number;
+  total: number;
+  pct: number;
+  passed: boolean;
+  pass_pct: number;
+  questions: QuizResultQuestion[];
+}
+export interface QuizResultRow {
+  id: number;
+  agent_id: number;
+  agent_code: string;
+  agent_name: string;
+  company: string;
+  quiz_id: number;
+  quiz_title: string;
+  material_title: string | null;
+  score: number;
+  total: number;
+  pct: number;
+  passed: boolean;
+  attempt_count: number;
+  submitted_at: string;
+}
+export interface QuizResults {
+  rows: QuizResultRow[];
+  total_attempts: number;
+  pass_count: number;
+}

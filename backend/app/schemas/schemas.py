@@ -274,6 +274,36 @@ class TrainingCategoryOut(BaseModel):
     section: str = "training"
 
 
+# --- 課程考核 (MC quiz) ------------------------------------------------------
+class QuizQuestionIn(BaseModel):
+    text: str
+    options: list[str] = []
+    correct_index: int = 0
+    explanation: str | None = None
+
+
+class QuizIn(BaseModel):
+    title: str
+    material_id: int
+    description: str | None = None
+    pass_pct: int = 60
+    is_active: bool = True
+    questions: list[QuizQuestionIn] = []
+
+
+class QuizUpdate(BaseModel):
+    title: str | None = None
+    material_id: int | None = None
+    description: str | None = None
+    pass_pct: int | None = None
+    is_active: bool | None = None
+    questions: list[QuizQuestionIn] | None = None
+
+
+class QuizSubmitIn(BaseModel):
+    answers: list[int] = []   # chosen option index per question; -1 = unanswered
+
+
 # --- Products ---------------------------------------------------------------
 class ProductIn(BaseModel):
     code: str

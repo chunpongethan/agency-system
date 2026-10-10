@@ -8,6 +8,7 @@ import type {
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
   KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews,
+  QuizSummary, QuizAdmin, QuizListItem, QuizTake, QuizResult, QuizResults,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
 
@@ -201,6 +202,27 @@ export const api = {
     request<void>(`/admin/training-video-views/${viewId}`, { method: "DELETE" }),
   clearTrainingVideoViews: () =>
     request<void>("/admin/training-video-views", { method: "DELETE" }),
+
+  // 課程考核 (MC quiz) — admin maintenance
+  adminQuizzes: () => request<QuizSummary[]>("/admin/quizzes"),
+  adminQuiz: (id: number) => request<QuizAdmin>(`/admin/quizzes/${id}`),
+  createQuiz: (payload: Record<string, unknown>) =>
+    request<QuizAdmin>("/admin/quizzes", { method: "POST", body: JSON.stringify(payload) }),
+  updateQuiz: (id: number, payload: Record<string, unknown>) =>
+    request<QuizAdmin>(`/admin/quizzes/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  deleteQuiz: (id: number) =>
+    request<void>(`/admin/quizzes/${id}`, { method: "DELETE" }),
+  // 課程考核 — taker
+  quizzes: () => request<QuizListItem[]>("/quizzes"),
+  quiz: (id: number) => request<QuizTake>(`/quizzes/${id}`),
+  submitQuiz: (id: number, body: { answers: number[] }) =>
+    request<QuizResult>(`/quizzes/${id}/submit`, { method: "POST", body: JSON.stringify(body) }),
+  // 課程考核成績 — admin report
+  quizResults: () => request<QuizResults>("/admin/quiz-results"),
+  deleteQuizResult: (id: number) =>
+    request<void>(`/admin/quiz-results/${id}`, { method: "DELETE" }),
+  clearQuizResults: () =>
+    request<void>("/admin/quiz-results", { method: "DELETE" }),
   transcodePendingVideos: () =>
     request<{ scheduled: number }>("/training-materials/transcode-pending", { method: "POST" }),
   transcodeVideoFile: (id: number, fileId: number) =>

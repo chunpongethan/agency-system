@@ -564,6 +564,43 @@ class TrainingVideoView(Base):
     last_viewed_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
 
 
+class Quiz(Base):
+    """課程考核: a multiple-choice assessment tied to one 商學院課程 (training material).
+    `questions` is a JSON list of {text, options: [str], correct_index: int, explanation: str}.
+    The quiz inherits the linked material's company visibility; a taker needs pass_pct % to 合格."""
+    __tablename__ = "quizzes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    material_id: Mapped[int] = mapped_column(ForeignKey("training_materials.id"), index=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    pass_pct: Mapped[int] = mapped_column(Integer, default=60)   # passing percentage
+    questions: Mapped[list] = mapped_column(JSON, default=list)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
+
+
+class QuizAttempt(Base):
+    """One row per (agent, quiz): the taker's LATEST attempt (upserted on retake), the
+    score and pass/fail, their chosen answers, and how many times they've submitted.
+    Powers the admin 課程考核成績 report."""
+    __tablename__ = "quiz_attempts"
+    __table_args__ = (UniqueConstraint("agent_id", "quiz_id", name="uq_quiz_attempt_agent_quiz"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quizzes.id"), index=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"), index=True)
+    score: Mapped[int] = mapped_column(Integer, default=0)   # number correct
+    total: Mapped[int] = mapped_column(Integer, default=0)   # number of questions at submit
+    pct: Mapped[int] = mapped_column(Integer, default=0)
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    answers: Mapped[list] = mapped_column(JSON, default=list)   # chosen option index per question
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
 class MenuSetting(Base):
     """Global left-menu customisation: one row per sidebar item with a show/hide
     flag and sort order. The set of valid keys is defined by the frontend menu

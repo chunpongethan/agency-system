@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import ClientDetail from "./pages/ClientDetail";
 import Leads from "./pages/Leads";
 import Training from "./pages/Training";
+import Quiz from "./pages/Quiz";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Products from "./pages/Products";
 import Transactions from "./pages/Transactions";
@@ -27,6 +28,8 @@ import AdminKnowledgeBase from "./pages/admin/AdminKnowledgeBase";
 import AdminMenu from "./pages/admin/AdminMenu";
 import AdminLlm from "./pages/admin/AdminLlm";
 import AdminTrainingViews from "./pages/admin/AdminTrainingViews";
+import AdminQuizzes from "./pages/admin/AdminQuizzes";
+import AdminQuizResults from "./pages/admin/AdminQuizResults";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import type { ReactElement } from "react";
 
@@ -105,6 +108,14 @@ export default function App() {
           element={
             <RequireRole roles={["agent", "manager", "admin", "student"]}>
               <Training section="promo" />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/quiz"
+          element={
+            <RequireRole roles={["agent", "manager", "admin", "student"]}>
+              <Quiz />
             </RequireRole>
           }
         />
@@ -201,6 +212,14 @@ export default function App() {
         <Route
           path="/admin/training-views"
           element={<RequireRole roles={["admin"]}><AdminTrainingViews /></RequireRole>}
+        />
+        <Route
+          path="/admin/quizzes"
+          element={<RequireRole roles={["admin"]}><AdminQuizzes /></RequireRole>}
+        />
+        <Route
+          path="/admin/quiz-results"
+          element={<RequireRole roles={["admin"]}><AdminQuizResults /></RequireRole>}
         />
         <Route path="/admin" element={<Navigate to="/admin/agents" replace />} />
       </Route>
