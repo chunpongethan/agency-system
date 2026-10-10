@@ -197,6 +197,10 @@ export const api = {
   recordTrainingView: (id: number, fileId: number, body: { seconds: number; new_session: boolean }) =>
     request<void>(`/training-materials/${id}/files/${fileId}/view`, { method: "POST", body: JSON.stringify(body) }),
   trainingVideoViews: () => request<TrainingVideoViews>("/admin/training-video-views"),
+  deleteTrainingVideoView: (viewId: number) =>
+    request<void>(`/admin/training-video-views/${viewId}`, { method: "DELETE" }),
+  clearTrainingVideoViews: () =>
+    request<void>("/admin/training-video-views", { method: "DELETE" }),
   transcodePendingVideos: () =>
     request<{ scheduled: number }>("/training-materials/transcode-pending", { method: "POST" }),
   transcodeVideoFile: (id: number, fileId: number) =>

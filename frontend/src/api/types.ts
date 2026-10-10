@@ -453,6 +453,7 @@ export interface KbUsageSummary {
 }
 
 export interface TrainingVideoViewRow {
+  id: number;
   agent_id: number;
   agent_code: string;
   agent_name: string;

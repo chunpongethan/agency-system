@@ -2566,6 +2566,7 @@ def admin_training_video_views(db: Session = Depends(get_db),
         .order_by(Ag.code, TrainingVideoView.watched_seconds.desc())
     ).all()
     out = [{
+        "id": v.id,
         "agent_id": v.agent_id, "agent_code": code, "agent_name": name, "company": company,
         "material_id": v.material_id, "material_title": title, "file_name": fname,
         "view_count": v.view_count, "watched_seconds": v.watched_seconds,
@@ -2574,6 +2575,24 @@ def admin_training_video_views(db: Session = Depends(get_db),
     return {"rows": out,
             "total_seconds": sum(r["watched_seconds"] for r in out),
             "total_views": sum(r["view_count"] for r in out)}
+
+
+@app.delete("/admin/training-video-views/{view_id}", status_code=204)
+def delete_training_video_view(view_id: int, db: Session = Depends(get_db),
+                               current: Agent = Depends(require_admin)):
+    """Delete one 商學院課程觀看 record (admin only)."""
+    row = db.get(TrainingVideoView, view_id)
+    if row is not None:
+        db.delete(row)
+        db.commit()
+
+
+@app.delete("/admin/training-video-views", status_code=204)
+def clear_training_video_views(db: Session = Depends(get_db),
+                               current: Agent = Depends(require_admin)):
+    """Clear all 商學院課程觀看 records (admin only)."""
+    db.query(TrainingVideoView).delete()
+    db.commit()
 
 
 @app.delete("/training-materials/{material_id}/files/{file_id}", response_model=schemas.TrainingMaterialOut)

@@ -589,3 +589,13 @@ def test_training_video_views_logged_for_every_viewer(client):
     assert byc["b1"]["material_title"] == "Onboarding 101" and byc["b1"]["file_name"] == "v.mp4"
     assert byc["AX"]["watched_seconds"] == 99 and byc["AX"]["view_count"] == 1
     assert rep["total_seconds"] == 149 and rep["total_views"] == 3
+
+    # Admin can delete one record and clear the rest; agents cannot.
+    assert client.delete(f"/admin/training-video-views/{byc['AX']['id']}", headers=ax).status_code == 403
+    assert client.delete(f"/admin/training-video-views/{byc['AX']['id']}", headers=adm).status_code == 204
+    rep = client.get("/admin/training-video-views", headers=adm).json()
+    assert [r["agent_code"] for r in rep["rows"]] == ["b1"] and rep["total_views"] == 2
+    assert client.delete("/admin/training-video-views", headers=ax).status_code == 403
+    assert client.delete("/admin/training-video-views", headers=adm).status_code == 204
+    rep = client.get("/admin/training-video-views", headers=adm).json()
+    assert rep["rows"] == [] and rep["total_seconds"] == 0 and rep["total_views"] == 0

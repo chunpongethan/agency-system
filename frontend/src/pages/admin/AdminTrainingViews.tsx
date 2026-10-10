@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { useI18n } from "../../i18n/LanguageContext";
 import { dateShort } from "../../lib/format";
@@ -18,13 +18,29 @@ function hms(total: number): string {
 
 export default function AdminTrainingViews() {
   const { t } = useI18n();
+  const qc = useQueryClient();
   const q = useQuery({ queryKey: ["trainingVideoViews"], queryFn: () => api.trainingVideoViews() });
   const d = q.data;
 
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["trainingVideoViews"] });
+  const delOne = useMutation({ mutationFn: (id: number) => api.deleteTrainingVideoView(id), onSuccess: invalidate });
+  const clearAll = useMutation({ mutationFn: () => api.clearTrainingVideoViews(), onSuccess: invalidate });
+
   return (
     <div>
-      <h1 className="page-title">{t("trainingViews.title")}</h1>
-      <p className="page-sub">{t("trainingViews.subtitle")}</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+        <div>
+          <h1 className="page-title">{t("trainingViews.title")}</h1>
+          <p className="page-sub">{t("trainingViews.subtitle")}</p>
+        </div>
+        {d && d.rows.length > 0 && (
+          <button className="danger" style={{ marginTop: 4 }}
+            disabled={clearAll.isPending}
+            onClick={() => { if (window.confirm(t("trainingViews.confirmClear"))) clearAll.mutate(); }}>
+            {t("trainingViews.clearAll")}
+          </button>
+        )}
+      </div>
 
       {q.isLoading && <div className="spinner">{t("common.loading")}</div>}
       {d && (
@@ -44,19 +60,28 @@ export default function AdminTrainingViews() {
                 <th className="num">{t("trainingViews.views")}</th>
                 <th className="num">{t("trainingViews.watched")}</th>
                 <th>{t("trainingViews.lastViewed")}</th>
+                <th></th>
               </tr></thead>
               <tbody>
                 {d.rows.map((r) => (
-                  <tr key={`${r.agent_id}-${r.material_id}-${r.file_name}`}>
+                  <tr key={r.id}>
                     <td>{r.agent_name} <span className="muted" style={{ fontSize: 12 }}>({r.agent_code})</span></td>
                     <td>{r.material_title}</td>
                     <td className="muted" style={{ fontSize: 13 }}>{r.file_name}</td>
                     <td className="num">{num(r.view_count)}</td>
                     <td className="num">{hms(r.watched_seconds)}</td>
                     <td className="muted" style={{ fontSize: 13 }}>{dateShort(r.last_viewed_at)}</td>
+                    <td className="num">
+                      <button type="button" className="icon-btn" title={t("common.delete")}
+                        disabled={delOne.isPending}
+                        onClick={() => { if (window.confirm(t("trainingViews.confirmDelete"))) delOne.mutate(r.id); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--danger, #dc2626)", fontSize: 15 }}>
+                        ✕
+                      </button>
+                    </td>
                   </tr>
                 ))}
-                {d.rows.length === 0 && <tr><td colSpan={6} className="muted">{t("trainingViews.noData")}</td></tr>}
+                {d.rows.length === 0 && <tr><td colSpan={7} className="muted">{t("trainingViews.noData")}</td></tr>}
               </tbody>
             </table>
           </div>
