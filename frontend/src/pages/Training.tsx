@@ -204,10 +204,13 @@ function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }
       <div className="muted" style={{ fontSize: 12, marginBottom: 4, display: "flex",
         justifyContent: "space-between", gap: 8, alignItems: "center" }}>
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={name}>{name}</span>
-        <button type="button" onClick={onDownload} style={{ background: "none", border: "none",
-          color: "var(--brand, #2563eb)", cursor: "pointer", padding: 0, fontSize: 12, whiteSpace: "nowrap" }}>
-          ↓ {t("training.download")}
-        </button>
+        {/* Videos (course content) are view-only — no download link. */}
+        {!isVideo && (
+          <button type="button" onClick={onDownload} style={{ background: "none", border: "none",
+            color: "var(--brand, #2563eb)", cursor: "pointer", padding: 0, fontSize: 12, whiteSpace: "nowrap" }}>
+            ↓ {t("training.download")}
+          </button>
+        )}
       </div>
       {!failed && (url
         ? <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
