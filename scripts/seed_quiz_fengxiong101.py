@@ -1,46 +1,44 @@
 """
-Seed the 香港分紅險101 課後測驗 (course assessment) into the quizzes table.
+Seed the 香港分紅險101 course assessments — one quiz PER CHAPTER (4 quizzes, 5
+questions each), each linked to that chapter's 商學院課程 material.
 
-Idempotent: upserts a single Quiz identified by its title, linked to the
-香港分紅險101 training material (商學院課程). Question text / options / explanations
-are stored Traditional (OpenCC s2hk), matching the rest of the app.
+Idempotent: upserts each chapter quiz by title, and removes the old combined
+20-question quiz (and its attempts) if present. Content is stored Traditional
+(OpenCC s2hk) to match the rest of the app.
 
-Run INSIDE the api container (which has the Quiz model + DATABASE_URL), piping
-this file over stdin so no image rebuild is needed:
+Run INSIDE the api container, with DATABASE_URL present (it defaults to a throwaway
+SQLite file otherwise — then the rows never reach Postgres):
 
   sudo docker compose -f docker-compose.prod.images.yml --env-file .env \
-      exec -T api python - < scripts/seed_quiz_fengxiong101.py
+      exec api sh -c 'echo "$DATABASE_URL"; python /app/scripts/seed_quiz_fengxiong101.py'
 
-Pick the linked course by (in order): QUIZ_MATERIAL_ID env, a QUIZ_MATERIAL
-title-substring env, or the default substring "分红险101" (matched against both
-the Simplified and Traditional form of each material title). The run prints the
-quiz id and the course it linked to, or lists candidate course titles if it
-can't find a unique match.
+Each chapter's course material is matched by title (contains 分紅險101 + 第N章); a
+chapter can be pinned with QUIZ_MATERIAL_ID_1 .. QUIZ_MATERIAL_ID_4 if the match
+is ambiguous.
 """
 from __future__ import annotations
 
 import os
 import sys
 
-# Work both inside the container (/app/backend) and in a local checkout, and
-# without relying on __file__ (this file is usually piped over stdin).
 for _p in ("/app/backend", os.path.abspath("backend"), os.path.abspath(".")):
     if os.path.isdir(os.path.join(_p, "app")):
         sys.path.insert(0, _p)
         break
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, delete
 from sqlalchemy.orm import sessionmaker
 
-from app.models.models import Base, Quiz, TrainingMaterial
+from app.models.models import Base, Quiz, QuizAttempt, TrainingMaterial
 from app.services.zh_convert import to_traditional
 
-TITLE = "香港分红险101 · 课后测验"
-PASS_PCT = 80
+COURSE_KW = "分红险101"          # matched against each material title (Simplified or Traditional)
+OLD_COMBINED_TITLE = "香港分红险101 · 课后测验"   # the single-quiz seed to remove
+PASS_PCT = 80                    # 4 / 5
 
-# (question, [options...], correct letter, explanation) — Simplified source,
-# converted to Traditional on save.
+# (question, [options...], correct letter, explanation) — Simplified source.
 RAW = [
+    # --- 第1章 · 产品与运作 ---
     ("利益说明书上的“退保发还总额”中，哪一项是合约保证的？",
      ["保证现金价值", "复归红利", "终期分红", "以上三项全部保证"], "A",
      "退保发还总额 = 保证现金价值 + 复归红利 + 终期分红，只有第一项是合约保证"),
@@ -62,6 +60,7 @@ RAW = [
       "它等于实际资本除以最低资本要求，约为监管最低要求 150% 的两倍；展示前须核对最新数据",
       "它是公司的分红实现率", "它一经公布就固定不变，可以长期引用"], "B",
      "偿付能力充足率 = 实际资本 ÷ 最低资本要求；314% 约为 150% 的两倍；数字会变动，展示前须核对"),
+    # --- 第2章 · 回报与实现率 ---
     ("从 2025 年 7 月 1 日起，美元保单的“6.5%”应该怎样向客户描述？",
      ["保险公司保证每年 6.5% 回报", "保单的预定保证利率",
       "保监局设定的利益演示上限，不是保证，也不是承诺", "过去十年的平均分红实现率"], "C",
@@ -82,6 +81,7 @@ RAW = [
       "看长期是否稳定在 100% 左右，分开看两种红利，并与同类产品、同一签发年份比较",
       "实现率超过 100% 代表公司财务有风险"], "C",
      "四个问题：看长期、分开两种红利、同类同年比较、连到提取方案"),
+    # --- 第3章 · 独有功能 ---
     ("“无限次转换受保人”最早从什么时候开始可以申请？",
      ["第 3 个保单周年日", "第 6 个保单周年日", "第 5 个保单年度终结后", "第 15 个保单周年日"], "B",
      "第 6 个保单周年日起；第 3 个周年日是货币转换，第 5 年度终结后是保单分拆，第 15 个周年日是财富增值调配"),
@@ -103,6 +103,7 @@ RAW = [
       "“保守”方案第 20 年金额最低，但稳健资产户口的钱派发后即成为保证，并可随时申请提取",
       "“增进”方案的流动性最高", "调配选项从第 5 个保单周年日起即可使用"], "B",
      "第 20 年增进约 78 万、均衡约 67 万、保守约 56 万；保守方案流动性最高；调配从第 15 个周年日起"),
+    # --- 第4章 · 复利与提取 ---
     ("提取密码“5-6-7”，每年保费 2 万美元，代表什么？",
      ["缴 5 年，第 7 年起每年提取 6%，即 6,000 美元", "缴 6 年，第 5 年起每年提取 7%",
       "缴 5 年，第 6 年起每年提取年缴保费的 7%，即 1,400 美元",
@@ -126,14 +127,21 @@ RAW = [
      "长线数字是演示，依赖非保证红利；不能说“一定有”或“保证”"),
 ]
 
+CHAPTERS = [
+    (1, "產品與運作", RAW[0:5]),
+    (2, "回報與實現率", RAW[5:10]),
+    (3, "獨有功能", RAW[10:15]),
+    (4, "複利與提取", RAW[15:20]),
+]
+
 
 def _t(s):
     return to_traditional(s)
 
 
-def build_questions():
+def build_questions(raw):
     out = []
-    for text, options, letter, expl in RAW:
+    for text, options, letter, expl in raw:
         out.append({
             "text": _t(text),
             "options": [_t(o) for o in options],
@@ -143,60 +151,66 @@ def build_questions():
     return out
 
 
-def find_material(db):
-    override = os.getenv("QUIZ_MATERIAL_ID")
+def find_chapter_material(db, ch: int):
+    override = os.getenv(f"QUIZ_MATERIAL_ID_{ch}")
     if override and override.isdigit():
         m = db.get(TrainingMaterial, int(override))
         if m is None:
-            sys.exit(f"seed_quiz: no training material with id {override}")
+            sys.exit(f"seed_quiz: no training material with id {override} for chapter {ch}")
         return m
-    kw = os.getenv("QUIZ_MATERIAL") or (sys.argv[1] if len(sys.argv) > 1 else "分红险101")
-    if kw.isdigit():
-        m = db.get(TrainingMaterial, int(kw))
-        if m is None:
-            sys.exit(f"seed_quiz: no training material with id {kw}")
-        return m
-    kw_trad = to_traditional(kw)
+    kw_trad = _t(COURSE_KW)
+    marker = f"第{ch}章"
     mats = db.execute(select(TrainingMaterial)).scalars().all()
-    hits = [m for m in mats if kw in (m.title or "") or kw_trad in to_traditional(m.title or "")]
+    hits = [m for m in mats
+            if (COURSE_KW in (m.title or "") or kw_trad in _t(m.title or ""))
+            and marker in _t(m.title or "")]
     if len(hits) == 1:
         return hits[0]
+    listing = "\n".join(f"  [{m.id}] {m.title}" for m in mats)
     if not hits:
-        titles = "\n".join(f"  [{m.id}] {m.title}" for m in mats)
-        sys.exit(f"seed_quiz: no course title matched {kw!r}. Re-run with "
-                 f"QUIZ_MATERIAL_ID=<id>. Available courses:\n{titles}")
-    titles = "\n".join(f"  [{m.id}] {m.title}" for m in hits)
-    sys.exit(f"seed_quiz: {kw!r} matched several courses — re-run with "
-             f"QUIZ_MATERIAL_ID=<id>:\n{titles}")
+        sys.exit(f"seed_quiz: no course matched {COURSE_KW!r} + {marker!r} for chapter {ch}. "
+                 f"Re-run with QUIZ_MATERIAL_ID_{ch}=<id>. Courses:\n{listing}")
+    multi = "\n".join(f"  [{m.id}] {m.title}" for m in hits)
+    sys.exit(f"seed_quiz: chapter {ch} matched several courses — set QUIZ_MATERIAL_ID_{ch}=<id>:\n{multi}")
 
 
 def main():
     try:
-        sys.stdout.reconfigure(encoding="utf-8")   # avoid cp1252 console errors
+        sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
     engine = create_engine(os.getenv("DATABASE_URL", "sqlite:///./backend/agency.db"))
-    Base.metadata.create_all(engine)   # ensure quizzes table exists
+    Base.metadata.create_all(engine)
     db = sessionmaker(bind=engine)()
     try:
-        material = find_material(db)
-        title = _t(TITLE)
-        quiz = db.execute(select(Quiz).where(Quiz.title == title)).scalars().first()
-        verb = "updated" if quiz else "created"
-        if quiz is None:
-            nxt = db.execute(select(Quiz.sort_order).order_by(Quiz.sort_order.desc())).scalars().first() or 0
-            quiz = Quiz(title=title, sort_order=nxt + 1)
-            db.add(quiz)
-        quiz.material_id = material.id
-        quiz.description = _t("共 20 题单项选择题，每题 5 分，满分 100 分；及格 80 分。请在看完对应视频后作答。")
-        quiz.pass_pct = PASS_PCT
-        quiz.is_active = True
-        quiz.companies = None   # visible to all companies
-        quiz.questions = build_questions()
-        db.commit()
-        print(f"seed_quiz: {verb} quiz id={quiz.id} {quiz.title!r} "
-              f"({len(quiz.questions)} questions, pass {quiz.pass_pct}%) "
-              f"linked to course [{material.id}] {material.title!r}")
+        # Remove the old combined 20-question quiz (and its attempts), if present.
+        old = db.execute(select(Quiz).where(Quiz.title == _t(OLD_COMBINED_TITLE))).scalars().all()
+        for q in old:
+            db.execute(delete(QuizAttempt).where(QuizAttempt.quiz_id == q.id))
+            db.delete(q)
+            print(f"seed_quiz: removed old combined quiz id={q.id} {q.title!r}")
+
+        nxt = (db.execute(select(Quiz.sort_order).order_by(Quiz.sort_order.desc()))
+               .scalars().first() or 0)
+        for ch, name, raw in CHAPTERS:
+            material = find_chapter_material(db, ch)
+            title = _t(f"香港分红险101 · 第{ch}章 {name} 课后测验")
+            quiz = db.execute(select(Quiz).where(Quiz.title == title)).scalars().first()
+            verb = "updated" if quiz else "created"
+            if quiz is None:
+                nxt += 1
+                quiz = Quiz(title=title, sort_order=nxt)
+                db.add(quiz)
+            quiz.material_id = material.id
+            quiz.description = _t(f"香港分红险101 第{ch}章 · {name} 课后测验：5 题单项选择，及格 {PASS_PCT}%。")
+            quiz.pass_pct = PASS_PCT
+            quiz.is_active = True
+            quiz.companies = None   # all companies
+            quiz.questions = build_questions(raw)
+            db.commit()
+            print(f"seed_quiz: {verb} quiz id={quiz.id} {quiz.title!r} "
+                  f"({len(quiz.questions)} questions, pass {quiz.pass_pct}%) "
+                  f"-> course [{material.id}] {material.title!r}")
     finally:
         db.close()
 

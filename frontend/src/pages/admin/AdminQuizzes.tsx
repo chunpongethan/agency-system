@@ -12,6 +12,8 @@ type Form = {
   pass_pct: number; is_active: boolean; companies: string[]; questions: QForm[];
 };
 const COMPANIES = ["heritree", "cpm", "bschool"];
+// A quiz links only to a 商學院課程 — training materials filed under this 培訓類別.
+const SCHOOL_CATEGORY = "商學院課程";
 const BLANK_Q: QForm = { text: "", options: ["", ""], correct_index: 0, explanation: "" };
 const BLANK: Form = { title: "", material_id: "", description: "", pass_pct: 60, is_active: true,
                       companies: [...COMPANIES], questions: [{ ...BLANK_Q, options: ["", ""] }] };
@@ -20,7 +22,8 @@ export default function AdminQuizzes() {
   const { t } = useI18n();
   const qc = useQueryClient();
   const quizzes = useQuery({ queryKey: ["quizzes-admin"], queryFn: () => api.adminQuizzes() });
-  const courses = useQuery({ queryKey: ["training"], queryFn: () => api.listTraining() });
+  const courses = useQuery({ queryKey: ["trainingCourses", SCHOOL_CATEGORY],
+    queryFn: () => api.listTraining({ category: SCHOOL_CATEGORY }) });
   const rows = quizzes.data ?? [];
   const courseRows = courses.data ?? [];
 
