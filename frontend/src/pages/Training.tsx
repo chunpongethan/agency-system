@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, downloadFile, fetchBlobUrl, errorText } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
@@ -141,9 +141,9 @@ function embed(url: string, type: string, name: string) {
 
 // One file's preview inside the detail modal. Fetched eagerly (the user opened
 // the item on purpose), and the object URL is revoked on unmount.
-function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }:
+function FilePreview({ previewPath, name, type, onDownload, materialId, fileId, onVideoEnded }:
   { previewPath: string; name: string; type: string; onDownload: () => void;
-    materialId: number; fileId: number }) {
+    materialId: number; fileId: number; onVideoEnded?: () => void }) {
   const { t } = useI18n();
   const { me } = useAuth();
   // Video streams directly from a ranged URL (no blob) so it plays on iOS and can
@@ -189,6 +189,7 @@ function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }
   }, [track, flush]);
   const onPlay = () => { lastTime.current = videoRef.current?.currentTime ?? null; };
   const onPauseOrEnd = () => { lastTime.current = null; flush(); };
+  const onEnded = () => { onPauseOrEnd(); onVideoEnded?.(); };
   const onTimeUpdate = () => {
     const ct = videoRef.current?.currentTime;
     if (ct == null) return;
@@ -216,7 +217,7 @@ function FilePreview({ previewPath, name, type, onDownload, materialId, fileId }
         ? <div style={{ border: "1px solid var(--line)", borderRadius: 8, overflow: "hidden", background: "#f3f4f6" }}>
             {isVideo
               ? <video ref={videoRef} src={url} controls playsInline preload="metadata"
-                  onPlay={onPlay} onPause={onPauseOrEnd} onEnded={onPauseOrEnd} onTimeUpdate={onTimeUpdate}
+                  onPlay={onPlay} onPause={onPauseOrEnd} onEnded={onEnded} onTimeUpdate={onTimeUpdate}
                   style={{ width: "100%", maxHeight: 520, background: "#000", display: "block" }} />
               : embed(url, type, name)}
           </div>
@@ -235,6 +236,19 @@ export default function Training({ section = "training" }: { section?: "training
   const [dlError, setDlError] = useState<string | null>(null);
   const [open, setOpen] = useState<TrainingMaterial | null>(null);
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Quizzes the viewer can take, keyed by their linked course (material) id, so a
+  // course's detail popup can offer its 課程考核. Uses the taker list (already
+  // company-/active-filtered), so a button only shows when the quiz is takeable.
+  const quizList = useQuery({ queryKey: ["quizzes"], queryFn: () => api.quizzes(), staleTime: 60_000 });
+  const quizByMaterial = useMemo(() => {
+    const m = new Map<number, number>();   // material_id -> quiz_id
+    for (const q of quizList.data ?? []) if (!m.has(q.material_id)) m.set(q.material_id, q.id);
+    return m;
+  }, [quizList.data]);
+  const linkedQuizId = open ? quizByMaterial.get(open.id) : undefined;
+  const goQuiz = useCallback((qid: number) => { setOpen(null); navigate(`/quiz?take=${qid}`); }, [navigate]);
 
   async function onDownloadFile(m: TrainingMaterial, f: TrainingFile) {
     setDlError(null);
@@ -409,8 +423,17 @@ export default function Training({ section = "training" }: { section?: "training
               {(open.files ?? []).filter(canPreview).map((f) => (
                 <FilePreview key={f.id} previewPath={api.trainingFilePath(open.id, f.id)}
                   materialId={open.id} fileId={f.id}
-                  name={f.file_name} type={previewType(f)} onDownload={() => onDownloadFile(open, f)} />
+                  name={f.file_name} type={previewType(f)} onDownload={() => onDownloadFile(open, f)}
+                  onVideoEnded={linkedQuizId != null
+                    ? () => { if (window.confirm(t("training.quizAfterVideo"))) goQuiz(linkedQuizId); }
+                    : undefined} />
               ))}
+              {/* A linked 課程考核 → let the viewer jump to it, below the video. */}
+              {linkedQuizId != null && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--line)" }}>
+                  <button onClick={() => goQuiz(linkedQuizId)}>{t("training.goQuiz")} →</button>
+                </div>
+              )}
               {(open.files ?? []).length === 0 && !open.link_url && !open.description && (
                 <p className="muted">{t("training.noSummary")}</p>
               )}

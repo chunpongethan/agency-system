@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, errorText } from "../api/client";
 import { useI18n } from "../i18n/LanguageContext";
@@ -10,7 +11,15 @@ import type { QuizListItem, QuizResult } from "../api/types";
 export default function Quiz() {
   const { t } = useI18n();
   const list = useQuery({ queryKey: ["quizzes"], queryFn: () => api.quizzes() });
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [params, setParams] = useSearchParams();
+  // ?take=<id> (e.g. from a course's detail popup) auto-opens that quiz.
+  const [openId, setOpenId] = useState<number | null>(() => {
+    const t = params.get("take"); return t ? Number(t) : null;
+  });
+  const closeModal = () => {
+    setOpenId(null);
+    if (params.get("take")) { params.delete("take"); setParams(params, { replace: true }); }
+  };
   const rows = list.data ?? [];
 
   const renderCard = (q: QuizListItem) => {
@@ -54,7 +63,7 @@ export default function Quiz() {
         <div className="training-grid">{rows.map(renderCard)}</div>
       </div>
 
-      {openId != null && <QuizModal quizId={openId} onClose={() => setOpenId(null)} />}
+      {openId != null && <QuizModal quizId={openId} onClose={closeModal} />}
     </div>
   );
 }

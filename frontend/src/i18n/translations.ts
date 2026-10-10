@@ -866,6 +866,8 @@ export const translations: Record<string, Translation> = {
   "training.noMatch": { "zh-Hant": "沒有符合條件的資料。", en: "No materials match." },
   "training.openLink": { "zh-Hant": "開啟連結", en: "Open link" },
   "training.download": { "zh-Hant": "下載檔案", en: "Download" },
+  "training.goQuiz": { "zh-Hant": "前往課程考核", en: "Go to the assessment" },
+  "training.quizAfterVideo": { "zh-Hant": "影片已看完，立即前往課程考核？", en: "Finished the video — go to the assessment now?" },
   "training.count": { "zh-Hant": "{count} 筆資料", en: "{count} materials" },
   // form / admin
   "training.new": { "zh-Hant": "新增資料", en: "New material" },
