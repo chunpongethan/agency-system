@@ -81,6 +81,9 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
+    networks:
+      - default
+      - edge
     depends_on:
       - web
       - api
@@ -89,3 +92,10 @@ volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+
+networks:
+  # Shared external network for reaching co-hosted services (e.g. FIS at
+  # fis:3000, reverse-proxied by Caddy). Created outside this stack:
+  #     docker network create edge
+  edge:
+    external: true
