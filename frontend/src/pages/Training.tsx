@@ -141,9 +141,9 @@ function embed(url: string, type: string, name: string) {
 
 // One file's preview inside the detail modal. Fetched eagerly (the user opened
 // the item on purpose), and the object URL is revoked on unmount.
-function FilePreview({ previewPath, name, type, onDownload, materialId, fileId, onVideoEnded }:
+function FilePreview({ previewPath, name, type, onDownload, materialId, fileId, onVideoEnded, logViews }:
   { previewPath: string; name: string; type: string; onDownload: () => void;
-    materialId: number; fileId: number; onVideoEnded?: () => void }) {
+    materialId: number; fileId: number; onVideoEnded?: () => void; logViews?: boolean }) {
   const { t } = useI18n();
   const { me } = useAuth();
   // Video streams directly from a ranged URL (no blob) so it plays on iOS and can
@@ -161,12 +161,12 @@ function FilePreview({ previewPath, name, type, onDownload, materialId, fileId, 
     return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [previewPath, isVideo]);
 
-  // Video-watch logging: accumulate ACTUAL play time (sum of currentTime deltas
-  // between timeupdate events; a jump ≥2s is a seek, not playback, so it is
-  // ignored) and flush the whole seconds to the server periodically and on
-  // pause/unmount. Every viewer is logged. new_session marks the first flush of
-  // this mount, so a reopened video counts as one more view.
-  const track = isVideo && !!me;
+  // Video-watch logging (商學院課程 videos only, via logViews): accumulate ACTUAL
+  // play time (sum of currentTime deltas between timeupdate events; a jump ≥2s is
+  // a seek, not playback, so it is ignored) and flush the whole seconds to the
+  // server periodically and on pause/unmount. Every viewer is logged. new_session
+  // marks the first flush of this mount, so a reopened video counts as one more view.
+  const track = isVideo && !!me && !!logViews;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const pending = useRef(0);          // played seconds not yet sent (fractional)
   const lastTime = useRef<number | null>(null);
@@ -422,7 +422,7 @@ export default function Training({ section = "training" }: { section?: "training
               {/* Previewable files render in place, loaded now. */}
               {(open.files ?? []).filter(canPreview).map((f) => (
                 <FilePreview key={f.id} previewPath={api.trainingFilePath(open.id, f.id)}
-                  materialId={open.id} fileId={f.id}
+                  materialId={open.id} fileId={f.id} logViews={open.category === "商學院課程"}
                   name={f.file_name} type={previewType(f)} onDownload={() => onDownloadFile(open, f)}
                   onVideoEnded={linkedQuizId != null
                     ? () => { if (window.confirm(t("training.quizAfterVideo"))) goQuiz(linkedQuizId); }

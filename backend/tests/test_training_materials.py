@@ -561,28 +561,31 @@ def _mk_bschool(client, code="b1"):
     s.add(a); s.commit(); s.close()
 
 
-def test_training_video_views_logged_for_every_viewer(client):
+def test_training_video_views_logged_for_school_courses_only(client):
     adm = auth(client, "ADM")
     _mk_bschool(client, "b1")
     b, ax = auth(client, "b1"), auth(client, "AX")
 
-    mid = mk_material(client, adm).json()["id"]
+    # A 商學院課程 video IS logged, for every viewer.
+    mid = mk_material(client, adm, category="商學院課程").json()["id"]
     data = b"\x00\x00\x00\x18ftypmp42" + b"A" * 500
     fid = _upload(client, adm, mid, ("v.mp4", data, "video/mp4")).json()["files"][0]["id"]
     view = f"/training-materials/{mid}/files/{fid}/view"
-
-    # First flush opens a viewing session; a later flush adds to the same session.
     assert client.post(view, headers=b, json={"seconds": 30, "new_session": True}).status_code == 204
     assert client.post(view, headers=b, json={"seconds": 15, "new_session": False}).status_code == 204
-    # Reopening the video = a second session.
     assert client.post(view, headers=b, json={"seconds": 5, "new_session": True}).status_code == 204
-    # A non-商學院 agent is logged too (now every viewer counts).
     assert client.post(view, headers=ax, json={"seconds": 99, "new_session": True}).status_code == 204
 
-    # Report is admin-only and aggregates per agent × video.
+    # A video in any OTHER 培訓類別 is a no-op (still 204) and never recorded.
+    omid = mk_material(client, adm, title="其他課", category="新人培訓").json()["id"]
+    ofid = _upload(client, adm, omid, ("o.mp4", data, "video/mp4")).json()["files"][0]["id"]
+    assert client.post(f"/training-materials/{omid}/files/{ofid}/view", headers=b,
+                       json={"seconds": 60, "new_session": True}).status_code == 204
+
+    # Report is admin-only, 商學院課程 only, aggregated per agent × video.
     assert client.get("/admin/training-video-views", headers=ax).status_code == 403
     rep = client.get("/admin/training-video-views", headers=adm).json()
-    assert len(rep["rows"]) == 2
+    assert len(rep["rows"]) == 2    # only the 商學院課程 video
     byc = {r["agent_code"]: r for r in rep["rows"]}
     assert byc["b1"]["company"] == "bschool"
     assert byc["b1"]["watched_seconds"] == 50 and byc["b1"]["view_count"] == 2

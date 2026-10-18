@@ -1837,6 +1837,7 @@ TRAINING_MAX_UPLOAD_MB = int(os.getenv("TRAINING_MAX_UPLOAD_MB", "25"))
 
 TRAINING_COMPANIES = ("heritree", "cpm", "bschool")   # bschool = 商學院 (學員 audience)
 TRAINING_SECTIONS = ("training", "promo")             # 培訓資料 / 宣傳資料
+SCHOOL_CATEGORY = "商學院課程"                          # only these videos are view-logged
 
 
 def _clean_section(section: str | None) -> str:
@@ -2538,12 +2539,15 @@ def get_training_thumb(material_id: int, file_id: int, db: Session = Depends(get
 def record_training_view(material_id: int, file_id: int, payload: schemas.TrainingViewIn,
                          db: Session = Depends(get_db),
                          current: Agent = Depends(get_training_viewer)):
-    """Accumulate a viewer's actual watch time for a training video (one aggregate
+    """Accumulate a viewer's actual watch time for a 商學院課程 video (one aggregate
     row per agent×video). Logs every viewer who can see the material (agent / 學員 /
-    manager / admin), across all companies."""
+    manager / admin), across all companies. Views of videos in any other 培訓類別 are
+    NOT logged — the report is 商學院課程 only."""
     m = db.get(TrainingMaterial, material_id)
     if m is None or (not scoping.is_admin(current) and not _visible_to_company(m, current.company)):
         raise HTTPException(404, "training material not found")
+    if (m.category or "") != SCHOOL_CATEGORY:
+        return   # only 商學院課程 videos are logged
     f = db.get(TrainingFile, file_id)
     if f is None or f.material_id != material_id:
         raise HTTPException(404, "file not found")
@@ -2572,6 +2576,7 @@ def admin_training_video_views(db: Session = Depends(get_db),
         .join(Ag, TrainingVideoView.agent_id == Ag.id)
         .join(TrainingMaterial, TrainingVideoView.material_id == TrainingMaterial.id)
         .join(TrainingFile, TrainingVideoView.file_id == TrainingFile.id)
+        .where(TrainingMaterial.category == SCHOOL_CATEGORY)   # 商學院課程 only
         .order_by(Ag.code, TrainingVideoView.watched_seconds.desc())
     ).all()
     out = [{
