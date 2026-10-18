@@ -2232,7 +2232,7 @@ def create_training_material(payload: schemas.TrainingMaterialIn,
     # audience) — the automatic Simplified→Traditional conversion is skipped for it.
     conv = (lambda s: s) if payload.category == NO_ZH_CONVERT_CATEGORY else to_traditional
     m = TrainingMaterial(
-        title=conv(payload.title), category=conv(payload.category),
+        title=conv(payload.title), category=conv(payload.category).strip(),
         description=conv(sanitize_html(payload.description)), link_url=payload.link_url,
         companies=_clean_companies(payload.companies),
         inline_preview=payload.inline_preview, sort_order=next_order, created_by=current.id,
@@ -2339,6 +2339,8 @@ def update_training_material(material_id: int, payload: schemas.TrainingMaterial
     for k in ("title", "category"):
         if data.get(k):
             data[k] = conv(data[k])
+    if data.get("category"):
+        data["category"] = data["category"].strip()
     before = {"title": m.title, "category": m.category, "link_url": m.link_url}
     for k, v in data.items():
         setattr(m, k, v)
