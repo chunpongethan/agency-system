@@ -2152,9 +2152,9 @@ def _training_out(db: Session, m: TrainingMaterial, full: bool = False) -> dict:
 
 
 def _visible_to_company(m: TrainingMaterial, company: str) -> bool:
-    """A material with no companies set is visible to all; otherwise only to the
-    companies it lists."""
-    return not m.companies or company in m.companies
+    """Visible only to the companies the material lists. An empty/NULL list means
+    the material is hidden from every agent (admins still see it to manage it)."""
+    return bool(m.companies) and company in m.companies
 
 
 @app.get("/training-materials", response_model=list[schemas.TrainingMaterialOut])

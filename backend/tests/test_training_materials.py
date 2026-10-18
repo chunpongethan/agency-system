@@ -55,7 +55,10 @@ def auth(tc, code):
 
 
 def mk_material(tc, headers, **kw):
-    payload = {"title": "Onboarding 101", "category": "新人入職"}
+    # Default to all companies so tests that don't care about visibility stay visible
+    # (an empty/omitted list now means "hidden from everyone").
+    payload = {"title": "Onboarding 101", "category": "新人入職",
+               "companies": ["heritree", "cpm", "bschool"]}
     payload.update(kw)
     return tc.post("/training-materials", headers=headers, json=payload)
 
@@ -481,14 +484,17 @@ def test_company_visibility(client):
     # CPM-only, Heritree-only, and both/all
     cpm_only = mk_material(client, adm, title="CPM only", companies=["cpm"]).json()["id"]
     her_only = mk_material(client, adm, title="Heritree only", companies=["heritree"]).json()["id"]
-    everyone = mk_material(client, adm, title="Everyone").json()["id"]  # companies None
+    everyone = mk_material(client, adm, title="Everyone", companies=["heritree", "cpm", "bschool"]).json()["id"]
+    hidden = mk_material(client, adm, title="Hidden", companies=[]).json()["id"]   # no company → hidden
     ax_ids = {m["id"] for m in client.get("/training-materials", headers=ax).json()}
     cpm_ids = {m["id"] for m in client.get("/training-materials", headers=cpm).json()}
     assert her_only in ax_ids and everyone in ax_ids and cpm_only not in ax_ids
     assert cpm_only in cpm_ids and everyone in cpm_ids and her_only not in cpm_ids
-    # admin sees all regardless of company
+    # a material with no company is hidden from every agent...
+    assert hidden not in ax_ids and hidden not in cpm_ids
+    # ...but admin sees all regardless of company.
     adm_ids = {m["id"] for m in client.get("/training-materials", headers=adm).json()}
-    assert {cpm_only, her_only, everyone} <= adm_ids
+    assert {cpm_only, her_only, everyone, hidden} <= adm_ids
 
 
 def test_company_scoped_file_access(client):
