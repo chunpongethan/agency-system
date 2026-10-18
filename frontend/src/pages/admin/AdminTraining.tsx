@@ -308,7 +308,7 @@ export default function AdminTraining() {
             </div>
           )}
           <div style={{ marginTop: 14 }}>
-            <button className="primary" type="submit" disabled={save.isPending || form.companies.length === 0}>
+            <button className="primary" type="submit" disabled={save.isPending}>
               {save.isPending ? (files.length ? t("training.uploading") : t("training.saving")) : t("training.save")}
             </button>
           </div>
