@@ -2,7 +2,7 @@
 
 Configured from the environment (same pattern as the mailer):
   ANTHROPIC_API_KEY   — required to enable the AI assistant
-  ANTHROPIC_MODEL     — model id (default: claude-sonnet-5)
+  ANTHROPIC_MODEL     — model id (default: claude-sonnet-5-5)
 
 When the key is absent, `ai_enabled()` is False and the /kb/ask endpoint tells
 the user the assistant isn't configured (browse/search still work). The answer
@@ -17,7 +17,7 @@ import os
 
 log = logging.getLogger("kb_ai")
 
-DEFAULT_MODEL = "claude-sonnet-5"
+DEFAULT_MODEL = "claude-sonnet-5-5"
 _MAX_TOKENS = 1024
 
 _SYSTEM = (
