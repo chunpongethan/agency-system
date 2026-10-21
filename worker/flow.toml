@@ -182,8 +182,7 @@ timeout = 30
 after = 3
 
 # 复制下载链接 copies three lines: viewer link, file name, summary. The link opens 保易通's
-# web PDF viewer, not the file itself, so this final download step still needs a
-# decision (see README "Getting the PDF").
+# web PDF viewer; the worker opens it in a headless browser and keeps the PDF it loads.
 [[step]]
 action = "copy_link_download"
 template = "share_copy_link"         # 复制下载链接

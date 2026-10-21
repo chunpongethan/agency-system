@@ -113,16 +113,63 @@ def _win_shot():
     return pyautogui.screenshot(region=(r.left, r.top, r.width(), r.height()))
 
 
-def _download(url: str, folder: Path) -> Path:
+def _pdf_via_browser(url: str, timeout: float = 90) -> bytes:
+    """Open the share link in a headless phone-sized browser, as a client would, and
+    keep the PDF that 保易通's web viewer downloads in order to display it."""
+    from playwright.sync_api import sync_playwright
+
+    found: list[bytes] = []
+
+    def on_response(resp):
+        if found:
+            return
+        ctype = (resp.headers.get("content-type") or "").lower()
+        if "pdf" in ctype or "octet-stream" in ctype:
+            try:
+                body = resp.body()
+            except Exception:
+                return
+            if body.startswith(b"%PDF"):
+                found.append(body)
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        try:
+            ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True,
+                                      accept_downloads=True)
+            page = ctx.new_page()
+            page.on("response", on_response)
+            page.goto(url, wait_until="domcontentloaded", timeout=60_000)
+            deadline = time.time() + timeout
+            retried = 0
+            while not found and time.time() < deadline:
+                page.wait_for_timeout(1000)
+                # The viewer sometimes shows 文件加载失败 + 重新加载 on first load.
+                retry = page.get_by_text("重新加载")
+                if retried < 3 and retry.count() and retry.first.is_visible():
+                    retry.first.click()
+                    retried += 1
+        finally:
+            browser.close()
+    if not found:
+        raise FlowError("the share link's viewer never loaded a PDF")
+    return found[0]
+
+
+def _download(url: str, folder: Path, name: str | None = None) -> Path:
     if not re.match(r"^https?://", url or ""):
         raise FlowError(f"clipboard doesn't hold a download link: {url[:80]!r}")
     resp = requests.get(url, timeout=120)
     resp.raise_for_status()
     data = resp.content
     if not data.startswith(b"%PDF"):
-        raise FlowError(f"download link didn't return a PDF ({resp.headers.get('content-type')})")
+        # 复制下载链接 points at 保易通's web viewer page, not the file itself.
+        data = _pdf_via_browser(url)
     folder.mkdir(parents=True, exist_ok=True)
-    path = folder / f"proposal-{time.strftime('%Y%m%d-%H%M%S')}.pdf"
+    safe = re.sub(r'[\\/:*?"<>|\r\n]+', "_", name or "").strip()
+    if not safe.lower().endswith(".pdf"):
+        safe = f"proposal-{time.strftime('%Y%m%d-%H%M%S')}.pdf"
+    path = folder / safe
     path.write_bytes(data)
     return path
 
@@ -204,12 +251,14 @@ def run(job: dict, cfg: dict, log=print) -> Path:
                 pyautogui.click(*pyautogui.center(box))
                 # The clipboard holds "<link>\n<file name>.pdf\n<summary>"; take the link.
                 deadline = time.time() + 10
-                url = ""
+                url, name = "", None
                 while time.time() < deadline and not url:
                     time.sleep(0.5)
-                    m = re.search(r"https?://\S+", pyperclip.paste() or "")
+                    clip = pyperclip.paste() or ""
+                    m = re.search(r"https?://\S+", clip)
                     url = m.group(0) if m else ""
-                return _download(url, downloads)
+                    name = next((ln.strip() for ln in clip.splitlines() if ln.strip().lower().endswith(".pdf")), None)
+                return _download(url, downloads, name)
             else:
                 raise FlowError(f"unknown action {action!r}")
             time.sleep(float(step.get("after", 0.8)))

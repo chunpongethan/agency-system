@@ -6,3 +6,4 @@ pywinauto>=0.6.8        # focus the WeChat window
 Pillow>=10
 tomli>=2.0; python_version < "3.11"
 opencc-python-reimplemented>=0.1.7   # Traditional → Simplified product search
+playwright>=1.47        # opens 保易通's share link to fetch the PDF (run: python -m playwright install chromium)
