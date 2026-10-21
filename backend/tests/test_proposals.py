@@ -107,7 +107,7 @@ def test_stale_claim_requeued(client):
     _claim(client)
     s = client._Session()
     r = s.get(ProposalRequest, pid)
-    r.claimed_at = now_utc() - timedelta(minutes=30)
+    r.claimed_at = now_utc() - timedelta(minutes=45)
     s.commit(); s.close()
     assert _claim(client, "w2").json()["id"] == pid        # stale claim went back to the queue
 

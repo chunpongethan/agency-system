@@ -1,84 +1,138 @@
 # The 保易通助手 建議書 flow, as data. The worker runs these steps in order.
-#
-# DRAFT: the screens and field order still have to be confirmed on the real
-# mini-program. Run `python calibrate.py` to capture each template image, adjust
-# the steps below to match what you see, then test with `python main.py --once --dry-run`.
+# Mapped against the real mini-program on 2026-10-21 (飛揚·88, 30 F, USD 50,000, 2 yrs).
 #
 # Actions:
-#   focus          bring a window to the front (title regex)
-#   click          find templates/<template>.png on screen and click its centre
-#   paste          put text on the clipboard and Ctrl+V (works for Chinese)
-#   type           type ASCII text (numbers)
-#   clear          select-all + delete in the focused field
-#   key            press a key, e.g. "enter", "tab", "esc"
-#   wait           sleep `seconds`
-#   wait_for       wait until a template appears (timeout seconds)
-#   wait_download  wait for a new PDF in downloads_dir; ends the flow
+#   focus              bring a window to the front (title regex)
+#   click              find templates/<template>.png on screen and click its centre
+#                      (offset = [dx, dy] clicks relative to it, e.g. the input right of a label)
+#   click_at           click at = [x, y] relative to the focused window
+#   scroll             wheel at = [x, y] (window-relative) by amount (negative = down)
+#   paste / type       Chinese via clipboard / ASCII keystrokes
+#   clear, key, wait, wait_for
+#   wait_ready         poll until pending_template is no longer on the top card
+#   copy_link_download click template (复制下载链接), read the URL from the clipboard,
+#                      download the PDF; ends the flow
 #
-# Text can use placeholders from the job: {age} {gender} {gender_label}
-# {product} {premium} {term_years} {currency}. Templates can use them too,
-# e.g. "gender_{gender}" -> gender_F.png.
-#
-# Common optional fields: timeout (s, default 15), optional = true (skip if not found),
-# offset = [dx, dy] (click relative to the template, e.g. the input to the right of a label).
+# Placeholders: {age} {gender} {gender_label} {product} {product_simplified}
+# {product_search} {premium} {term_years} {currency}.
+# Window-relative coordinates assume the 保易通助手 window size stays as calibrated (535×984).
 
+# --- get to 建議書管理 -------------------------------------------------------
 [[step]]
 action = "focus"
-title = "保易通助手|小程序|微信"
+title = "^保易通助手$"               # the mini-program's own window (not the 微信 panel)
 
 [[step]]
 action = "click"
-template = "workbench_tab"        # 工作台 tab in the bottom bar
+template = "nav_home"                # house icon, shown on inner pages (e.g. the last share page)
 optional = true
+timeout = 2
+after = 3
 
 [[step]]
 action = "click"
-template = "jianyishu"            # 建議書 icon
+template = "workbench_tab"           # 工作台 tab
+optional = true
+timeout = 5
+after = 2
 
 [[step]]
 action = "click"
-template = "product_search"       # product search box
+template = "jianyishu"               # 建議書 → 建議書管理 list
+after = 4
+
+[[step]]
+action = "click"
+template = "new_proposal"            # floating 新建 button
+timeout = 20
+after = 3
+
+# --- product -------------------------------------------------------------
+[[step]]
+action = "click"
+template = "product_search"          # 请输入产品名称搜索
 
 [[step]]
 action = "paste"
-text = "{product}"
+text = "{product_search}"            # Simplified leading name, e.g. 飞扬
+after = 2.5
 
 [[step]]
-action = "wait"
-seconds = 1.5
+action = "click_at"
+at = [205, 345]                      # first search result
+note = "first product result"
+after = 4
+
+# --- insured (受保人信息) ----------------------------------------------------
+[[step]]
+action = "wait_for"
+template = "label_name"
+timeout = 20
+after = 2
 
 [[step]]
 action = "click"
-template = "product_first_result" # first matching product in the results
+template = "label_name"              # 姓名 → input on the right
+offset = [396, 0]
+
+[[step]]
+action = "paste"
+text = "vip"                         # placeholder — never a real client name
 
 [[step]]
 action = "click"
-template = "label_age"            # 年齡 label; offset clicks the input next to it
-offset = [220, 0]
+template = "gender_{gender}"         # 男 / 女
 
 [[step]]
-action = "clear"
+action = "click"
+template = "label_age"               # 投保年龄 → input on the right
+offset = [339, 0]
 
 [[step]]
 action = "type"
 text = "{age}"
 
+# --- product details (產品信息) ---------------------------------------------
 [[step]]
-action = "click"
-template = "gender_{gender}"      # 男 / 女 option
+action = "scroll"
+at = [268, 700]
+amount = -5
+after = 1.5
 
 [[step]]
 action = "click"
-template = "currency_{currency}"  # 美元 / 港元 / 人民幣 option
-optional = true
+template = "label_term"              # 缴付年期 → opens a picker
+offset = [395, 0]
+after = 1.5
 
 [[step]]
 action = "click"
-template = "label_premium"        # 保費 label
-offset = [220, 0]
+template = "term_{term_years}"       # e.g. 2年 in the picker wheel
+timeout = 5
 
 [[step]]
-action = "clear"
+action = "click"
+template = "picker_confirm"          # 确认
+
+[[step]]
+action = "click"
+template = "label_currency"          # 保单货币 → opens a picker
+offset = [395, 0]
+after = 1.5
+
+[[step]]
+action = "click"
+template = "currency_{currency}"     # 美元 / 港元 / 人民币
+timeout = 5
+
+[[step]]
+action = "click"
+template = "picker_confirm"
+
+[[step]]
+action = "click"
+template = "label_premium"           # 年缴保费 → input on the right
+offset = [355, 0]
 
 [[step]]
 action = "type"
@@ -86,21 +140,51 @@ text = "{premium}"
 
 [[step]]
 action = "click"
-template = "term_{term_years}"    # 繳費年期 option, e.g. term_2.png
-optional = true
+template = "submit"                  # 提交
+after = 2
 
 [[step]]
 action = "click"
-template = "generate"             # 生成 / 計算 button
+template = "submit_ok"               # 提交成功 → 我知道了
+timeout = 15
+after = 3
+
+# --- wait for 保易通's robot, generate the PDF, copy its link ---------------------
+# After 提交 the list shows the new card on top (未生成 = no PDF yet). Open it; while the
+# robot works it says 機器人處理中. When ready the 生成方案 button appears at the bottom.
+[[step]]
+action = "click_at"
+at = [200, 340]                      # open the newest (top) card's detail page
+note = "open the new proposal"
+after = 4
 
 [[step]]
-action = "wait_for"
-template = "download"             # 下載 / 保存 PDF button
-timeout = 60
+action = "wait_ready"
+ready_template = "gen_plan"          # 生成方案 — only shown once 智能解讀 is ready
+interval = 30
+timeout = 1200
+refresh = [[36, 52], [200, 340]]     # back to the list, reopen the top card
 
 [[step]]
 action = "click"
-template = "download"
+template = "gen_plan"
+after = 2
 
 [[step]]
-action = "wait_download"
+action = "click"
+template = "plan_traditional"        # 保險公司建議書 (傳統) — the insurer-format PDF
+after = 6
+
+[[step]]
+action = "click"
+template = "get_file"                # 文件詳情 → 獲取文件 (share page)
+timeout = 30
+after = 3
+
+# 复制下载链接 copies three lines: viewer link, file name, summary. The link opens 保易通's
+# web PDF viewer, not the file itself, so this final download step still needs a
+# decision (see README "Getting the PDF").
+[[step]]
+action = "copy_link_download"
+template = "share_copy_link"         # 复制下载链接
+timeout = 30

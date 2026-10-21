@@ -59,6 +59,17 @@ FOA shows "生成機器在線" on the 建議書生成 page while the worker is r
 To start it automatically: Task Scheduler → Create Task → "At log on" →
 action `pythonw.exe main.py` with "Start in" = this folder.
 
+## Getting the PDF (open question)
+
+Mapped on 2026-10-21, the 保易通 flow is: 建議書 → 新建 → product → form → 提交 →
+wait for 保易通's robot (often 10+ min; the card shows 未生成 until a PDF is made) →
+open the card → 生成方案 → 保險公司建議書 (傳統) → 文件詳情 → 獲取文件 → 复制下载链接.
+
+The download icon on 文件詳情 does nothing on PC WeChat, and 复制下载链接 gives a link to
+保易通's web PDF viewer, not the PDF file, so the final step of `flow.toml` can't fetch
+the file with a plain HTTP request yet. Until that's settled, an admin can open the
+link and use **手動上傳 PDF** in FOA.
+
 ## When something breaks
 
 - A failed job is retried up to 3 times, then shows **失敗** in FOA with the error

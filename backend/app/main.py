@@ -3150,7 +3150,7 @@ from urllib.parse import quote as _quote          # noqa: E402
 from app.services import proposal_ai              # noqa: E402
 
 PROPOSAL_CURRENCIES = ("USD", "HKD", "RMB")
-PROPOSAL_CLAIM_TIMEOUT = timedelta(minutes=10)    # a claimed job older than this is re-queued
+PROPOSAL_CLAIM_TIMEOUT = timedelta(minutes=30)    # re-queue a claim older than this (保易通 can take ~10–20 min)
 PROPOSAL_MAX_ATTEMPTS = 3
 WORKER_ONLINE_WINDOW = timedelta(seconds=60)
 
