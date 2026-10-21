@@ -37,7 +37,14 @@ after = 3
 
 [[step]]
 action = "click"
-template = "workbench_tab"           # 工作台 tab
+template = "workbench_tab_off"       # 工作台 tab when another tab (首页) is selected
+optional = true
+timeout = 4
+after = 2
+
+[[step]]
+action = "click"
+template = "workbench_tab"           # 工作台 tab (already selected)
 optional = true
 timeout = 5
 after = 2
