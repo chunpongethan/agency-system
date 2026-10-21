@@ -1,0 +1,106 @@
+# The 保易通助手 建議書 flow, as data. The worker runs these steps in order.
+#
+# DRAFT: the screens and field order still have to be confirmed on the real
+# mini-program. Run `python calibrate.py` to capture each template image, adjust
+# the steps below to match what you see, then test with `python main.py --once --dry-run`.
+#
+# Actions:
+#   focus          bring a window to the front (title regex)
+#   click          find templates/<template>.png on screen and click its centre
+#   paste          put text on the clipboard and Ctrl+V (works for Chinese)
+#   type           type ASCII text (numbers)
+#   clear          select-all + delete in the focused field
+#   key            press a key, e.g. "enter", "tab", "esc"
+#   wait           sleep `seconds`
+#   wait_for       wait until a template appears (timeout seconds)
+#   wait_download  wait for a new PDF in downloads_dir; ends the flow
+#
+# Text can use placeholders from the job: {age} {gender} {gender_label}
+# {product} {premium} {term_years} {currency}. Templates can use them too,
+# e.g. "gender_{gender}" -> gender_F.png.
+#
+# Common optional fields: timeout (s, default 15), optional = true (skip if not found),
+# offset = [dx, dy] (click relative to the template, e.g. the input to the right of a label).
+
+[[step]]
+action = "focus"
+title = "保易通助手|小程序|微信"
+
+[[step]]
+action = "click"
+template = "workbench_tab"        # 工作台 tab in the bottom bar
+optional = true
+
+[[step]]
+action = "click"
+template = "jianyishu"            # 建議書 icon
+
+[[step]]
+action = "click"
+template = "product_search"       # product search box
+
+[[step]]
+action = "paste"
+text = "{product}"
+
+[[step]]
+action = "wait"
+seconds = 1.5
+
+[[step]]
+action = "click"
+template = "product_first_result" # first matching product in the results
+
+[[step]]
+action = "click"
+template = "label_age"            # 年齡 label; offset clicks the input next to it
+offset = [220, 0]
+
+[[step]]
+action = "clear"
+
+[[step]]
+action = "type"
+text = "{age}"
+
+[[step]]
+action = "click"
+template = "gender_{gender}"      # 男 / 女 option
+
+[[step]]
+action = "click"
+template = "currency_{currency}"  # 美元 / 港元 / 人民幣 option
+optional = true
+
+[[step]]
+action = "click"
+template = "label_premium"        # 保費 label
+offset = [220, 0]
+
+[[step]]
+action = "clear"
+
+[[step]]
+action = "type"
+text = "{premium}"
+
+[[step]]
+action = "click"
+template = "term_{term_years}"    # 繳費年期 option, e.g. term_2.png
+optional = true
+
+[[step]]
+action = "click"
+template = "generate"             # 生成 / 計算 button
+
+[[step]]
+action = "wait_for"
+template = "download"             # 下載 / 保存 PDF button
+timeout = 60
+
+[[step]]
+action = "click"
+template = "download"
+
+[[step]]
+action = "wait_download"

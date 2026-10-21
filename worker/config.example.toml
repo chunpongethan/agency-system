@@ -1,0 +1,14 @@
+# Copy to config.toml and fill in. Keep config.toml private (it holds the token).
+
+api_base = "https://api.example.com"   # your FOA API_DOMAIN, no trailing slash
+token = "paste PROPOSAL_WORKER_TOKEN here"
+worker_id = "pilot-pc"
+
+# Folder where the 保易通 download button saves PDFs.
+downloads_dir = 'C:\Users\you\Downloads'
+
+poll_seconds = 10          # how often to ask FOA for a job when idle
+heartbeat_seconds = 30
+download_timeout = 120     # seconds to wait for the PDF to appear
+match_confidence = 0.85    # 0-1, template match strictness
+dry_run = false            # true = run the flow but don't upload (for testing)

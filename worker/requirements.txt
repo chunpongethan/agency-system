@@ -1,0 +1,7 @@
+requests>=2.31
+pyautogui>=0.9.54
+opencv-python>=4.9      # enables confidence= in template matching
+pyperclip>=1.8          # paste Chinese text (pyautogui can't type non-ASCII)
+pywinauto>=0.6.8        # focus the WeChat window
+Pillow>=10
+tomli>=2.0; python_version < "3.11"
