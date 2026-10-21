@@ -236,3 +236,30 @@ def test_ask_records_usage(client, monkeypatch):
                        json={"question": "hi?"}).status_code == 200
     b = client.get("/kb/usage", headers=auth(client, "ADM")).json()
     assert b["total"]["requests"] == 1 and b["total"]["input_tokens"] == 100
+
+
+def test_workspace_header_sent_when_configured(monkeypatch):
+    """A key not scoped to a workspace needs anthropic-workspace-id on every call."""
+    import sys, types
+    from app.services import kb_ai
+
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, **kw):
+            seen.update(kw)
+            self.messages = types.SimpleNamespace(create=lambda **k: types.SimpleNamespace(
+                content=[types.SimpleNamespace(text="ok")],
+                usage=types.SimpleNamespace(input_tokens=1, output_tokens=1)))
+
+    monkeypatch.setitem(sys.modules, "anthropic", types.SimpleNamespace(Anthropic=FakeClient))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+
+    monkeypatch.setenv("ANTHROPIC_WORKSPACE_ID", "wrkspc_123")
+    assert kb_ai.complete("sys", [{"role": "user", "content": "hi"}])["text"] == "ok"
+    assert seen["default_headers"] == {"anthropic-workspace-id": "wrkspc_123"}
+
+    seen.clear()
+    monkeypatch.delenv("ANTHROPIC_WORKSPACE_ID")
+    kb_ai.complete("sys", [{"role": "user", "content": "hi"}])
+    assert seen["default_headers"] is None

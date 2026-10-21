@@ -3,6 +3,8 @@
 Configured from the environment (same pattern as the mailer):
   ANTHROPIC_API_KEY   — required to enable the AI assistant
   ANTHROPIC_MODEL     — model id (default: claude-sonnet-5-5)
+  ANTHROPIC_WORKSPACE_ID — optional; sent as the anthropic-workspace-id header,
+                        required when the key isn't scoped to a workspace
 
 When the key is absent, `ai_enabled()` is False and the /kb/ask endpoint tells
 the user the assistant isn't configured (browse/search still work). The answer
@@ -82,6 +84,12 @@ def _format_context(chunks) -> str:
     return "\n\n".join(lines) if lines else "(no matching knowledge-base entries)"
 
 
+def _extra_headers() -> dict:
+    """Keys that aren't scoped to a workspace must name one on every request."""
+    ws = (os.getenv("ANTHROPIC_WORKSPACE_ID") or "").strip()
+    return {"anthropic-workspace-id": ws} if ws else {}
+
+
 def complete(system: str, messages: list[dict], max_tokens: int = _MAX_TOKENS) -> dict:
     """One Claude call shared by the KB assistant and other features.
 
@@ -96,7 +104,8 @@ def complete(system: str, messages: list[dict], max_tokens: int = _MAX_TOKENS) -
         raise KbAiError(f"anthropic SDK unavailable: {e}")
 
     model = os.getenv("ANTHROPIC_MODEL", DEFAULT_MODEL)
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"),
+                                 default_headers=_extra_headers() or None)
     try:
         resp = client.messages.create(
             model=model, max_tokens=max_tokens, system=system, messages=messages)
