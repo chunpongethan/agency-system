@@ -65,14 +65,23 @@ def load_steps() -> list[dict]:
         return tomllib.load(f).get("step", [])
 
 
-def _locate(template: str, confidence: float, timeout: float):
+def _locate(template: str, confidence: float, timeout: float, within=None):
+    """Find a template on screen; `within` = [x1, y1, x2, y2] relative to the focused
+    window limits the search (e.g. to a picker sheet, so a same-looking label
+    elsewhere on the page isn't matched)."""
     path = TEMPLATES / f"{template}.png"
     if not path.exists():
         raise FlowError(f"missing template image {path.name} — capture it with calibrate.py")
+    region = None
+    if within:
+        x1, y1 = _win_point(within[:2])
+        x2, y2 = _win_point(within[2:])
+        region = (x1, y1, x2 - x1, y2 - y1)
     deadline = time.time() + timeout
     while True:
         try:
-            box = pyautogui.locateOnScreen(str(path), confidence=confidence, grayscale=True)
+            box = pyautogui.locateOnScreen(str(path), confidence=confidence, grayscale=True,
+                                           region=region)
         except pyautogui.ImageNotFoundException:
             box = None
         if box:
@@ -189,7 +198,7 @@ def run(job: dict, cfg: dict, log=print) -> Path:
                 _focus(step["title"])
             elif action in ("click", "wait_for"):
                 template = _fill(step["template"], job)
-                box = _locate(template, confidence, timeout)
+                box = _locate(template, confidence, timeout, step.get("within"))
                 if box is None:
                     if step.get("optional"):
                         log(f"  skipped (optional, {template} not found)")
@@ -199,6 +208,18 @@ def run(job: dict, cfg: dict, log=print) -> Path:
                     dx, dy = step.get("offset", [0, 0])
                     x, y = pyautogui.center(box)
                     pyautogui.click(x + dx, y + dy)
+            elif action == "back_until":
+                # Leave whatever page the last run ended on: press back until one of
+                # the target templates is visible (or give up after `max` presses).
+                targets = step["until"]
+                for _ in range(int(step.get("max", 8)) + 1):
+                    if any(_locate(t, confidence, 1.5) for t in targets):
+                        break
+                    back = _locate(step["back_template"], confidence, 2)
+                    if back is None:
+                        break
+                    pyautogui.click(*pyautogui.center(back))
+                    time.sleep(float(step.get("pause", 2.5)))
             elif action == "click_at":
                 pyautogui.click(*_win_point(step["at"]))
             elif action == "scroll":

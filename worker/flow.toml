@@ -23,6 +23,12 @@ action = "focus"
 title = "^保易通助手$"               # the mini-program's own window (not the 微信 panel)
 
 [[step]]
+action = "back_until"                # leave whatever page the last run ended on
+back_template = "nav_back"
+until = ["workbench_tab", "jianyishu", "nav_home"]
+max = 8
+
+[[step]]
 action = "click"
 template = "nav_home"                # house icon, shown on inner pages (e.g. the last share page)
 optional = true
@@ -108,11 +114,13 @@ after = 1.5
 [[step]]
 action = "click"
 template = "term_{term_years}"       # e.g. 2年 in the picker wheel
+within = [0, 640, 535, 984]          # search only the picker sheet, not the form row behind it
 timeout = 5
 
 [[step]]
 action = "click"
 template = "picker_confirm"          # 确认
+within = [0, 560, 535, 700]          # the picker header (确认)
 
 [[step]]
 action = "click"
@@ -123,11 +131,13 @@ after = 1.5
 [[step]]
 action = "click"
 template = "currency_{currency}"     # 美元 / 港元 / 人民币
+within = [0, 640, 535, 984]
 timeout = 5
 
 [[step]]
 action = "click"
 template = "picker_confirm"
+within = [0, 560, 535, 700]          # the picker header (确认)
 
 [[step]]
 action = "click"
