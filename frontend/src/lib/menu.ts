@@ -23,6 +23,7 @@ export const MENU: MenuItem[] = [
   { key: "promo", to: "/promo", labelKey: "nav.promo", roles: ["agent", "manager", "admin", "student"], group: "main" },
   { key: "quiz", to: "/quiz", labelKey: "nav.quiz", roles: ["agent", "manager", "admin", "student"], group: "main" },
   { key: "knowledgeBase", to: "/knowledge-base", labelKey: "nav.knowledgeBase", roles: ["agent", "manager", "admin"], group: "main" },
+  { key: "proposals", to: "/proposals", labelKey: "nav.proposals", roles: ["agent", "manager", "admin"], group: "main" },
   { key: "products", to: "/products", labelKey: "nav.products", roles: ["agent", "manager"], group: "main" },
   { key: "myTxns", to: "/my-transactions", labelKey: "nav.myTxns", roles: ["agent", "manager"], group: "main" },
   { key: "newTransaction", to: "/transactions/new", labelKey: "nav.newTransaction", roles: ["admin"], group: "main" },

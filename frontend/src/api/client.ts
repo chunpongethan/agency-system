@@ -7,7 +7,7 @@ import type {
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
-  KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews,
+  KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews, Proposal, ProposalWorkerStatus,
   QuizSummary, QuizAdmin, QuizListItem, QuizTake, QuizResult, QuizResults,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
@@ -256,6 +256,24 @@ export const api = {
   kbAsk: (question: string, history: KbChatTurn[]) =>
     request<KbAnswer>("/kb/ask", { method: "POST", body: JSON.stringify({ question, history }) }),
   kbUsage: () => request<KbUsageSummary>("/kb/usage"),
+
+  // 建議書 (proposal) generation
+  proposals: () => request<Proposal[]>("/proposals"),
+  proposal: (id: number) => request<Proposal>(`/proposals/${id}`),
+  createProposal: (body: Record<string, unknown>) =>
+    request<Proposal>("/proposals", { method: "POST", body: JSON.stringify(body) }),
+  cancelProposal: (id: number) => request<Proposal>(`/proposals/${id}/cancel`, { method: "POST" }),
+  retryProposal: (id: number) => request<Proposal>(`/proposals/${id}/retry`, { method: "POST" }),
+  reanalyzeProposal: (id: number) => request<Proposal>(`/proposals/${id}/reanalyze`, { method: "POST" }),
+  uploadProposalPdf: (id: number, file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return uploadForm<Proposal>(`/proposals/${id}/upload`, form);
+  },
+  proposalWorkerStatus: () => request<ProposalWorkerStatus>("/proposals/worker-status"),
+  proposalPdfPath: (id: number, download = false) =>
+    `/proposals/${id}/pdf${download ? "?download=1" : ""}`,
+  proposalScreenshotPath: (id: number) => `/proposals/${id}/screenshot`,
 
   // Training categories (培訓類別)
   trainingCategories: () => request<TrainingCategory[]>("/training-categories"),

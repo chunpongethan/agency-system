@@ -565,3 +565,38 @@ export interface QuizResults {
   total_attempts: number;
   pass_count: number;
 }
+
+// --- 建議書 (proposal) generation ---
+export interface ProposalInputs {
+  age: number;
+  gender: "M" | "F";
+  product: string;
+  premium: number;
+  term_years: number;
+  currency: string;
+}
+export interface Proposal {
+  id: number;
+  inputs: ProposalInputs;
+  status: "queued" | "claimed" | "done" | "failed" | "cancelled";
+  error: string | null;
+  attempts: number;
+  queue_position: number | null;
+  analysis: string | null;
+  analysis_status: "pending" | "done" | "failed" | "skipped";
+  has_pdf: boolean;
+  has_screenshot: boolean;
+  agent_id: number;
+  agent_name: string | null;
+  agent_code: string | null;
+  client_id: number | null;
+  client_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export interface ProposalWorkerStatus {
+  online: boolean;
+  last_seen: string | null;
+  status: string | null;
+  queued: number;
+}

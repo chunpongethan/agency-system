@@ -545,7 +545,56 @@ class KbUsage(Base):
     model: Mapped[str] = mapped_column(String(80))
     input_tokens: Mapped[int] = mapped_column(Integer, default=0)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    feature: Mapped[str] = mapped_column(String(20), default="kb")   # kb | proposal
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
+class ProposalRequest(Base):
+    """An agent's request for a 建議書 (insurance proposal). A Windows worker claims
+    queued requests, drives the 保易通助手 mini-program, and uploads the PDF; the
+    backend then writes an AI analysis. Only non-identifying inputs (age, gender,
+    product, premium, term, currency) are ever handed to the worker."""
+    __tablename__ = "proposal_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"), index=True)
+    client_id: Mapped[int | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
+    inputs: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    worker_id: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    analysis: Mapped[str | None] = mapped_column(Text, nullable=True)
+    analysis_status: Mapped[str] = mapped_column(String(16), default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
+
+
+class ProposalFile(Base):
+    """The generated 建議書 PDF (bytes kept out of the request row), or a failure
+    screenshot (kind='screenshot') a worker uploaded for debugging."""
+    __tablename__ = "proposal_files"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    request_id: Mapped[int] = mapped_column(ForeignKey("proposal_requests.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16), default="pdf")   # pdf | screenshot
+    file_name: Mapped[str] = mapped_column(String(255), default="proposal.pdf")
+    content_type: Mapped[str] = mapped_column(String(120), default="application/pdf")
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+
+
+class WorkerHeartbeat(Base):
+    """Last check-in from a proposal worker, so the UI can show online/offline."""
+    __tablename__ = "worker_heartbeats"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    worker_id: Mapped[str] = mapped_column(String(60), unique=True)
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+    status: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    version: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
 
 class TrainingVideoView(Base):

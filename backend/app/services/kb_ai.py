@@ -82,11 +82,11 @@ def _format_context(chunks) -> str:
     return "\n\n".join(lines) if lines else "(no matching knowledge-base entries)"
 
 
-def answer(question: str, history: list[dict] | None, chunks) -> dict:
-    """Return {"text": str, "sources": [{n,title,source_type,link,ref_id}]}.
+def complete(system: str, messages: list[dict], max_tokens: int = _MAX_TOKENS) -> dict:
+    """One Claude call shared by the KB assistant and other features.
 
-    `history` is a list of prior turns [{role: "user"|"assistant", content: str}].
-    Raises KbAiError when the assistant is unavailable.
+    Returns {"text", "usage": {model, input_tokens, output_tokens}}; raises KbAiError
+    when AI is not configured or the request fails.
     """
     if not ai_enabled():
         raise KbAiError("AI assistant is not configured (ANTHROPIC_API_KEY missing).")
@@ -97,7 +97,30 @@ def answer(question: str, history: list[dict] | None, chunks) -> dict:
 
     model = os.getenv("ANTHROPIC_MODEL", DEFAULT_MODEL)
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    try:
+        resp = client.messages.create(
+            model=model, max_tokens=max_tokens, system=system, messages=messages)
+        text = "".join(getattr(b, "text", "") for b in resp.content).strip()
+    except Exception as e:
+        log.exception("Anthropic call failed")
+        raise KbAiError(f"AI request failed: {e}")
+    usage = getattr(resp, "usage", None)
+    return {
+        "text": text,
+        "usage": {
+            "model": model,
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+        },
+    }
 
+
+def answer(question: str, history: list[dict] | None, chunks) -> dict:
+    """Return {"text": str, "sources": [{n,title,source_type,link,ref_id}]}.
+
+    `history` is a list of prior turns [{role: "user"|"assistant", content: str}].
+    Raises KbAiError when the assistant is unavailable.
+    """
     messages: list[dict] = []
     for turn in (history or [])[-6:]:
         role = "assistant" if turn.get("role") == "assistant" else "user"
@@ -108,23 +131,7 @@ def answer(question: str, history: list[dict] | None, chunks) -> dict:
     messages.append({"role": "user",
                      "content": f"Knowledge-base context:\n{context}\n\nQuestion: {question}"})
 
-    try:
-        resp = client.messages.create(
-            model=model, max_tokens=_MAX_TOKENS, system=_SYSTEM, messages=messages)
-        text = "".join(getattr(b, "text", "") for b in resp.content).strip()
-    except Exception as e:
-        log.exception("Anthropic call failed")
-        raise KbAiError(f"AI request failed: {e}")
-
-    usage = getattr(resp, "usage", None)
+    result = complete(_SYSTEM, messages)
     sources = [{"n": i, "title": c.title, "source_type": c.source_type,
                 "link": c.link, "ref_id": c.ref_id} for i, c in enumerate(chunks, start=1)]
-    return {
-        "text": text or "（沒有回覆）",
-        "sources": sources,
-        "usage": {
-            "model": model,
-            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
-            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
-        },
-    }
+    return {"text": result["text"] or "（沒有回覆）", "sources": sources, "usage": result["usage"]}

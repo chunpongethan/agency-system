@@ -11,7 +11,7 @@ import os
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form, Request
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, UploadFile, File, Body, Form, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -26,7 +26,7 @@ from app.models.models import (
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
     ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView,
-    Quiz, QuizAttempt, now_utc,
+    Quiz, QuizAttempt, ProposalRequest, ProposalFile, WorkerHeartbeat, now_utc,
 )
 from app.schemas import schemas
 from app.security import (
@@ -137,6 +137,8 @@ def _ensure_columns() -> None:
         ddl.append("ALTER TABLE training_files ADD COLUMN extracted_text TEXT")
     if "label" not in cols("menu_settings") and "menu_settings" in insp.get_table_names():
         ddl.append("ALTER TABLE menu_settings ADD COLUMN label VARCHAR(80)")
+    if "feature" not in cols("kb_usage") and "kb_usage" in insp.get_table_names():
+        ddl.append("ALTER TABLE kb_usage ADD COLUMN feature VARCHAR(20) DEFAULT 'kb'")
     # 課程考核 per-quiz company visibility (NULL = all companies).
     if "companies" not in cols("quizzes") and "quizzes" in insp.get_table_names():
         ddl.append(f"ALTER TABLE quizzes ADD COLUMN companies {json_type}")
@@ -3104,6 +3106,7 @@ def kb_usage(start: date | None = None, end: date | None = None,
     by_model: dict[str, dict] = {}
     by_month: dict[str, dict] = {}
     by_agent: dict[int, dict] = {}
+    by_feature: dict[str, dict] = {}
     for r in rows:
         c = kb_ai.cost_usd(r.model, r.input_tokens, r.output_tokens)
         for bucket in (total,):
@@ -3116,12 +3119,13 @@ def kb_usage(start: date | None = None, end: date | None = None,
         ag = by_agent.setdefault(r.agent_id or 0, {**blank(), "agent_id": r.agent_id,
                                                    "name": names.get(r.agent_id, ("?", "?"))[0],
                                                    "code": names.get(r.agent_id, ("?", "?"))[1]})
-        for bucket in (m, mo, ag):
+        fe = by_feature.setdefault(r.feature or "kb", {**blank(), "feature": r.feature or "kb"})
+        for bucket in (m, mo, ag, fe):
             bucket["requests"] += 1
             bucket["input_tokens"] += r.input_tokens
             bucket["output_tokens"] += r.output_tokens
             bucket["cost_usd"] += c
-    for d in (total, *by_model.values(), *by_month.values(), *by_agent.values()):
+    for d in (total, *by_model.values(), *by_month.values(), *by_agent.values(), *by_feature.values()):
         d["cost_usd"] = round(d["cost_usd"], 4)
 
     return {
@@ -3129,10 +3133,333 @@ def kb_usage(start: date | None = None, end: date | None = None,
         "by_model": sorted(by_model.values(), key=lambda x: x["cost_usd"], reverse=True),
         "by_month": sorted(by_month.values(), key=lambda x: x["month"], reverse=True),
         "by_agent": sorted(by_agent.values(), key=lambda x: x["cost_usd"], reverse=True)[:15],
+        "by_feature": sorted(by_feature.values(), key=lambda x: x["cost_usd"], reverse=True),
         "prices": kb_ai.prices(),
         "model": os.getenv("ANTHROPIC_MODEL", kb_ai.DEFAULT_MODEL),
         "ai_enabled": kb_ai.ai_enabled(),
     }
+
+
+# --- 建議書 (proposal) generation ---------------------------------------------
+# Agents queue a request; a Windows worker (X-Worker-Token) claims it, drives the
+# 保易通助手 mini-program in WeChat, and uploads the PDF; the backend then writes an
+# AI analysis. Admins can attach a PDF by hand when the worker can't.
+import hmac as _hmac                              # noqa: E402
+import logging as _logging                        # noqa: E402
+from urllib.parse import quote as _quote          # noqa: E402
+from app.services import proposal_ai              # noqa: E402
+
+PROPOSAL_CURRENCIES = ("USD", "HKD", "RMB")
+PROPOSAL_CLAIM_TIMEOUT = timedelta(minutes=10)    # a claimed job older than this is re-queued
+PROPOSAL_MAX_ATTEMPTS = 3
+WORKER_ONLINE_WINDOW = timedelta(seconds=60)
+
+
+def _aware(dt: datetime | None) -> datetime | None:
+    """SQLite returns naive datetimes; treat them as UTC."""
+    if dt is None:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def require_worker(x_worker_token: str | None = Header(default=None)) -> None:
+    """Machine auth for the proposal worker: X-Worker-Token must equal the
+    PROPOSAL_WORKER_TOKEN env var. Disabled (403) when the env var is unset."""
+    expected = os.getenv("PROPOSAL_WORKER_TOKEN") or ""
+    if not expected or not x_worker_token or not _hmac.compare_digest(x_worker_token, expected):
+        raise HTTPException(403, "invalid worker token")
+
+
+def _proposal_pdf(db: Session, request_id: int) -> ProposalFile | None:
+    return db.execute(select(ProposalFile).where(
+        ProposalFile.request_id == request_id, ProposalFile.kind == "pdf")).scalars().first()
+
+
+def _proposal_out(db: Session, r: ProposalRequest) -> dict:
+    agent = db.get(Agent, r.agent_id)
+    client = db.get(Client, r.client_id) if r.client_id else None
+    pos = None
+    if r.status == "queued":
+        pos = db.execute(select(func.count()).select_from(ProposalRequest).where(
+            ProposalRequest.status == "queued", ProposalRequest.id <= r.id)).scalar()
+    shot = db.execute(select(ProposalFile.id).where(
+        ProposalFile.request_id == r.id, ProposalFile.kind == "screenshot")).scalars().first()
+    return {
+        "id": r.id, "inputs": r.inputs, "status": r.status, "error": r.error,
+        "attempts": r.attempts, "queue_position": pos,
+        "analysis": r.analysis, "analysis_status": r.analysis_status,
+        "has_pdf": _proposal_pdf(db, r.id) is not None, "has_screenshot": shot is not None,
+        "agent_id": r.agent_id, "agent_name": agent.name if agent else None,
+        "agent_code": agent.code if agent else None,
+        "client_id": r.client_id, "client_name": client.name if client else None,
+        "created_at": r.created_at, "updated_at": r.updated_at,
+    }
+
+
+def _get_proposal_for(db: Session, proposal_id: int, current: Agent) -> ProposalRequest:
+    r = db.get(ProposalRequest, proposal_id)
+    if r is None or (not scoping.is_admin(current) and r.agent_id != current.id):
+        raise HTTPException(404, "proposal not found")
+    return r
+
+
+def _run_proposal_analysis(request_id: int) -> None:
+    """Background task: write the AI analysis for a proposal's PDF."""
+    db = SessionLocal()
+    try:
+        r = db.get(ProposalRequest, request_id)
+        f = _proposal_pdf(db, request_id)
+        if r is None or f is None:
+            return
+        if not kb_ai.ai_enabled():
+            r.analysis_status = "skipped"
+            db.commit()
+            return
+        try:
+            result = proposal_ai.analyze(f.data, f.extracted_text or "", r.inputs or {})
+            r.analysis, r.analysis_status = result["text"], "done"
+            u = result["usage"]
+            db.add(KbUsage(agent_id=r.agent_id, model=u["model"], feature="proposal",
+                           input_tokens=u["input_tokens"], output_tokens=u["output_tokens"]))
+        except kb_ai.KbAiError as e:
+            r.analysis, r.analysis_status = f"分析失敗：{e}", "failed"
+        db.commit()
+    except Exception:
+        db.rollback()
+        _logging.getLogger("proposals").exception("proposal analysis failed")
+    finally:
+        db.close()
+
+
+async def _read_pdf_upload(file: UploadFile) -> bytes:
+    data = await file.read()
+    if len(data) > TRAINING_MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(400, "file too large", headers={"X-Error-Code": "file_too_large"})
+    if not data.startswith(b"%PDF"):
+        raise HTTPException(400, "not a PDF", headers={"X-Error-Code": "not_pdf"})
+    return data
+
+
+def _store_proposal_pdf(db: Session, r: ProposalRequest, data: bytes, name: str,
+                        background: BackgroundTasks) -> None:
+    """Shared by the worker result upload and the admin manual upload."""
+    old = _proposal_pdf(db, r.id)
+    if old is not None:
+        db.delete(old)
+    db.add(ProposalFile(request_id=r.id, kind="pdf", file_name=name or f"proposal-{r.id}.pdf",
+                        content_type="application/pdf", data=data,
+                        extracted_text=kb_retrieval.pdf_to_text(data, max_pages=60)))
+    r.status, r.error = "done", None
+    r.analysis, r.analysis_status = None, "pending"
+    db.commit()
+    background.add_task(_run_proposal_analysis, r.id)
+
+
+@app.post("/proposals", status_code=201)
+def create_proposal(payload: schemas.ProposalIn, db: Session = Depends(get_db),
+                    current: Agent = Depends(get_current_agent)):
+    gender = (payload.gender or "").upper()
+    currency = (payload.currency or "").upper()
+    product = (payload.product or "").strip()
+    if not (0 <= payload.age <= 100) or gender not in ("M", "F") or not product \
+            or payload.premium <= 0 or not (1 <= payload.term_years <= 50) \
+            or currency not in PROPOSAL_CURRENCIES:
+        raise HTTPException(422, "invalid proposal inputs", headers={"X-Error-Code": "invalid_input"})
+    if payload.client_id is not None:
+        c = db.get(Client, payload.client_id)
+        if c is None or (not scoping.is_admin(current) and c.agent_id != current.id):
+            raise HTTPException(404, "client not found")
+    r = ProposalRequest(agent_id=current.id, client_id=payload.client_id, status="queued",
+                        inputs={"age": payload.age, "gender": gender, "product": product[:120],
+                                "premium": payload.premium, "term_years": payload.term_years,
+                                "currency": currency})
+    db.add(r); db.commit()
+    return _proposal_out(db, r)
+
+
+@app.get("/proposals")
+def list_proposals(db: Session = Depends(get_db), current: Agent = Depends(get_current_agent)):
+    stmt = select(ProposalRequest).order_by(ProposalRequest.created_at.desc()).limit(200)
+    if not scoping.is_admin(current):
+        stmt = stmt.where(ProposalRequest.agent_id == current.id)
+    return [_proposal_out(db, r) for r in db.execute(stmt).scalars()]
+
+
+@app.get("/proposals/worker-status")
+def proposal_worker_status(db: Session = Depends(get_db), current: Agent = Depends(get_current_agent)):
+    hb = db.execute(select(WorkerHeartbeat).order_by(WorkerHeartbeat.last_seen.desc())).scalars().first()
+    last = _aware(hb.last_seen) if hb else None
+    online = bool(last and now_utc() - last <= WORKER_ONLINE_WINDOW)
+    queued = db.execute(select(func.count()).select_from(ProposalRequest).where(
+        ProposalRequest.status == "queued")).scalar()
+    return {"online": online, "last_seen": last, "status": hb.status if hb else None, "queued": queued}
+
+
+@app.get("/proposals/{proposal_id}")
+def get_proposal(proposal_id: int, db: Session = Depends(get_db),
+                 current: Agent = Depends(get_current_agent)):
+    return _proposal_out(db, _get_proposal_for(db, proposal_id, current))
+
+
+@app.get("/proposals/{proposal_id}/pdf")
+def get_proposal_pdf(proposal_id: int, request: Request, download: bool = False,
+                     db: Session = Depends(get_db), current: Agent = Depends(get_agent_for_media)):
+    r = _get_proposal_for(db, proposal_id, current)
+    f = _proposal_pdf(db, r.id)
+    if f is None:
+        raise HTTPException(404, "proposal PDF not ready")
+    name = f.file_name or f"proposal-{r.id}.pdf"
+    ascii_fallback = name.encode("ascii", "ignore").decode().strip() or "proposal.pdf"
+    disposition = (f"{'attachment' if download else 'inline'}; filename=\"{ascii_fallback}\"; "
+                   f"filename*=UTF-8''{_quote(name)}")
+    return _ranged_response(request, f.data, "application/pdf", disposition)
+
+
+@app.get("/proposals/{proposal_id}/screenshot")
+def get_proposal_screenshot(proposal_id: int, db: Session = Depends(get_db),
+                            current: Agent = Depends(get_agent_for_media)):
+    r = _get_proposal_for(db, proposal_id, current)
+    f = db.execute(select(ProposalFile).where(ProposalFile.request_id == r.id,
+                                              ProposalFile.kind == "screenshot")
+                   .order_by(ProposalFile.id.desc())).scalars().first()
+    if f is None:
+        raise HTTPException(404, "no screenshot")
+    return Response(content=f.data, media_type=f.content_type,
+                    headers={"X-Content-Type-Options": "nosniff"})
+
+
+@app.post("/proposals/{proposal_id}/cancel")
+def cancel_proposal(proposal_id: int, db: Session = Depends(get_db),
+                    current: Agent = Depends(get_current_agent)):
+    r = _get_proposal_for(db, proposal_id, current)
+    if r.status != "queued":
+        raise HTTPException(409, "only a queued request can be cancelled")
+    r.status = "cancelled"
+    db.commit()
+    return _proposal_out(db, r)
+
+
+@app.post("/proposals/{proposal_id}/retry")
+def retry_proposal(proposal_id: int, db: Session = Depends(get_db),
+                   current: Agent = Depends(get_current_agent)):
+    r = _get_proposal_for(db, proposal_id, current)
+    if r.status not in ("failed", "cancelled"):
+        raise HTTPException(409, "only a failed or cancelled request can be retried")
+    r.status, r.error, r.attempts, r.worker_id, r.claimed_at = "queued", None, 0, None, None
+    db.commit()
+    return _proposal_out(db, r)
+
+
+@app.post("/proposals/{proposal_id}/reanalyze")
+def reanalyze_proposal(proposal_id: int, background: BackgroundTasks, db: Session = Depends(get_db),
+                       current: Agent = Depends(get_current_agent)):
+    r = _get_proposal_for(db, proposal_id, current)
+    if _proposal_pdf(db, r.id) is None:
+        raise HTTPException(409, "proposal PDF not ready")
+    r.analysis, r.analysis_status = None, "pending"
+    db.commit()
+    background.add_task(_run_proposal_analysis, r.id)
+    return _proposal_out(db, r)
+
+
+@app.post("/proposals/{proposal_id}/upload")
+async def admin_upload_proposal(proposal_id: int, background: BackgroundTasks,
+                                file: UploadFile = File(...), db: Session = Depends(get_db),
+                                current: Agent = Depends(require_admin)):
+    """Admin manual fulfilment: attach the PDF by hand when the worker can't."""
+    r = db.get(ProposalRequest, proposal_id)
+    if r is None:
+        raise HTTPException(404, "proposal not found")
+    data = await _read_pdf_upload(file)
+    _store_proposal_pdf(db, r, data, file.filename or "", background)
+    audit.record(db, current.id, "upload", "proposal", r.id, after={"file": file.filename})
+    db.commit()
+    return _proposal_out(db, r)
+
+
+# --- worker endpoints (X-Worker-Token) ---
+
+@app.post("/worker/heartbeat", dependencies=[Depends(require_worker)])
+def worker_heartbeat(worker_id: str = Body(..., embed=True), status: str | None = Body(None, embed=True),
+                     version: str | None = Body(None, embed=True), db: Session = Depends(get_db)):
+    hb = db.execute(select(WorkerHeartbeat).where(WorkerHeartbeat.worker_id == worker_id[:60])).scalars().first()
+    if hb is None:
+        hb = WorkerHeartbeat(worker_id=worker_id[:60])
+        db.add(hb)
+    hb.last_seen, hb.status, hb.version = now_utc(), (status or "")[:40], (version or "")[:40]
+    db.commit()
+    return {"ok": True}
+
+
+@app.post("/worker/proposals/claim", dependencies=[Depends(require_worker)])
+def worker_claim_proposal(worker_id: str = Body(..., embed=True), db: Session = Depends(get_db)):
+    """Atomically hand the oldest queued request to this worker (204 if none).
+    Claims older than PROPOSAL_CLAIM_TIMEOUT are re-queued, or failed after
+    PROPOSAL_MAX_ATTEMPTS."""
+    stale_before = now_utc() - PROPOSAL_CLAIM_TIMEOUT
+    for r in db.execute(select(ProposalRequest).where(
+            ProposalRequest.status == "claimed", ProposalRequest.claimed_at < stale_before)).scalars():
+        if (r.attempts or 0) >= PROPOSAL_MAX_ATTEMPTS:
+            r.status, r.error = "failed", "worker timed out"
+        else:
+            r.status, r.worker_id, r.claimed_at = "queued", None, None
+    db.commit()
+
+    for _ in range(5):   # retry if another worker grabs the same row first
+        candidate = db.execute(select(ProposalRequest.id).where(ProposalRequest.status == "queued")
+                               .order_by(ProposalRequest.id).limit(1)).scalar()
+        if candidate is None:
+            return Response(status_code=204)
+        res = db.execute(
+            ProposalRequest.__table__.update()
+            .where(ProposalRequest.id == candidate, ProposalRequest.status == "queued")
+            .values(status="claimed", worker_id=worker_id[:60], claimed_at=now_utc(),
+                    attempts=ProposalRequest.attempts + 1, updated_at=now_utc()))
+        db.commit()
+        if res.rowcount == 1:
+            r = db.get(ProposalRequest, candidate)
+            db.refresh(r)
+            return {"id": r.id, "inputs": r.inputs, "attempt": r.attempts}
+    return Response(status_code=204)
+
+
+def _claimed_by(db: Session, proposal_id: int, worker_id: str | None) -> ProposalRequest:
+    r = db.get(ProposalRequest, proposal_id)
+    if r is None or r.status != "claimed" or (worker_id and r.worker_id != worker_id):
+        raise HTTPException(409, "request is not claimed by this worker")
+    return r
+
+
+@app.post("/worker/proposals/{proposal_id}/result", dependencies=[Depends(require_worker)])
+async def worker_proposal_result(proposal_id: int, background: BackgroundTasks,
+                                 file: UploadFile = File(...), worker_id: str | None = Form(None),
+                                 db: Session = Depends(get_db)):
+    r = _claimed_by(db, proposal_id, worker_id)
+    data = await _read_pdf_upload(file)
+    _store_proposal_pdf(db, r, data, file.filename or "", background)
+    return {"ok": True}
+
+
+@app.post("/worker/proposals/{proposal_id}/fail", dependencies=[Depends(require_worker)])
+async def worker_proposal_fail(proposal_id: int, error: str = Form(...), worker_id: str | None = Form(None),
+                               retry: bool = Form(True), screenshot: UploadFile | None = File(None),
+                               db: Session = Depends(get_db)):
+    """Report a failed attempt. Re-queued while attempts remain (and retry=true),
+    otherwise marked failed. An optional screenshot is kept for debugging."""
+    r = _claimed_by(db, proposal_id, worker_id)
+    if screenshot is not None:
+        img = await screenshot.read()
+        if img and len(img) <= 10 * 1024 * 1024:
+            db.add(ProposalFile(request_id=r.id, kind="screenshot", data=img,
+                                file_name=screenshot.filename or "screenshot.png",
+                                content_type=screenshot.content_type or "image/png"))
+    r.error = (error or "")[:2000]
+    if retry and (r.attempts or 0) < PROPOSAL_MAX_ATTEMPTS:
+        r.status, r.worker_id, r.claimed_at = "queued", None, None
+    else:
+        r.status = "failed"
+    db.commit()
+    return {"ok": True, "status": r.status}
 
 
 # --- Left-menu settings (選單設定; admins customise the sidebar globally) ------

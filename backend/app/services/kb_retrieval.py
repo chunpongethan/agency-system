@@ -73,7 +73,7 @@ def html_to_text(html: str | None) -> str:
     return re.sub(r"[ \t]+", " ", "".join(p.parts)).strip()
 
 
-def pdf_to_text(data: bytes) -> str:
+def pdf_to_text(data: bytes, max_pages: int = _MAX_DOC_PAGES) -> str:
     """Extract text from a PDF byte string via PyMuPDF (best-effort)."""
     try:
         try:
@@ -83,7 +83,7 @@ def pdf_to_text(data: bytes) -> str:
         doc = fitz.open(stream=data, filetype="pdf")
         out = []
         for i, page in enumerate(doc):
-            if i >= _MAX_DOC_PAGES:
+            if i >= max_pages:
                 break
             out.append(page.get_text())
         return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()

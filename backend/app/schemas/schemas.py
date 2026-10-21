@@ -249,6 +249,16 @@ class TrainingMaterialOut(BaseModel):
     updated_at: datetime
 
 
+class ProposalIn(BaseModel):
+    age: int
+    gender: str                 # "M" | "F"
+    product: str
+    premium: float
+    term_years: int
+    currency: str = "USD"
+    client_id: int | None = None
+
+
 class TrainingViewIn(BaseModel):
     seconds: int = 0          # actual play seconds since the last report
     new_session: bool = False  # true on the first report of a viewing session

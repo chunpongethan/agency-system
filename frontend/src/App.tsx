@@ -13,6 +13,7 @@ import Leads from "./pages/Leads";
 import Training from "./pages/Training";
 import Quiz from "./pages/Quiz";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import Proposals from "./pages/Proposals";
 import Products from "./pages/Products";
 import Transactions from "./pages/Transactions";
 import NewTransaction from "./pages/NewTransaction";
@@ -116,6 +117,14 @@ export default function App() {
           element={
             <RequireRole roles={["agent", "manager", "admin", "student"]}>
               <Quiz />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/proposals"
+          element={
+            <RequireRole roles={["agent", "manager", "admin"]}>
+              <Proposals />
             </RequireRole>
           }
         />
