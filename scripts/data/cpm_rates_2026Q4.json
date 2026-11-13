@@ -1,0 +1,4050 @@
+{
+ "source": "CPM 合作機構介紹費率 全部計劃 2026 Q4 (valid to 2026-12-31)",
+ "company": "cpm",
+ "effective_to": "2026-12-31",
+ "count": 380,
+ "products": [
+  {
+   "code": "INS-AIA-001",
+   "name": "盈御多元貨幣計劃3 (Global Power Multi-Currency Plan3) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-AIA-002",
+   "name": "盈御多元貨幣計劃3 (Global Power Multi-Currency Plan3) · 5年 · PI",
+   "year_commissions": [
+    "0.4636",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-AIA-003",
+   "name": "盈御多元貨幣計劃3 (Global Power Multi-Currency Plan3) · 5年",
+   "year_commissions": [
+    "0.4034",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013"
+   ]
+  },
+  {
+   "code": "INS-AIA-004",
+   "name": "環宇盈活儲蓄保險計劃 (Global Felix Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-AIA-005",
+   "name": "環宇盈活儲蓄保險計劃 (Global Felix Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4636",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-AIA-006",
+   "name": "環宇盈活儲蓄保險計劃 (Global Felix Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.4034",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013"
+   ]
+  },
+  {
+   "code": "INS-AIA-009",
+   "name": "「愛伴航 」保險計劃2 (On Your Side Insurance Plan 2) · 18年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1367",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-010",
+   "name": "「愛伴航 」保險計劃2 (On Your Side Insurance Plan 2) · 18年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-AIA-011",
+   "name": "「愛伴航 」保險計劃2 (On Your Side Insurance Plan 2) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2250",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-012",
+   "name": "「愛伴航 」保險計劃2 (On Your Side Insurance Plan 2) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1168",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-AIA-013",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 10年 · PI",
+   "year_commissions": [
+    "0.3519",
+    "0.0427",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-014",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 10年",
+   "year_commissions": [
+    "0.3347",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-AIA-015",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 18年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1367",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-016",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 18年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-AIA-017",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2250",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-018",
+   "name": "「簡緻 • 愛伴航」保險計劃 ( Essence – On Your Side Insurance Plan) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1168",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-AIA-019",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 6年 · PI",
+   "year_commissions": [
+    "0.2919",
+    "0.0342",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-AIA-020",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 6年",
+   "year_commissions": [
+    "0.2690",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-AIA-021",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 10年 · PI",
+   "year_commissions": [
+    "0.3519",
+    "0.0342",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-AIA-022",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 10年",
+   "year_commissions": [
+    "0.3118",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-AIA-023",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 15年 · PI",
+   "year_commissions": [
+    "0.4722",
+    "0.0684",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-024",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 15年",
+   "year_commissions": [
+    "0.4407",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AIA-025",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1367",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-026",
+   "name": "愛無憂長享計劃5 (Forever Love Coupon Plan5) · 20年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-AIA-027",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 5年 · PI",
+   "year_commissions": [
+    "0.1715",
+    "0.0256",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-028",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 5年",
+   "year_commissions": [
+    "0.1773",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-AIA-029",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 10年 · PI",
+   "year_commissions": [
+    "0.3405",
+    "0.0427",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-030",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 10年",
+   "year_commissions": [
+    "0.3262",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-AIA-031",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2250",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-032",
+   "name": "「樂怡人生」保障計劃 (Serene Life ) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1168",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-AIA-033",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 整付",
+   "year_commissions": [
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AIA-034",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 5年 · PI",
+   "year_commissions": [
+    "0.2919",
+    "0.0427",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-AIA-035",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 5年",
+   "year_commissions": [
+    "0.2690",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-AIA-036",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 10年 · PI",
+   "year_commissions": [
+    "0.4121",
+    "0.0855",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-037",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 10年",
+   "year_commissions": [
+    "0.4121",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-AIA-038",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 18年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1367",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-039",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 18年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-AIA-040",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2250",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-AIA-041",
+   "name": "裕滿人生保障計劃2 (Admire Life2) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1168",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-AIA-042",
+   "name": "至尊醫療計劃 5 (CEO Medical Plan 5 ) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-043",
+   "name": "至尊明珠醫療計劃 5 (CEO Pearl Medical Plan 5) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-044",
+   "name": "AIA自願醫保標準計劃 (只適用於香港) (AIA VHIS Standard) · 每年續保",
+   "year_commissions": [
+    "0.2747",
+    "0.0598",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-AIA-045",
+   "name": "AIA自願醫保靈活計劃 (只適用於香港) (AIA VHIS Flexi) · 每年續保",
+   "year_commissions": [
+    "0.2747",
+    "0.0598",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-AIA-050",
+   "name": "「尊耀明珠」醫療附加契約 (Privilege Ultra Pearl Medical Plan-Rider) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-051",
+   "name": "財富盈活儲蓄保險計劃 (Wealth Flexi Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-AIA-052",
+   "name": "財富盈活儲蓄保險計劃 (Wealth Flexi Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4636",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-AIA-053",
+   "name": "財富盈活儲蓄保險計劃 (Wealth Flexi Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.4034",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013",
+    "0.0013"
+   ]
+  },
+  {
+   "code": "INS-AIA-054",
+   "name": "AIA自願醫保尊耀計劃 (AIA Voluntary Health Insurance Privilege Ultra Scheme) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-055",
+   "name": "AIA自願醫保尊耀計劃(附加計劃) (AIA Voluntary Health Insurance Privilege Ultra Scheme Rider) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-056",
+   "name": "尊耀明珠醫療計劃 (Privilege Ultra Pearl Medical Plan) · 每年續保",
+   "year_commissions": [
+    "0.2660",
+    "0.1538",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AIA-057",
+   "name": "財富恆裕人壽保險計劃3 (Wealth Elite Life Insurance Plan 3) · 整付",
+   "year_commissions": [
+    "0.0658"
+   ]
+  },
+  {
+   "code": "INS-AXA-010",
+   "name": "「尊尚盈家 2」壽險計劃 (Max Goal Insurance Plan II) · 整付",
+   "year_commissions": [
+    "0.0457"
+   ]
+  },
+  {
+   "code": "INS-AXA-012",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 10年 · PI",
+   "year_commissions": [
+    "0.3405",
+    "0.0342",
+    "0.0057",
+    "0.0057",
+    "0.0057",
+    "0.0057",
+    "0.0057",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-AXA-013",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 15年 · PI",
+   "year_commissions": [
+    "0.4579",
+    "0.0769",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-AXA-014",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1282",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-AXA-015",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1481",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-AXA-016",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 10年",
+   "year_commissions": [
+    "0.3061",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-AXA-017",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 15年",
+   "year_commissions": [
+    "0.4579",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AXA-018",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 20年",
+   "year_commissions": [
+    "0.5380",
+    "0.0712",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-AXA-019",
+   "name": "愛唯守危疾保障 (TotalAssure Critical Illness Plan) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.0940",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-AXA-022",
+   "name": "智尊守慧醫療保障 (WiseGuard Pro Medical Insurance Plan) · 每年續保",
+   "year_commissions": [
+    "0.2832",
+    "0.0769",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-AXA-023",
+   "name": "臻尚環球醫療 (GlobalReach Medical Insurance Plan) · 每年續保",
+   "year_commissions": [
+    "0.1773",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-AXA-024",
+   "name": "盛利II儲蓄保險–至尊(基本身故保險賠償) (WealthAhead II Savings Insurance - Supreme (Regular death benefit option)) · 5年 · PI",
+   "year_commissions": [
+    "0.4722",
+    "0.0142",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-AXA-025",
+   "name": "盛利II儲蓄保險–至尊(基本身故保險賠償) (WealthAhead II Savings Insurance - Supreme (Regular death benefit option)) · 5年",
+   "year_commissions": [
+    "0.3405",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AXA-026",
+   "name": "盛利II儲蓄保險–至尊(特級身故保險賠償) (WealthAhead II Savings Insurance - Supreme (Superior death benefit option)) · 5年 · PI",
+   "year_commissions": [
+    "0.4722",
+    "0.0142",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-AXA-027",
+   "name": "盛利II儲蓄保險–至尊(特級身故保險賠償) (WealthAhead II Savings Insurance - Supreme (Superior death benefit option)) · 5年",
+   "year_commissions": [
+    "0.3405",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AXA-028",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 15年 · PI",
+   "year_commissions": [
+    "0.4579",
+    "0.0769",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-AXA-029",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1253",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-AXA-030",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1481",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-AXA-031",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 10年",
+   "year_commissions": [
+    "0.3061",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-AXA-032",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 15年",
+   "year_commissions": [
+    "0.4579",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-AXA-033",
+   "name": "愛唯守危疾保障(升級版) - 愛寶保 (TotalAssure Plus Critical Illness Plan - BabyPro) · 20年",
+   "year_commissions": [
+    "0.5380",
+    "0.0712",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-AXA-034",
+   "name": "臻尚環球醫療保障(特級) (GlobalReach Medical Insurance Plan (Prestige)) · 每年續保",
+   "year_commissions": [
+    "0.1773",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-AXA-035",
+   "name": "臻尚環球醫療保障(精選) (GlobalReach Medical Insurance Plan (Essential)) · 每年續保",
+   "year_commissions": [
+    "0.1773",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-AXA-036",
+   "name": "臻尚環球醫療保障(全面) (GlobalReach Medical Insurance Plan (Comprehensive)) · 每年續保",
+   "year_commissions": [
+    "0.1773",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-BLUE-003",
+   "name": "WeWealth GO息寶3儲蓄保險計劃 (WeWealth GOWealth Generator 3 Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-BOC-001",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2260"
+   ]
+  },
+  {
+   "code": "INS-BOC-002",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1573",
+    "0.0655"
+   ]
+  },
+  {
+   "code": "INS-BOC-003",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.1887"
+   ]
+  },
+  {
+   "code": "INS-BOC-004",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1285",
+    "0.0541"
+   ]
+  },
+  {
+   "code": "INS-BOC-007",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4006",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-BOC-008",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.2919",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-BOC-009",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-BOC-010",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.1544"
+   ]
+  },
+  {
+   "code": "INS-BOC-011",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1056",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-BOC-012",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.1544"
+   ]
+  },
+  {
+   "code": "INS-BOC-013",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1056",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-BOC-016",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.0598"
+   ]
+  },
+  {
+   "code": "INS-BOC-017",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0399",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-BOC-018",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.1887"
+   ]
+  },
+  {
+   "code": "INS-BOC-019",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.1315",
+    "0.0142",
+    "0.0142",
+    "0.0142",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-BOC-021",
+   "name": "鑄富世代環球終身壽險計劃 (Eternal Fortune Global Whole Life Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4808",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-BOC-022",
+   "name": "鑄富世代環球終身壽險計劃 (Eternal Fortune Global Whole Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3548",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-BOC-023",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 3年 · PI",
+   "year_commissions": [
+    "0.1372"
+   ]
+  },
+  {
+   "code": "INS-BOC-024",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 3年",
+   "year_commissions": [
+    "0.0942",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-BOC-025",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.3519",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-BOC-026",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.2690",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-BOC-027",
+   "name": "延期年金計劃(終身) (Deferred Annuity (Lifetime)) · 5年",
+   "year_commissions": [
+    "0.2088",
+    "0.0114",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-001",
+   "name": "安達傳承首創儲蓄保障計劃V-豐足 (Chubb MyLegacy Insurance Plan V-Harvest) · 5年 · PI",
+   "year_commissions": [
+    "0.3090",
+    "0.0057",
+    "0.0057",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-002",
+   "name": "安達傳承首創儲蓄保障計劃V-豐足 (Chubb MyLegacy Insurance Plan V-Harvest) · 5年",
+   "year_commissions": [
+    "0.2374",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-003",
+   "name": "安達傳承首創儲蓄保障計劃V-豐成 (Chubb MyLegacy Insurance Plan V-Blossom) · 2年 · PI",
+   "year_commissions": [
+    "0.2002"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-004",
+   "name": "安達傳承首創儲蓄保障計劃V-豐成 (Chubb MyLegacy Insurance Plan V-Blossom) · 2年",
+   "year_commissions": [
+    "0.1458",
+    "0.0598"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-005",
+   "name": "安達傳承首創儲蓄保障計劃V-豐成 (Chubb MyLegacy Insurance Plan V-Blossom) · 5年 · PI",
+   "year_commissions": [
+    "0.4436",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CHUBB-006",
+   "name": "安達傳承首創儲蓄保障計劃V-豐成 (Chubb MyLegacy Insurance Plan V-Blossom) · 5年",
+   "year_commissions": [
+    "0.3290",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-003",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0828"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-004",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0828"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-005",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0772"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-006",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2145"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-007",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1344",
+    "0.0570"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-008",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.5037",
+    "0.0142",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-009",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3691",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-010",
+   "name": "萬里優悠儲蓄保險計劃 (Glory Income Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.2631",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-011",
+   "name": "萬里優悠儲蓄保險計劃 (Glory Income Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.2031",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-012",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 2年 · 年缴保費≥1,500,000HKD",
+   "year_commissions": [
+    "0.1458",
+    "0.0598"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-013",
+   "name": "晉裕傳承儲蓄保險計劃(至尊版) (Supreme Fortune Savings Insurance Plan(Premier)) · 5年 · PI",
+   "year_commissions": [
+    "0.4264",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-014",
+   "name": "晉裕傳承儲蓄保險計劃(至尊版) (Supreme Fortune Savings Insurance Plan(Premier)) · 5年",
+   "year_commissions": [
+    "0.3033",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-015",
+   "name": "智裕世代多元貨幣保險計劃(卓越) (Wise Legend Multi-Currency Insurance Plan (Excel)) · 5年 · PI",
+   "year_commissions": [
+    "0.4379",
+    "0.0142",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-016",
+   "name": "智裕世代多元貨幣保險計劃(卓越) (Wise Legend Multi-Currency Insurance Plan (Excel)) · 5年",
+   "year_commissions": [
+    "0.3233",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-017",
+   "name": "非凡遠見儲蓄保險計劃 (Grand Horizon Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0887"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-020",
+   "name": "宏就名家傳承保險計劃(標準版) (Noble Pride Life Insurance Plan (Standard)) · 整付",
+   "year_commissions": [
+    "0.0715"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-021",
+   "name": "宏就名家傳承保險計劃(標準升級版) (Noble Pride Life Insurance Plan (Standard Plus)) · 整付",
+   "year_commissions": [
+    "0.0715"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-022",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 10年 · PI",
+   "year_commissions": [
+    "0.3405",
+    "0.0199",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-023",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 10年",
+   "year_commissions": [
+    "0.2889",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-024",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 20年 · PI",
+   "year_commissions": [
+    "0.4922",
+    "0.1310",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-025",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 20年",
+   "year_commissions": [
+    "0.4922",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-026",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 25年 · PI",
+   "year_commissions": [
+    "0.4922",
+    "0.1538",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CLIFE-027",
+   "name": "衛您守護危疾多重保 (TotalGuard Critical Illness Multiple Protector Series) · 25年",
+   "year_commissions": [
+    "0.4922",
+    "0.0598",
+    "0.0598",
+    "0.0598",
+    "0.0598",
+    "0.0598"
+   ]
+  },
+  {
+   "code": "INS-CPIC-010",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 整付 · 特別折扣 2%，總保費 ≥ 100,000USD",
+   "year_commissions": [
+    "0.0658"
+   ]
+  },
+  {
+   "code": "INS-CPIC-011",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 整付 · 特別折扣 4%，總保費 ≥ 100,000USD",
+   "year_commissions": [
+    "0.0542"
+   ]
+  },
+  {
+   "code": "INS-CPIC-012",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 整付 · 特別折扣 6%，總保費 ≥ 100,000USD",
+   "year_commissions": [
+    "0.0457"
+   ]
+  },
+  {
+   "code": "INS-CPIC-013",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 整付 · 特別折扣 8%，總保費 ≥ 100,000USD",
+   "year_commissions": [
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-CPIC-014",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 整付 · 特別折扣 10%，總保費 ≥100,000USD",
+   "year_commissions": [
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-CPIC-015",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 0-80歲 · PI",
+   "year_commissions": [
+    "0.2116"
+   ]
+  },
+  {
+   "code": "INS-CPIC-016",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 5%，總保費 ≥ 100,000USD · PI",
+   "year_commissions": [
+    "0.1830"
+   ]
+  },
+  {
+   "code": "INS-CPIC-017",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 10%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.1544"
+   ]
+  },
+  {
+   "code": "INS-CPIC-018",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 15%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.1285"
+   ]
+  },
+  {
+   "code": "INS-CPIC-019",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 20%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.1028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-020",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 0-75歲 · PI",
+   "year_commissions": [
+    "0.4837",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-021",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 10%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.4293",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-022",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 20%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.3720",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-023",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 30%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.3233",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-024",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 40%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.2660",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-025",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 50%，總保費 ≥100,000USD · PI",
+   "year_commissions": [
+    "0.2116",
+    "0.0598",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-028",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 20%，總保費 ≥100,000USD",
+   "year_commissions": [
+    "0.2690",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-CPIC-029",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 30%，總保費 ≥100,000USD",
+   "year_commissions": [
+    "0.2145",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-CPIC-030",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 40%，總保費 ≥100,000USD",
+   "year_commissions": [
+    "0.1601",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-CPIC-031",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 5年 · 特別折扣 50%，總保費 ≥100,000USD",
+   "year_commissions": [
+    "0.1056",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-CPIC-032",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 10年 · PI",
+   "year_commissions": [
+    "0.5094",
+    "0.2137",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CPIC-033",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 10年",
+   "year_commissions": [
+    "0.5094",
+    "0.0513",
+    "0.0513",
+    "0.0513",
+    "0.0513",
+    "0.0513"
+   ]
+  },
+  {
+   "code": "INS-CPIC-034",
+   "name": "鑫安逸儲蓄保險計劃 (Golden Pleasure Savings Insurance Plan) · 3年",
+   "year_commissions": [
+    "0.1773"
+   ]
+  },
+  {
+   "code": "INS-CPIC-035",
+   "name": "鑫相伴終身年金保險計劃 (Golden Promise Annuity Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0599"
+   ]
+  },
+  {
+   "code": "INS-CPIC-036",
+   "name": "鑫相伴終身年金保險計劃 (Golden Promise Annuity Insurance Plan) · 6年 · PI",
+   "year_commissions": [
+    "0.5094",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CPIC-037",
+   "name": "鑫相伴終身年金保險計劃 (Golden Promise Annuity Insurance Plan) · 6年",
+   "year_commissions": [
+    "0.3606",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-CPIC-038",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 5年 · HKD & USD · PI",
+   "year_commissions": [
+    "0.4293",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-039",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 5年 · CNY · PI",
+   "year_commissions": [
+    "0.3233",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-CPIC-040",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 5年 · HKD & USD",
+   "year_commissions": [
+    "0.2976",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-CPIC-041",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 5年 · CNY",
+   "year_commissions": [
+    "0.1887",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-CPIC-042",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 10年 · HKD & USD · PI",
+   "year_commissions": [
+    "0.5094",
+    "0.2051",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-CPIC-044",
+   "name": "世代鑫享增額終身壽險計劃 (Ever growing Whole Life Insurance Plan) · 10年 · HKD & USD",
+   "year_commissions": [
+    "0.5094",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-CTAI-001",
+   "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 整付",
+   "year_commissions": [
+    "0.0944"
+   ]
+  },
+  {
+   "code": "INS-CTAI-002",
+   "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 2年 · PI",
+   "year_commissions": [
+    "0.2002"
+   ]
+  },
+  {
+   "code": "INS-CTAI-003",
+   "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 2年",
+   "year_commissions": [
+    "0.1372",
+    "0.0570"
+   ]
+  },
+  {
+   "code": "INS-CTAI-004",
+   "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 5年 · PI",
+   "year_commissions": [
+    "0.4551",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-CTAI-005",
+   "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 5年",
+   "year_commissions": [
+    "0.3290",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CTAI-006",
+   "name": "喜裕儲蓄保險計劃 (Fortune Delight Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0828"
+   ]
+  },
+  {
+   "code": "INS-CTAI-008",
+   "name": "頤年樂享儲蓄保險計劃II (Golden Life Savings Insurance Plan II) · 3年",
+   "year_commissions": [
+    "0.1515",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-CTAI-009",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 整付",
+   "year_commissions": [
+    "0.0944"
+   ]
+  },
+  {
+   "code": "INS-CTAI-010",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 2年 · PI",
+   "year_commissions": [
+    "0.2002"
+   ]
+  },
+  {
+   "code": "INS-CTAI-011",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 5年 · HKD & USD",
+   "year_commissions": [
+    "0.3462",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-CTAI-012",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 5年 · CNY",
+   "year_commissions": [
+    "0.3290",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-CTAI-013",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 5年 · PI",
+   "year_commissions": [
+    "0.4551",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-CTAI-014",
+   "name": "太平傳世共享終身壽險計劃 ((Infinite Legacy Whole Life Insurance Plan)) · 2年 · PI",
+   "year_commissions": [
+    "0.1601"
+   ]
+  },
+  {
+   "code": "INS-CTAI-015",
+   "name": "太平傳世共享終身壽險計劃 ((Infinite Legacy Whole Life Insurance Plan)) · 2年",
+   "year_commissions": [
+    "0.1115",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-CTAI-016",
+   "name": "頤年樂享儲蓄保險計劃II (Golden Life Savings Insurance Plan II) · 5年 · PI",
+   "year_commissions": [
+    "0.4551",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-CTAI-017",
+   "name": "頤年樂享儲蓄保險計劃II (Golden Life Savings Insurance Plan II) · 5年",
+   "year_commissions": [
+    "0.3290",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-FWD-001",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 2年 · PI",
+   "year_commissions": [
+    "0.2431"
+   ]
+  },
+  {
+   "code": "INS-FWD-002",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 2年",
+   "year_commissions": [
+    "0.1687",
+    "0.0684"
+   ]
+  },
+  {
+   "code": "INS-FWD-003",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 3年 · PI",
+   "year_commissions": [
+    "0.2116"
+   ]
+  },
+  {
+   "code": "INS-FWD-004",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 3年",
+   "year_commissions": [
+    "0.1458",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-FWD-005",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 5年 · PI",
+   "year_commissions": [
+    "0.5210",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-FWD-006",
+   "name": "盈聚·天下壽險計劃II (MaxFocus Legacy Insurance Plan II) · 5年",
+   "year_commissions": [
+    "0.3920",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-FWD-008",
+   "name": "衛一醫療總匯 (TheOne Medical Solution) · 每年續保",
+   "year_commissions": [
+    "0.2317",
+    "0.1054",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-FWD-009",
+   "name": "至‧衛一醫療計劃 (vTheOne Medical Plan) · 每年續保",
+   "year_commissions": [
+    "0.2546",
+    "0.1054",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-FWD-010",
+   "name": "尊衛您（寰譽版）醫療計劃 (vPrime Signature Medical Plan) · 每年續保",
+   "year_commissions": [
+    "0.2919",
+    "0.1168",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769"
+   ]
+  },
+  {
+   "code": "INS-FWD-011",
+   "name": "更衛您醫療計劃 (vCare Medical Plan) · 每年續保",
+   "year_commissions": [
+    "0.2546",
+    "0.1054",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-FWD-013",
+   "name": "智盈匯聚(優越版)V保險計劃 (Wealth ICON Supreme V Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-FWD-014",
+   "name": "智盈·超凡保險計劃 (Wealth ICON Horizon Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0599"
+   ]
+  },
+  {
+   "code": "INS-FWD-015",
+   "name": "危疾應援保(升級版) (Crisis USupporter Pro) · 10年",
+   "year_commissions": [
+    "0.3061",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ]
+  },
+  {
+   "code": "INS-FWD-016",
+   "name": "危疾應援保(升級版) (Crisis USupporter Pro) · 25年",
+   "year_commissions": [
+    "0.5323",
+    "0.0712",
+    "0.0712",
+    "0.0712",
+    "0.0712",
+    "0.0712"
+   ]
+  },
+  {
+   "code": "INS-FWD-017",
+   "name": "危疾應援保(升級版) (Crisis USupporter Pro) · 30年",
+   "year_commissions": [
+    "0.5323",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769"
+   ]
+  },
+  {
+   "code": "INS-FWD-018",
+   "name": "更衛您(優越版)醫療計劃 (vCare Supreme Medical Plan) · 每年續保",
+   "year_commissions": [
+    "0.2546",
+    "0.1054",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798",
+    "0.0798"
+   ]
+  },
+  {
+   "code": "INS-FWD-019",
+   "name": "尊衛您(寰譽版)醫療計劃(特等) (vPrime Signature Medical Plan(Superior)) · 每年續保",
+   "year_commissions": [
+    "0.2919",
+    "0.1168",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769"
+   ]
+  },
+  {
+   "code": "INS-GEN-001",
+   "name": "啟航創富-卓越版 (LionAchiever-Elite) · 2年 · PI",
+   "year_commissions": [
+    "0.2260"
+   ]
+  },
+  {
+   "code": "INS-GEN-002",
+   "name": "啟航創富-卓越版 (LionAchiever-Elite) · 2年",
+   "year_commissions": [
+    "0.1573",
+    "0.0655"
+   ]
+  },
+  {
+   "code": "INS-GEN-003",
+   "name": "啟航創富-卓越版 (LionAchiever-Elite) · 5年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-GEN-004",
+   "name": "啟航創富-卓越版 (LionAchiever-Elite) · 5年",
+   "year_commissions": [
+    "0.3835",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-GEN-005",
+   "name": "跨越無限保 (LionGuardian Beyond) · 10年 · PI",
+   "year_commissions": [
+    "0.3949",
+    "0.1823",
+    "0.0855"
+   ]
+  },
+  {
+   "code": "INS-GEN-006",
+   "name": "跨越無限保 (LionGuardian Beyond) · 10年",
+   "year_commissions": [
+    "0.4207",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-GEN-007",
+   "name": "跨越無限保 (LionGuardian Beyond) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2763",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-GEN-008",
+   "name": "跨越無限保 (LionGuardian Beyond) · 20年",
+   "year_commissions": [
+    "0.5323",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-GEN-009",
+   "name": "跨越無限保 (LionGuardian Beyond) · 25年 · PI",
+   "year_commissions": [
+    "0.5323",
+    "0.2849",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-GEN-010",
+   "name": "跨越無限保 (LionGuardian Beyond) · 25年",
+   "year_commissions": [
+    "0.5352",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-GEN-011",
+   "name": "靈活昇譽保 (LionPainter Flexi) · 10年",
+   "year_commissions": [
+    "0.2660",
+    "0.1196"
+   ]
+  },
+  {
+   "code": "INS-GEN-012",
+   "name": "靈活昇譽保 (LionPainter Flexi) · 15年",
+   "year_commissions": [
+    "0.4264",
+    "0.1196"
+   ]
+  },
+  {
+   "code": "INS-GEN-013",
+   "name": "靈活昇譽保 (LionPainter Flexi) · 20年",
+   "year_commissions": [
+    "0.5238",
+    "0.1282"
+   ]
+  },
+  {
+   "code": "INS-GEN-014",
+   "name": "靈活昇譽保 (LionPainter Flexi) · 25年",
+   "year_commissions": [
+    "0.5323",
+    "0.1567"
+   ]
+  },
+  {
+   "code": "INS-GEN-015",
+   "name": "啟航創富(卓越版) (LionAchiever Elite) · 5年 · 年繳保費≥1,000,000HKD；年繳保費≥128,206USD · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-GEN-016",
+   "name": "啟航創富(卓越版) (LionAchiever Elite) · 5年 · 年繳保費≥1,000,000HKD；年繳保費≥128,206USD",
+   "year_commissions": [
+    "0.3892",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-GEN-017",
+   "name": "玲瓏儲蓄保險計劃 (Emerald Savings Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0457"
+   ]
+  },
+  {
+   "code": "INS-HASL-001",
+   "name": "晉壹投資計劃 (OneFuture) · 整付",
+   "year_commissions": [
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-MNL-001",
+   "name": "宏摯傳承保障計劃 Genesis · 2年 · PI",
+   "year_commissions": [
+    "0.2260"
+   ]
+  },
+  {
+   "code": "INS-MNL-002",
+   "name": "宏摯傳承保障計劃 Genesis · 2年",
+   "year_commissions": [
+    "0.1544",
+    "0.0655"
+   ]
+  },
+  {
+   "code": "INS-MNL-003",
+   "name": "宏摯傳承保障計劃 Genesis · 5年 · PI",
+   "year_commissions": [
+    "0.4865",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-MNL-012",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 10年 · PI",
+   "year_commissions": [
+    "0.3290",
+    "0.0356",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-013",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 10年",
+   "year_commissions": [
+    "0.3434",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-MNL-014",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 20年 · PI",
+   "year_commissions": [
+    "0.5295",
+    "0.1823",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-015",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 20年",
+   "year_commissions": [
+    "0.5380",
+    "0.0655",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-MNL-016",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2393",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-017",
+   "name": "活耀人生危疾保2 (ManuBright Care 2) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1026",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-MNL-018",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 10年 · PI",
+   "year_commissions": [
+    "0.3290",
+    "0.0356",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-019",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 10年",
+   "year_commissions": [
+    "0.3434",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-MNL-020",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 20年 · PI",
+   "year_commissions": [
+    "0.5295",
+    "0.1823",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-021",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 20年",
+   "year_commissions": [
+    "0.5380",
+    "0.0655",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-MNL-022",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2393",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-MNL-023",
+   "name": "活耀人生危疾保PRO (Manulife Bright Care PRO) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.1026",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-MNL-024",
+   "name": "晉領醫療保障系列 (ManuMaster Healthcare Series） · 每年續保",
+   "year_commissions": [
+    "0.3118",
+    "0.1026",
+    "0.0769",
+    "0.0769",
+    "0.0513",
+    "0.0513"
+   ]
+  },
+  {
+   "code": "INS-MNL-025",
+   "name": "活亮人生醫療保障系列 (ManuShine Healthcare Series ) · 每年續保",
+   "year_commissions": [
+    "0.3118",
+    "0.1026",
+    "0.0769",
+    "0.0769",
+    "0.0513",
+    "0.0513"
+   ]
+  },
+  {
+   "code": "INS-MNL-026",
+   "name": "財摯傳承保障計劃 (Prestige Saver) · 整付",
+   "year_commissions": [
+    "0.0428"
+   ]
+  },
+  {
+   "code": "INS-MNL-027",
+   "name": "宏摯傳承保障計劃 (Genesis) · 整付",
+   "year_commissions": [
+    "0.0428"
+   ]
+  },
+  {
+   "code": "INS-MNL-028",
+   "name": "宏摯家傳承保險計劃 (Genesis Centurion Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2260"
+   ]
+  },
+  {
+   "code": "INS-MNL-029",
+   "name": "宏摯家傳承保險計劃 (Genesis Centurion Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1544",
+    "0.0655"
+   ]
+  },
+  {
+   "code": "INS-MNL-030",
+   "name": "宏摯家傳承保險計劃 (Genesis Centurion Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4980",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-MNL-031",
+   "name": "宏摯家傳承保險計劃 (Genesis Centurion Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3864",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-MNL-032",
+   "name": "匠心‧傳承儲蓄壽險計劃2(尊尚版) (MyWealth Savings Insurance Plan 2 (Premier)) · 2年",
+   "year_commissions": [
+    "0.1372",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-MNL-033",
+   "name": "匠心‧傳承儲蓄壽險計劃2(尊尚版) (MyWealth Savings Insurance Plan 2 (Premier)) · 5年 · PI",
+   "year_commissions": [
+    "0.4780",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-MNL-034",
+   "name": "匠心‧傳承儲蓄壽險計劃2(尊尚版) (MyWealth Savings Insurance Plan 2 (Premier)) · 5年",
+   "year_commissions": [
+    "0.3606",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-MNL-035",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 整付 · 保費＜500,000USD",
+   "year_commissions": [
+    "0.0944"
+   ]
+  },
+  {
+   "code": "INS-MNL-036",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 整付 · 保費≥500,000USD",
+   "year_commissions": [
+    "0.1001"
+   ]
+  },
+  {
+   "code": "INS-MNL-037",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 整付 · 保費＜400,000HKD",
+   "year_commissions": [
+    "0.0857"
+   ]
+  },
+  {
+   "code": "INS-MNL-038",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 整付 · 保費≥400,000HKD",
+   "year_commissions": [
+    "0.0915"
+   ]
+  },
+  {
+   "code": "INS-MNL-039",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 5年 · USD · PI",
+   "year_commissions": [
+    "0.4780",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-MNL-040",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 5年 · HKD · PI",
+   "year_commissions": [
+    "0.4293",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-MNL-041",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 5年 · USD",
+   "year_commissions": [
+    "0.3606",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-MNL-042",
+   "name": "匠心·飛越儲蓄保險計劃 (MyWealth Beyond Savings Insurance Plan) · 5年 · HKD",
+   "year_commissions": [
+    "0.3233",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-MNL-043",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 10年 · PI",
+   "year_commissions": [
+    "0.3606",
+    "0.0399",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-MNL-044",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 10年",
+   "year_commissions": [
+    "0.3319",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-MNL-045",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 15年 · PI",
+   "year_commissions": [
+    "0.4922",
+    "0.0798",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-MNL-046",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 15年",
+   "year_commissions": [
+    "0.4522",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-MNL-047",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1766",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-MNL-048",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 20年",
+   "year_commissions": [
+    "0.5066",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-MNL-049",
+   "name": "守護168危疾保障計劃(加強版) (HealthCare 168 Plus Critical Illness Protector) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2450",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-MNL-050",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 10年",
+   "year_commissions": [
+    "0.3148",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-MNL-051",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 15年 · PI",
+   "year_commissions": [
+    "0.4293",
+    "0.1139",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-MNL-052",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 15年",
+   "year_commissions": [
+    "0.4207",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-MNL-053",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 20年 · PI",
+   "year_commissions": [
+    "0.5151",
+    "0.1481",
+    "0.0256",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-MNL-054",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 20年",
+   "year_commissions": [
+    "0.5066",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-MNL-055",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2023",
+    "0.0256",
+    "0.0114",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-MNL-056",
+   "name": "守護家倍198危疾保障計劃 (FamCare 198 Critical Illness Protector) · 25年",
+   "year_commissions": [
+    "0.5037",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684"
+   ]
+  },
+  {
+   "code": "INS-MNL-057",
+   "name": "世逸特級醫療保障計劃 (MediChamp Insurance Plan) · 每年續保",
+   "year_commissions": [
+    "0.3319",
+    "0.0712",
+    "0.0627",
+    "0.0627",
+    "0.0513",
+    "0.0513",
+    "0.0513",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-PRU-001",
+   "name": "世譽財富 Prime Eternity (PRMESP) · 整付",
+   "year_commissions": [
+    "0.0428"
+   ]
+  },
+  {
+   "code": "INS-PRU-002",
+   "name": "保誠信守明天多元貨幣計劃 Prudential Entrust Multi-Currency Plan (TRST) · 5年 · PI",
+   "year_commissions": [
+    "0.4951",
+    "0.0256",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-PRU-004",
+   "name": "保誠啟耀未來儲蓄 (Prudential Enlight Savings Insurance) · 5年 · PI",
+   "year_commissions": [
+    "0.4780",
+    "0.0256",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-PRU-005",
+   "name": "保誠啟耀未來儲蓄 (Prudential Enlight Savings Insurance) · 5年",
+   "year_commissions": [
+    "0.3748",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-PRU-008",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 5年 · PI",
+   "year_commissions": [
+    "0.3576",
+    "0.0256",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-PRU-009",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 5年",
+   "year_commissions": [
+    "0.2889",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-010",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 10年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.0969",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-011",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 10年",
+   "year_commissions": [
+    "0.5352",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-PRU-012",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 15年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1738",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-013",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 15年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-PRU-014",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2507",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-017",
+   "name": "「誠保一生」危疾保 (PRUHealth Guardian Critical lllness Plan)(CIM3) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769"
+   ]
+  },
+  {
+   "code": "INS-PRU-018",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 5年 · PI",
+   "year_commissions": [
+    "0.3576",
+    "0.0256",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-PRU-019",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 5年",
+   "year_commissions": [
+    "0.2889",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-020",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 10年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.0969",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-021",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 10年",
+   "year_commissions": [
+    "0.5352",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-PRU-022",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 15年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1738",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-023",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 15年",
+   "year_commissions": [
+    "0.5380",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-PRU-024",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2507",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-025",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 20年",
+   "year_commissions": [
+    "0.5352",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627",
+    "0.0627"
+   ]
+  },
+  {
+   "code": "INS-PRU-026",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.3418",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-027",
+   "name": "「誠保一生」危疾保 - 摯愛寶 (PRUHealth Baby Guardian Critical lllness Plan)(BCIM3) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769",
+    "0.0769"
+   ]
+  },
+  {
+   "code": "INS-PRU-037",
+   "name": "醫療加倍保 (PRUhealth medical plus)(PMP) · 每年續保",
+   "year_commissions": [
+    "0.4780",
+    "0.0655",
+    "0.0427",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-038",
+   "name": "保誠自願醫保尚賓計劃 (PRUHealth VHIS VIP Plan)(VIP) · 每年續保",
+   "year_commissions": [
+    "0.4780",
+    "0.0655",
+    "0.0427",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-039",
+   "name": "「摯為您」優悅醫療保險計劃 PRUmyhealth prestige medical plan (PPM) · 每年續保",
+   "year_commissions": [
+    "0.4780",
+    "0.0655",
+    "0.0427",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-040",
+   "name": "高端醫療自由行計劃 PremierFlex Medical Plan (MCVIP) · 每年續保",
+   "year_commissions": [
+    "0.4780",
+    "0.0655",
+    "0.0427",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-PRU-041",
+   "name": "保誠信守明天多元貨幣計劃 (Prudential Entrust Multi-Currency Plan) · 5年 · 首年保費≥100,000USD · PI",
+   "year_commissions": [
+    "0.5009",
+    "0.0256",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-PRU-042",
+   "name": "保誠信守明天多元貨幣計劃 (Prudential Entrust Multi-Currency Plan) · 5年 · 首年保費≥200,000USD · PI",
+   "year_commissions": [
+    "0.5066",
+    "0.0256",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-PRU-043",
+   "name": "保誠信守明天多元貨幣計劃 (Prudential Entrust Multi-Currency Plan) · 5年 · 首年保費≥300,000USD · PI",
+   "year_commissions": [
+    "0.5123",
+    "0.0256",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-PRU-044",
+   "name": "保誠信守明天多元貨幣計劃 (Prudential Entrust Multi-Currency Plan) · 5年 · 首年保費≥500,000USD · PI",
+   "year_commissions": [
+    "0.5180",
+    "0.0256",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-PRU-045",
+   "name": "誠譽財富保險計劃 (Prime Horizon Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2631"
+   ]
+  },
+  {
+   "code": "INS-PRU-046",
+   "name": "誠譽財富保險計劃 (Prime Horizon Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1830",
+    "0.0741"
+   ]
+  },
+  {
+   "code": "INS-PRU-047",
+   "name": "駿譽財富保險計劃 (Prime Ace Insurance Plan) · 3年 · PI",
+   "year_commissions": [
+    "0.2202"
+   ]
+  },
+  {
+   "code": "INS-PRU-048",
+   "name": "駿譽財富保險計劃 (Prime Ace Insurance Plan) · 3年",
+   "year_commissions": [
+    "0.1515",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-PRU-049",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 整付",
+   "year_commissions": [
+    "0.0514"
+   ]
+  },
+  {
+   "code": "INS-PRU-050",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 5年 · PI",
+   "year_commissions": [
+    "0.4780",
+    "0.0256",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-PRU-051",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 10年",
+   "year_commissions": [
+    "0.5352",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-PRU-052",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2963",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-053",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 20年",
+   "year_commissions": [
+    "0.5352",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684"
+   ]
+  },
+  {
+   "code": "INS-PRU-054",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 30年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.4188",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-PRU-055",
+   "name": "自主未來保險計劃II (LiveFree Protector Insurance Plan II) · 30年",
+   "year_commissions": [
+    "0.5380",
+    "0.0912",
+    "0.0912",
+    "0.0912",
+    "0.0912",
+    "0.0912",
+    "0.0912"
+   ]
+  },
+  {
+   "code": "INS-PRU-056",
+   "name": "醫療加倍保(計劃2) (PRUhealth medical plus plan 2) · 每年續保",
+   "year_commissions": [
+    "0.4780",
+    "0.0655",
+    "0.0427",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-SUN-017",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 10年 · PI",
+   "year_commissions": [
+    "0.4121",
+    "0.0399",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-018",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 10年",
+   "year_commissions": [
+    "0.3347",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-SUN-019",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 15年 · PI",
+   "year_commissions": [
+    "0.5352",
+    "0.0769",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-020",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 15年",
+   "year_commissions": [
+    "0.4551",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-SUN-021",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1766",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-022",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 20年",
+   "year_commissions": [
+    "0.5266",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-SUN-023",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.2421",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-024",
+   "name": "萬家康尊尚保 (SunWell Supreme Care) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.0826",
+    "0.0456",
+    "0.0456",
+    "0.0456",
+    "0.0456"
+   ]
+  },
+  {
+   "code": "INS-SUN-025",
+   "name": "卓裕人壽保險計劃系列 III (Generations Life Insurance Plan III ) · 整付",
+   "year_commissions": [
+    "0.0599"
+   ]
+  },
+  {
+   "code": "INS-SUN-026",
+   "name": "卓裕人壽保險計劃系列 III (Generations Life Insurance Plan III ) · 5年 · PI",
+   "year_commissions": [
+    "0.3576",
+    "0.0256",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-027",
+   "name": "卓裕人壽保險計劃系列 III (Generations Life Insurance Plan III ) · 5年",
+   "year_commissions": [
+    "0.2775",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-SUN-028",
+   "name": "卓裕人壽保險計劃系列 III (Generations Life Insurance Plan III ) · 10年 · PI",
+   "year_commissions": [
+    "0.3835",
+    "0.1282",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-029",
+   "name": "卓裕人壽保險計劃系列 III (Generations Life Insurance Plan III ) · 10年",
+   "year_commissions": [
+    "0.3920",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-SUN-030",
+   "name": "萬年青星河尊享保險計劃II (SunJoy Global Insurance Plan II) · 2年 · PI",
+   "year_commissions": [
+    "0.1658"
+   ]
+  },
+  {
+   "code": "INS-SUN-031",
+   "name": "萬年青星河尊享保險計劃II (SunJoy Global Insurance Plan II) · 2年",
+   "year_commissions": [
+    "0.1143",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-SUN-032",
+   "name": "萬年青星河尊享保險計劃II (SunJoy Global Insurance Plan II) · 5年 · PI",
+   "year_commissions": [
+    "0.4178"
+   ]
+  },
+  {
+   "code": "INS-SUN-033",
+   "name": "萬年青星河尊享保險計劃II (SunJoy Global Insurance Plan II) · 5年",
+   "year_commissions": [
+    "0.3233",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-SUN-034",
+   "name": "萬年青星河傳承保險計劃II (SunGift Global Insurance Plan II) · 2年 · PI",
+   "year_commissions": [
+    "0.1830"
+   ]
+  },
+  {
+   "code": "INS-SUN-035",
+   "name": "萬年青星河傳承保險計劃II (SunGift Global Insurance Plan II) · 2年",
+   "year_commissions": [
+    "0.1285",
+    "0.0541"
+   ]
+  },
+  {
+   "code": "INS-SUN-036",
+   "name": "萬年青星河傳承保險計劃II (SunGift Global Insurance Plan II) · 5年 · PI",
+   "year_commissions": [
+    "0.4436"
+   ]
+  },
+  {
+   "code": "INS-SUN-037",
+   "name": "萬年青星河傳承保險計劃II (SunGift Global Insurance Plan II) · 5年",
+   "year_commissions": [
+    "0.3290",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-SUN-038",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 3年 · PI",
+   "year_commissions": [
+    "0.1944"
+   ]
+  },
+  {
+   "code": "INS-SUN-039",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 6年",
+   "year_commissions": [
+    "0.3118",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-SUN-040",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 12年 · PI",
+   "year_commissions": [
+    "0.5151",
+    "0.0541",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-041",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 12年",
+   "year_commissions": [
+    "0.4150",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313",
+    "0.0313"
+   ]
+  },
+  {
+   "code": "INS-SUN-042",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 18年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.0855",
+    "0.0256",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-043",
+   "name": "永越多元貨幣保險計劃II (Stellar Multi-Currency Insurance Plan II) · 18年",
+   "year_commissions": [
+    "0.5151",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-SUN-044",
+   "name": "永譽傳承儲蓄計劃 (RoyalFortune) · 整付",
+   "year_commissions": [
+    "0.0457"
+   ]
+  },
+  {
+   "code": "INS-SUN-045",
+   "name": "永延保障計劃 (SunProtect) · 6年 · PI",
+   "year_commissions": [
+    "0.3548",
+    "0.0085",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-046",
+   "name": "永延保障計劃 (SunProtect) · 6年",
+   "year_commissions": [
+    "0.2660",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-SUN-047",
+   "name": "永延保障計劃 (SunProtect) · 12年 · PI",
+   "year_commissions": [
+    "0.5009",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-048",
+   "name": "永延保障計劃 (SunProtect) · 12年",
+   "year_commissions": [
+    "0.3748",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-SUN-049",
+   "name": "永延保障計劃 (SunProtect) · 20年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1225",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-050",
+   "name": "永延保障計劃 (SunProtect) · 20年",
+   "year_commissions": [
+    "0.4837",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-SUN-051",
+   "name": "永延保障計劃 (SunProtect) · 25年 · PI",
+   "year_commissions": [
+    "0.5380",
+    "0.1994",
+    "0.0085",
+    "0.0085",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-SUN-052",
+   "name": "永延保障計劃 (SunProtect) · 25年",
+   "year_commissions": [
+    "0.5380",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427",
+    "0.0427"
+   ]
+  },
+  {
+   "code": "INS-SUN-053",
+   "name": "卓裕人壽保險計劃系列III-100 (Generations Life Insurance Plan III-100) · 整付",
+   "year_commissions": [
+    "0.0599"
+   ]
+  },
+  {
+   "code": "INS-SUN-054",
+   "name": "卓裕人壽保險計劃系列III-70 (Generations Life Insurance Plan III-70) · 5年 · PI",
+   "year_commissions": [
+    "0.3576",
+    "0.0256",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-055",
+   "name": "卓裕人壽保險計劃系列III-100 (Generations Life Insurance Plan III-100) · 5年 · PI",
+   "year_commissions": [
+    "0.3576",
+    "0.0256",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-056",
+   "name": "卓裕人壽保險計劃系列III-70 (Generations Life Insurance Plan III-70) · 5年",
+   "year_commissions": [
+    "0.2775",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-SUN-057",
+   "name": "卓裕人壽保險計劃系列III-100 (Generations Life Insurance Plan III-100) · 5年",
+   "year_commissions": [
+    "0.2775",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-SUN-058",
+   "name": "卓裕人壽保險計劃系列III-70 (Generations Life Insurance Plan III-70) · 10年 · PI",
+   "year_commissions": [
+    "0.3835",
+    "0.1282",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-059",
+   "name": "卓裕人壽保險計劃系列III-100 (Generations Life Insurance Plan III-100) · 10年 · PI",
+   "year_commissions": [
+    "0.3835",
+    "0.1282",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-SUN-060",
+   "name": "卓裕人壽保險計劃系列III-100 (Generations Life Insurance Plan III-100) · 10年",
+   "year_commissions": [
+    "0.3920",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171",
+    "0.0171"
+   ]
+  },
+  {
+   "code": "INS-WELL-002",
+   "name": "智選儲蓄保 (Target Saving Pro) · 整付",
+   "year_commissions": [
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-WELL-003",
+   "name": "智選儲蓄保 (Target Saving Pro) · 整付 · 25年期首年保費 < USD 60,000 收HKD 1,500 行政費",
+   "year_commissions": [
+    "0.0457"
+   ]
+  },
+  {
+   "code": "INS-YF-001",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 10年 · PI",
+   "year_commissions": [
+    "0.3634",
+    "0.0285",
+    "0.0114",
+    "0.0114",
+    "0.0114",
+    "0.0114"
+   ]
+  },
+  {
+   "code": "INS-YF-002",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 10年",
+   "year_commissions": [
+    "0.3176",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-YF-003",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 15年 · PI",
+   "year_commissions": [
+    "0.4379",
+    "0.1026",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-YF-004",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 15年",
+   "year_commissions": [
+    "0.4379",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399",
+    "0.0399"
+   ]
+  },
+  {
+   "code": "INS-YF-005",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 20年 · PI",
+   "year_commissions": [
+    "0.4980",
+    "0.1795",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-YF-006",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 20年",
+   "year_commissions": [
+    "0.4980",
+    "0.0541",
+    "0.0541",
+    "0.0541",
+    "0.0541",
+    "0.0541"
+   ]
+  },
+  {
+   "code": "INS-YF-007",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 25年 · PI",
+   "year_commissions": [
+    "0.4980",
+    "0.2193",
+    "0.0256",
+    "0.0256",
+    "0.0256",
+    "0.0256"
+   ]
+  },
+  {
+   "code": "INS-YF-008",
+   "name": "萬通危疾加護保 (優越版) YF PrimeHealth Pro (Signature) · 25年",
+   "year_commissions": [
+    "0.4980",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684",
+    "0.0684"
+   ]
+  },
+  {
+   "code": "INS-YF-009",
+   "name": "富饒盈家儲蓄保險計劃 (InfinityEdge Wealth Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0541"
+   ]
+  },
+  {
+   "code": "INS-YF-010",
+   "name": "尚裕終身壽險 (Preeminence) · 整付",
+   "year_commissions": [
+    "0.0514"
+   ]
+  },
+  {
+   "code": "INS-YF-013",
+   "name": "尚裕終身壽險 (Preeminence) · 10年 · PI",
+   "year_commissions": [
+    "0.3920",
+    "0.1026",
+    "0.0085",
+    "0.0085",
+    "0.0057",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-YF-014",
+   "name": "尚裕終身壽險 (Preeminence) · 10年",
+   "year_commissions": [
+    "0.3720",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285",
+    "0.0285"
+   ]
+  },
+  {
+   "code": "INS-YF-015",
+   "name": "尚裕終身壽險 (Preeminence) · 20年 · PI",
+   "year_commissions": [
+    "0.5266",
+    "0.2165",
+    "0.0085",
+    "0.0085",
+    "0.0057",
+    "0.0057"
+   ]
+  },
+  {
+   "code": "INS-YF-016",
+   "name": "尚裕終身壽險 (Preeminence) · 20年",
+   "year_commissions": [
+    "0.5266",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484",
+    "0.0484"
+   ]
+  },
+  {
+   "code": "INS-YFC-001",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2317"
+   ]
+  },
+  {
+   "code": "INS-YFC-002",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1687",
+    "0.0570"
+   ]
+  },
+  {
+   "code": "INS-YFC-003",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.5037",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-YFC-004",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3748",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-YFC-005",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 10年 · PI",
+   "year_commissions": [
+    "0.4436",
+    "0.1111",
+    "0.0142",
+    "0.0142",
+    "0.0142",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-YFC-006",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 10年",
+   "year_commissions": [
+    "0.4436",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-YFD-001",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.2317"
+   ]
+  },
+  {
+   "code": "INS-YFD-002",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.1687",
+    "0.0570"
+   ]
+  },
+  {
+   "code": "INS-YFD-003",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.5037",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-YFD-004",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3748",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-YFD-005",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 10年 · PI",
+   "year_commissions": [
+    "0.4436",
+    "0.1111",
+    "0.0142",
+    "0.0142",
+    "0.0142",
+    "0.0142"
+   ]
+  },
+  {
+   "code": "INS-YFD-006",
+   "name": "富饒萬家儲蓄保險計劃 (Beyond Infinity Savings Insurance Plan) · 10年",
+   "year_commissions": [
+    "0.4436",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  },
+  {
+   "code": "INS-ZUR-001",
+   "name": "瑞駿（尊尚版）萬用壽險保險計劃 (Swiss Fortune (Premier)Universal Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.2116",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-ZUR-002",
+   "name": "瑞駿（尊尚版）萬用壽險保險計劃 (Swiss Fortune (Premier)Universal Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.4407",
+    "0.0085",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-ZUR-003",
+   "name": "瑞駿（尊尚版）萬用壽險保險計劃 (Swiss Fortune (Premier)Universal Life Insurance Plan) · 10年",
+   "year_commissions": [
+    "0.5380",
+    "0.0741",
+    "0.0085",
+    "0.0085",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028",
+    "0.0028"
+   ]
+  },
+  {
+   "code": "INS-ZUR-004",
+   "name": "瑞承投資計劃 (Matterhorn) · 整付",
+   "year_commissions": [
+    "0.0342"
+   ]
+  },
+  {
+   "code": "INS-ZUR-007",
+   "name": "瑞翔投資計劃 (Swiss Elite) · 20年",
+   "year_commissions": [
+    "0.3720",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199",
+    "0.0199"
+   ]
+  },
+  {
+   "code": "INS-ZUR-008",
+   "name": "瑞盈儲蓄保險計劃 (Swiss Prime Savings Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.4837",
+    "0.0085",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ]
+  },
+  {
+   "code": "INS-ZUR-009",
+   "name": "瑞盈儲蓄保險計劃 (Swiss Prime Savings Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.3805",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ]
+  }
+ ]
+}

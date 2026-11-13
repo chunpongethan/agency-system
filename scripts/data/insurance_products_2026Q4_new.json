@@ -1,7 +1,7 @@
 {
  "source": "承瑞 合作機構介紹費率 全部計劃 2026 Q4 (valid to 2026-12-31)",
  "rate_company": "heritree",
- "count": 207,
+ "count": 193,
  "products": [
   {
    "code": "INS-PRU-041",
@@ -420,7 +420,7 @@
     "0.0048"
    ],
    "base_commission_rate": "0.2658",
-   "condition": "—5 / 22"
+   "condition": null
   },
   {
    "code": "INS-PRU-051",
@@ -1084,7 +1084,7 @@
     "0.0063"
    ],
    "base_commission_rate": "0.2992",
-   "condition": "—9 / 22"
+   "condition": null
   },
   {
    "code": "INS-MNL-050",
@@ -1315,7 +1315,7 @@
     "0.0127"
    ],
    "base_commission_rate": "0.1702",
-   "condition": "—10 / 22"
+   "condition": null
   },
   {
    "code": "INS-FWD-016",
@@ -1548,7 +1548,7 @@
     "0.1081"
    ],
    "base_commission_rate": "0.1081",
-   "condition": "—11 / 22"
+   "condition": null
   },
   {
    "code": "INS-SUN-039",
@@ -2370,13 +2370,13 @@
     "0.0333"
    ],
    "base_commission_rate": "0.2737",
-   "condition": "—17 / 22"
+   "condition": null
   },
   {
-   "code": "INS-CLIFE-028",
+   "code": "INS-BOC-021",
    "name": "鑄富世代環球終身壽險計劃 (Eternal Fortune Global Whole Life Insurance Plan) · 5年 · PI",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 5,
    "professional_investor": true,
    "age_min": 0,
@@ -2394,10 +2394,10 @@
    "condition": null
   },
   {
-   "code": "INS-CLIFE-029",
+   "code": "INS-BOC-022",
    "name": "鑄富世代環球終身壽險計劃 (Eternal Fortune Global Whole Life Insurance Plan) · 5年",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 5,
    "professional_investor": false,
    "age_min": 0,
@@ -2415,210 +2415,10 @@
    "condition": null
   },
   {
-   "code": "INS-CLIFE-030",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · HKD & USD · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.1257"
-   ],
-   "base_commission_rate": "0.1257",
-   "condition": "HKD & USD"
-  },
-  {
-   "code": "INS-CLIFE-031",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · CNY · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.1049"
-   ],
-   "base_commission_rate": "0.1049",
-   "condition": "CNY"
-  },
-  {
-   "code": "INS-CLIFE-032",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · HKD & USD",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.0875",
-    "0.0364"
-   ],
-   "base_commission_rate": "0.0875",
-   "condition": "HKD & USD"
-  },
-  {
-   "code": "INS-CLIFE-033",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · CNY",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.0715",
-    "0.0301"
-   ],
-   "base_commission_rate": "0.0715",
-   "condition": "CNY"
-  },
-  {
-   "code": "INS-CLIFE-034",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · HKD & USD · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.2690",
-    "0.0016"
-   ],
-   "base_commission_rate": "0.2690",
-   "condition": "HKD & USD"
-  },
-  {
-   "code": "INS-CLIFE-035",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · CNY · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.2228",
-    "0.0016"
-   ],
-   "base_commission_rate": "0.2228",
-   "condition": "CNY"
-  },
-  {
-   "code": "INS-CLIFE-036",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · HKD & USD",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.1957",
-    "0.0190",
-    "0.0190",
-    "0.0190",
-    "0.0190"
-   ],
-   "base_commission_rate": "0.1957",
-   "condition": "HKD & USD"
-  },
-  {
-   "code": "INS-CLIFE-037",
-   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · CNY",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.1623",
-    "0.0158",
-    "0.0158",
-    "0.0158",
-    "0.0158"
-   ],
-   "base_commission_rate": "0.1623",
-   "condition": "CNY"
-  },
-  {
-   "code": "INS-CLIFE-038",
-   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 整付",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": null,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "upfront",
-   "afyp_conversion": "0.1000",
-   "year_commissions": [
-    "0.0222"
-   ],
-   "base_commission_rate": "0.0222",
-   "condition": null
-  },
-  {
-   "code": "INS-CLIFE-039",
-   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年 · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.0859"
-   ],
-   "base_commission_rate": "0.0859",
-   "condition": "USD & HKD"
-  },
-  {
-   "code": "INS-CLIFE-040",
-   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.0587",
-    "0.0253"
-   ],
-   "base_commission_rate": "0.0587",
-   "condition": "USD & HKD"
-  },
-  {
-   "code": "INS-CLIFE-041",
+   "code": "INS-BOC-023",
    "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 3年 · PI",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 3,
    "professional_investor": true,
    "age_min": 0,
@@ -2632,10 +2432,10 @@
    "condition": "USD/HKD/CNY"
   },
   {
-   "code": "INS-CLIFE-042",
+   "code": "INS-BOC-024",
    "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 3年",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 3,
    "professional_investor": false,
    "age_min": 0,
@@ -2651,10 +2451,10 @@
    "condition": "USD/HKD/CNY"
   },
   {
-   "code": "INS-CLIFE-043",
+   "code": "INS-BOC-025",
    "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 5年 · PI",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 5,
    "professional_investor": true,
    "age_min": 0,
@@ -2671,10 +2471,10 @@
    "condition": "HKD&USD"
   },
   {
-   "code": "INS-CLIFE-044",
+   "code": "INS-BOC-026",
    "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 5年",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 5,
    "professional_investor": false,
    "age_min": 0,
@@ -2692,10 +2492,10 @@
    "condition": "HKD&USD"
   },
   {
-   "code": "INS-CLIFE-045",
+   "code": "INS-BOC-027",
    "name": "延期年金計劃(終身) (Deferred Annuity (Lifetime)) · 5年",
    "type": "insurance",
-   "provider": "China Life",
+   "provider": "BOC Life",
    "payment_tenor": 5,
    "professional_investor": false,
    "age_min": 18,
@@ -2710,62 +2510,6 @@
     "0.0016"
    ],
    "base_commission_rate": "0.1161",
-   "condition": "—18 / 22"
-  },
-  {
-   "code": "INS-CLIFE-046",
-   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 2年",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 2,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "0.5000",
-   "year_commissions": [
-    "0.0222",
-    "0.0111"
-   ],
-   "base_commission_rate": "0.0222",
-   "condition": null
-  },
-  {
-   "code": "INS-CLIFE-047",
-   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年 · PI",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": true,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.1049"
-   ],
-   "base_commission_rate": "0.1049",
-   "condition": null
-  },
-  {
-   "code": "INS-CLIFE-048",
-   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年",
-   "type": "insurance",
-   "provider": "China Life",
-   "payment_tenor": 5,
-   "professional_investor": false,
-   "age_min": 0,
-   "age_max": 70,
-   "commission_schedule": "trail",
-   "afyp_conversion": "1",
-   "year_commissions": [
-    "0.0731",
-    "0.0079",
-    "0.0079",
-    "0.0079",
-    "0.0079"
-   ],
-   "base_commission_rate": "0.0731",
    "condition": null
   },
   {
@@ -2837,7 +2581,7 @@
     "0.1114"
    ],
    "base_commission_rate": "0.1114",
-   "condition": "—19 / 22"
+   "condition": null
   },
   {
    "code": "INS-CTAI-011",
@@ -3106,7 +2850,7 @@
   },
   {
    "code": "INS-CPIC-019",
-   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 20%，總保費 ≥100,000USD20 / 22 · PI",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 20%，總保費 ≥100,000USD · PI",
    "type": "insurance",
    "provider": "China Pacific Life",
    "payment_tenor": 2,
@@ -3119,7 +2863,7 @@
     "0.0572"
    ],
    "base_commission_rate": "0.0572",
-   "condition": "特別折扣 20%，總保費 ≥100,000USD20 / 22"
+   "condition": "特別折扣 20%，總保費 ≥100,000USD"
   },
   {
    "code": "INS-CPIC-020",
@@ -3493,7 +3237,7 @@
     "0.0206"
    ],
    "base_commission_rate": "0.2005",
-   "condition": "HKD & USD21 / 22"
+   "condition": "HKD & USD"
   },
   {
    "code": "INS-CPIC-038",
@@ -3699,7 +3443,7 @@
     "0.0127"
    ],
    "base_commission_rate": "0.0127",
-   "condition": "保費＜USD60,000收取HKD1,500行政費22 / 22"
+   "condition": "保費＜USD60,000收取HKD1,500行政費"
   },
   {
    "code": "INS-PRU-056",

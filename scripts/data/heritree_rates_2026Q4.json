@@ -2,7 +2,7 @@
  "source": "承瑞 合作機構介紹費率 全部計劃 2026 Q4 (valid to 2026-12-31)",
  "company": "heritree",
  "effective_to": "2026-12-31",
- "count": 176,
+ "count": 192,
  "products": [
   {
    "code": "INS-AIA-001",
@@ -1752,6 +1752,39 @@
    ]
   },
   {
+   "code": "INS-BOC-009",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 整付",
+   "year_commissions": [
+    "0.0222"
+   ]
+  },
+  {
+   "code": "INS-BOC-017",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0222",
+    "0.0111"
+   ]
+  },
+  {
+   "code": "INS-BOC-018",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.1049"
+   ]
+  },
+  {
+   "code": "INS-BOC-019",
+   "name": "月悅出息終身享保險計劃 (IncomeJoy Lifelong Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.0731",
+    "0.0079",
+    "0.0079",
+    "0.0079",
+    "0.0079"
+   ]
+  },
+  {
    "code": "INS-CTAI-004",
    "name": "「頤年·樂享」儲蓄保險計劃（尊享版） (Golden Life Savings Insurance Plan(Premier Edithion)) · 5年 · PI",
    "year_commissions": [
@@ -1972,6 +2005,104 @@
    "year_commissions": [
     "0.0747",
     "0.0317"
+   ]
+  },
+  {
+   "code": "INS-BOC-001",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.1257"
+   ]
+  },
+  {
+   "code": "INS-BOC-003",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.1049"
+   ]
+  },
+  {
+   "code": "INS-BOC-002",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0875",
+    "0.0364"
+   ]
+  },
+  {
+   "code": "INS-BOC-004",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0715",
+    "0.0301"
+   ]
+  },
+  {
+   "code": "INS-BOC-005",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.2690",
+    "0.0016"
+   ]
+  },
+  {
+   "code": "INS-BOC-007",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年 · PI",
+   "year_commissions": [
+    "0.2228",
+    "0.0016"
+   ]
+  },
+  {
+   "code": "INS-BOC-006",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.1957",
+    "0.0190",
+    "0.0190",
+    "0.0190",
+    "0.0190"
+   ]
+  },
+  {
+   "code": "INS-BOC-008",
+   "name": "寰御安心環球終身保險計劃 (Assure Together Global Whole Life Insurance Plan) · 5年",
+   "year_commissions": [
+    "0.1623",
+    "0.0158",
+    "0.0158",
+    "0.0158",
+    "0.0158"
+   ]
+  },
+  {
+   "code": "INS-BOC-010",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.0859"
+   ]
+  },
+  {
+   "code": "INS-BOC-012",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年 · PI",
+   "year_commissions": [
+    "0.0859"
+   ]
+  },
+  {
+   "code": "INS-BOC-011",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0587",
+    "0.0253"
+   ]
+  },
+  {
+   "code": "INS-BOC-013",
+   "name": "薪火傳承環球終身壽險計劃 (Glamorous Glow Global Whole Life Insurance Plan) · 2年",
+   "year_commissions": [
+    "0.0587",
+    "0.0253"
    ]
   },
   {

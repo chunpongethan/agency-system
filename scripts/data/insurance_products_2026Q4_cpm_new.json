@@ -1,0 +1,269 @@
+{
+ "source": "CPM 合作機構介紹費率 全部計劃 2026 Q4 (valid to 2026-12-31)",
+ "rate_company": "cpm",
+ "count": 14,
+ "products": [
+  {
+   "code": "INS-CHUBB-007",
+   "name": "安達傳承守創多元貨幣保險計劃 (Chubb MyLegacy Multi-Currency Insurance Plan) · 5年 · PI",
+   "type": "insurance",
+   "provider": "CHUBB",
+   "payment_tenor": 5,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 65,
+   "commission_schedule": "trail",
+   "afyp_conversion": "1",
+   "year_commissions": [
+    "0.4436"
+   ],
+   "base_commission_rate": "0.4436",
+   "condition": null
+  },
+  {
+   "code": "INS-CHUBB-008",
+   "name": "安達傳承守創多元貨幣保險計劃 (Chubb MyLegacy Multi-Currency Insurance Plan) · 5年",
+   "type": "insurance",
+   "provider": "CHUBB",
+   "payment_tenor": 5,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 65,
+   "commission_schedule": "trail",
+   "afyp_conversion": "1",
+   "year_commissions": [
+    "0.3691",
+    "0.0370",
+    "0.0370",
+    "0.0370",
+    "0.0370"
+   ],
+   "base_commission_rate": "0.3691",
+   "condition": null
+  },
+  {
+   "code": "INS-CHUBB-009",
+   "name": "安達開創未來儲蓄計劃II (Chubb Future Achiever Savings Plan II) · 整付",
+   "type": "insurance",
+   "provider": "CHUBB",
+   "payment_tenor": null,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 70,
+   "commission_schedule": "upfront",
+   "afyp_conversion": "0.1000",
+   "year_commissions": [
+    "0.0887"
+   ],
+   "base_commission_rate": "0.0887",
+   "condition": null
+  },
+  {
+   "code": "INS-ZUR-010",
+   "name": "瑞盈儲蓄保險計劃 (Swiss Prime Savings Insurance Plan) · 2年 · PI",
+   "type": "insurance",
+   "provider": "Zurich",
+   "payment_tenor": 2,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 75,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.2116"
+   ],
+   "base_commission_rate": "0.2116",
+   "condition": null
+  },
+  {
+   "code": "INS-ZUR-011",
+   "name": "瑞盈儲蓄保險計劃 (Swiss Prime Savings Insurance Plan) · 2年",
+   "type": "insurance",
+   "provider": "Zurich",
+   "payment_tenor": 2,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 75,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.1429",
+    "0.0598"
+   ],
+   "base_commission_rate": "0.1429",
+   "condition": null
+  },
+  {
+   "code": "INS-CLIFE-049",
+   "name": "傲瓏盛世儲蓄保險計劃 (Regal Heritage Savings Insurance Plan) · 2年 · HKD/USD/CNY · PI",
+   "type": "insurance",
+   "provider": "China Life",
+   "payment_tenor": 2,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 70,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.1973"
+   ],
+   "base_commission_rate": "0.1973",
+   "condition": "HKD/USD/CNY"
+  },
+  {
+   "code": "INS-CLIFE-050",
+   "name": "國壽海外尊尚醫療保險計劃 (MasterCare Medical Plan) · 每年續保",
+   "type": "insurance",
+   "provider": "China Life",
+   "payment_tenor": null,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 70,
+   "commission_schedule": "trail",
+   "afyp_conversion": "1",
+   "year_commissions": [
+    "0.2690",
+    "0.0769",
+    "0.0513",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0342",
+    "0.0228",
+    "0.0228",
+    "0.0228"
+   ],
+   "base_commission_rate": "0.2690",
+   "condition": null
+  },
+  {
+   "code": "INS-BOC-028",
+   "name": "延期年金計劃(終身) (Deferred Annuity (Lifetime)) · 10年",
+   "type": "insurance",
+   "provider": "BOC Life",
+   "payment_tenor": 10,
+   "professional_investor": false,
+   "age_min": 18,
+   "age_max": 50,
+   "commission_schedule": "trail",
+   "afyp_conversion": "1",
+   "year_commissions": [
+    "0.4264",
+    "0.0256",
+    "0.0085",
+    "0.0085",
+    "0.0085"
+   ],
+   "base_commission_rate": "0.4264",
+   "condition": null
+  },
+  {
+   "code": "INS-CTAI-018",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 2年",
+   "type": "insurance",
+   "provider": "China Taiping",
+   "payment_tenor": 2,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 65,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.1372",
+    "0.0570"
+   ],
+   "base_commission_rate": "0.1372",
+   "condition": null
+  },
+  {
+   "code": "INS-CTAI-019",
+   "name": "頤年樂享儲蓄保險計劃(至尊版) (Golden Life Savings Insurance Plan (Prime Edition)) · 5年 · HKD & USD · PI",
+   "type": "insurance",
+   "provider": "China Taiping",
+   "payment_tenor": 5,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 65,
+   "commission_schedule": "trail",
+   "afyp_conversion": "1",
+   "year_commissions": [
+    "0.4808",
+    "0.0142"
+   ],
+   "base_commission_rate": "0.4808",
+   "condition": "HKD & USD"
+  },
+  {
+   "code": "INS-CPIC-046",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 特別折扣 25%，總保費 ≥100,000USD · PI",
+   "type": "insurance",
+   "provider": "China Pacific Life",
+   "payment_tenor": 2,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 80,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.0685"
+   ],
+   "base_commission_rate": "0.0685",
+   "condition": "特別折扣 25%，總保費 ≥100,000USD"
+  },
+  {
+   "code": "INS-CPIC-047",
+   "name": "世代悅享儲蓄保險計劃3 (Everlasting Joy Savings Insurance Plan 3) · 2年 · 0-80歲",
+   "type": "insurance",
+   "provider": "China Pacific Life",
+   "payment_tenor": 2,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 80,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.5000",
+   "year_commissions": [
+    "0.1344",
+    "0.0712"
+   ],
+   "base_commission_rate": "0.1344",
+   "condition": null
+  },
+  {
+   "code": "INS-CPIC-048",
+   "name": "世代臻享儲蓄保險計劃2(榮耀版) (Everlasting Treasure Savings Insurance Plan 2 (Glory Version)) · 3年 · USD · PI",
+   "type": "insurance",
+   "provider": "China Pacific Life",
+   "payment_tenor": 3,
+   "professional_investor": true,
+   "age_min": 0,
+   "age_max": 75,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.3333",
+   "year_commissions": [
+    "0.1401",
+    "0.0798"
+   ],
+   "base_commission_rate": "0.1401",
+   "condition": "USD"
+  },
+  {
+   "code": "INS-CPIC-049",
+   "name": "世代臻享儲蓄保險計劃2(榮耀版) (Everlasting Treasure Savings Insurance Plan 2 (Glory Version)) · 3年 · USD",
+   "type": "insurance",
+   "provider": "China Pacific Life",
+   "payment_tenor": 3,
+   "professional_investor": false,
+   "age_min": 0,
+   "age_max": 75,
+   "commission_schedule": "trail",
+   "afyp_conversion": "0.3333",
+   "year_commissions": [
+    "0.1401",
+    "0.0399",
+    "0.0399"
+   ],
+   "base_commission_rate": "0.1401",
+   "condition": "USD"
+  }
+ ]
+}
