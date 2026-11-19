@@ -67,6 +67,16 @@ h1,h2,h3{text-wrap:balance;margin:0}
 .mod .nm strong{font-size:15px}
 .mod .nm span{font-size:12px;color:var(--muted)}
 .mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mod .done{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--med);background:var(--med-t);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.mod.is-done{border-color:#B9D3A6}
+.mod.is-done .no{box-shadow:0 0 0 3px var(--med-t)}
+.reset{align-self:center;background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-weight:700;padding:8px 18px;min-height:40px}
+.reset.armed{border-color:var(--red);color:var(--red);background:var(--red-t)}
+.donebar{font-size:13px;font-weight:700;color:var(--brown);margin:0 0 4px}
+.chip .tick{margin-left:6px}
+.finish{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--med-t);color:var(--med);border-radius:16px;padding:16px}
+.finish strong{font-size:17px}
+.finish span{font-size:13px;color:var(--ink)}
 .foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
 
 /* ---------- 顶栏 ---------- */
@@ -167,8 +177,9 @@ h1,h2,h3{text-wrap:balance;margin:0}
       <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
       <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
     </div>
-    <div class="mods" id="home-mods"><h2>按模块学习</h2></div>
+    <div class="mods"><h2>按模块学习</h2><p class="donebar" id="donebar"></p><div class="mods" id="home-mods"></div></div>
     <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <button class="reset" id="btn-reset" type="button">重置学习进度</button>
     <div class="foot">内容取材自承瑞《房产活化收息方案 · 顾问培训》视频课程、课后测验及《SPIN 案例分析与演示话术》。利率、债券价格、汇率等市场数据为 2026 年 10 月初示意，面谈前须更新；测算为示意，非保证。仅供承瑞内部顾问培训使用，不得发给客户；向客户介绍时，以私人银行报价、授信条款及债券发行文件为准。</div>
   </section>
 
@@ -625,9 +636,12 @@ window.QUIZ = {
     C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
     if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
   });
-  var pos = 0, seen = {};
-  try{ var s=parseInt(localStorage.getItem("ht-prop-pos"),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
-  function save(){ try{ localStorage.setItem("ht-prop-pos", String(pos)); }catch(e){} }
+  var KEY="ht-prop-pos", pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem(KEY),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  var DKEY=KEY+"-done", done={};
+  try{ done=JSON.parse(localStorage.getItem(DKEY)||"{}")||{}; }catch(e){ done={}; }
+  function markDone(mid){ if(done[mid]) return; done[mid]=true; try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
+  function save(){ try{ localStorage.setItem(KEY, String(pos)); }catch(e){} }
 
   /* ---------- 首页 ---------- */
   var nQuiz = 0; for(var k in Q) nQuiz++;
@@ -635,23 +649,46 @@ window.QUIZ = {
     $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
   });
   function modList(container, onPick){
+    container.innerHTML="";
     M.forEach(function(m){
       var n=C.filter(function(c){return c.m===m.id;}).length;
-      var b=el("button",{class:"mod",type:"button"},[
+      var b=el("button",{class:"mod"+(done[m.id]?" is-done":""),type:"button"},[
         el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
         el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
-        el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+        done[m.id] ? el("span",{class:"done",text:"✓ 已完成"}) : el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
       ]);
       b.addEventListener("click",function(){ onPick(m.id); });
       container.appendChild(b);
     });
   }
+  function refreshLists(){
+    modList($("home-mods"), startAt);
+    modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+    var k=0; M.forEach(function(m){ if(done[m.id]) k++; });
+    $("donebar").textContent = k ? ("已完成 "+k+" / "+M.length+" 个模块"+(k===M.length?"，可以挑战结业测验":"")) : "";
+  }
   function startAt(mid){
     for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
     show("learn");
   }
-  modList($("home-mods"), startAt);
-  modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+  refreshLists();
+  updStart();
+
+  /* ---------- 重置进度：点两次确认 ---------- */
+  var resetTimer=null;
+  $("btn-reset").addEventListener("click",function(){
+    var b=$("btn-reset");
+    if(!b.classList.contains("armed")){
+      b.classList.add("armed"); b.textContent="再点一次，清除全部进度";
+      resetTimer=setTimeout(function(){ b.classList.remove("armed"); b.textContent="重置学习进度"; },4000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    done={}; seen={}; pos=0;
+    try{ localStorage.removeItem(DKEY); localStorage.removeItem(KEY); }catch(e){}
+    b.classList.remove("armed"); b.textContent="重置学习进度";
+    refreshLists(); updStart(); toast("已重置，可以从头开始");
+  });
 
   /* ---------- 视图切换 ---------- */
   function show(v){
@@ -720,7 +757,14 @@ window.QUIZ = {
   function quizEl(mid){
     var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
     wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
-    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1)); });
+    var answered=0, total=Q[mid].length;
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1,function(){
+      answered++;
+      if(answered===total){
+        wrap.appendChild(el("div",{class:"finish"},[el("strong",{text:"✓ 本模块已完成"}),el("span",{text:"看完解析后，点「完成，返回首页」。"})]));
+        markDone(mid); setChip(); setNext();
+      }
+    })); });
     return wrap;
   }
 
@@ -728,24 +772,48 @@ window.QUIZ = {
   function render(){
     var f=FLOW[pos], m=mod(f.m), stage=$("stage");
     stage.innerHTML="";
-    $("chip").textContent=m.no+" "+m.name;
+    setChip();
     $("chip").style.background=acc(m);
-    var pct=Math.round((pos+1)/FLOW.length*100);
+    var cards=[], ci=0;
+    FLOW.forEach(function(x,i){ if(x.m===f.m && x.t==="card"){ cards.push(i); if(i===pos) ci=cards.length; } });
+    var n=cards.length, step = f.t==="card" ? ci : n;
+    var hasQ=!!Q[f.m], totalSteps=n+(hasQ?1:0), cur = f.t==="card" ? ci : totalSteps;
+    var pct=Math.round(cur/totalSteps*100);
     $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
-    $("count").textContent=(pos+1)+" / "+FLOW.length;
+    $("progbar").setAttribute("aria-label","本模块进度");
+    $("count").textContent = f.t==="card" ? (ci+" / "+n) : "小测";
     if(f.t==="card"){
       stage.appendChild(cardEl(C[f.i],false));
       stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
     } else stage.appendChild(quizEl(f.m));
     $("btn-prev").disabled = pos===0;
     var nx=FLOW[pos+1];
-    $("btn-next").textContent = !nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张"));
+    setNext();
     save(); window.scrollTo(0,0);
+  }
+  function setNext(){
+    var f=FLOW[pos], nx=FLOW[pos+1], last=!nx || nx.m!==f.m;
+    var willFinish = last && (done[f.m] || !Q[f.m]);
+    $("btn-next").textContent = willFinish ? "完成，返回首页" : (!nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张")));
+  }
+  function updStart(){ $("btn-start").textContent = pos>0 ? "继续学习" : "开始学习"; }
+  function setChip(){
+    var f=FLOW[pos], m=mod(f.m);
+    $("chip").textContent=m.no+" "+m.name+(done[f.m]?"  ✓ 已完成":"");
   }
   function go(d){
     if(!$("v-review").hidden || !$("v-home").hidden) return;
     if(finalMode){ return; }
     var n=pos+d;
+    /* 没有小测的模块：读完最后一张卡往前走即算完成 */
+    var leaving = d>0 && (!FLOW[n] || FLOW[n].m!==FLOW[pos].m);
+    if(leaving && !Q[FLOW[pos].m]) markDone(FLOW[pos].m);
+    if(leaving && done[FLOW[pos].m]){
+      if(FLOW[n]){ pos=n; save(); }
+      show("home"); updStart();
+      var hm=$("home-mods"); if(hm && hm.scrollIntoView) setTimeout(function(){ hm.parentNode.scrollIntoView({behavior:"smooth",block:"start"}); },60);
+      return;
+    }
     if(n>=FLOW.length){ show("final"); return; }
     if(n<0) return;
     pos=n; render();
