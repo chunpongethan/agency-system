@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>香港分红险问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --teal:#1F5F6B; --teal-t:#E1EFF1; --plum:#6A2C6B; --plum-t:#F3E6F2;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADUCAMAAACVtl6AAAAAjVBMVEVMaXHXni/Xni/Xni/Xni/Xni/Xni8AAAAAAAAAAAAAAAAAAADXni/Xni/Xni/Xni/Xni8AAADXni/Xni/Xni/Xni8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADXni+76KTIAAAALXRSTlMAwICg8BBAgER3u8Bg0CAw4ECwkHBQEe4i3ZlmVYjMMxCq8GDQ4KAwsHCQUCDJRg+JAAAKRklEQVR42u2d6WKjOAyAzdkkDYHJ0aTTbjvTOXa3O/b7P95CCITbkixT2qIfbROD8YeELMlOKsT0ZOMqpcRnkZ3K5TOwHlRFgg9Pm6iauB8ZNlYd8nFxXaU+E/BWqc8DfFAD8vFwQ6U+E7DSycealxItr9p/HNqNAsknw/0owJ5SnwrYh/OqcEoDD6wacy7OlHgpBrdXSJnWJOrZVe+0gPHjCfC4+2BqQZJnT71uMM2gkC2MnHSAVZlZPJN8t0u2E5xJI6RfAVtz8i4iJY/LW3nivaTsHOoNhXg/gb9n7K2mi9sN4NEqOIWs32GVgp4oTLz4HKEczrv1y3qCroPX79uWBycYhzIb+djLx6HrOrlsXTfcvF1RNSA8vuBU97DV3ThvM7JBB4THF2ZRbgIN0qL9eLWZGG3OEFflKILsx6i9rdH6dcBL4gRxbRu0h3XPPnHmQ8jaIm+E1e+BuyxiKRHZwp0PnXej+CQKxgopB0dBXTglib9h5w1wvOE4ymWIXHv626F4E6OVRKI4nA9whOLtnyPXyp7YfYBjypUjpaYGnEAfYMKFPau4tDAkgSLgr2tXu1QFQyNofHDl2+YlzUs+0OX62L0p1nFpCg6BXW2x7tk+Lm0ahtoKMpLfj8DLqOAEHvTz5Ai+2xmlhQ67iwZS9F40Nk93dzqdbBkVDOwpwugXrl4nNNq0aQ/4gPLP1uaUnfn6jQ/i9TD6heUJB/O8PWHbZBRAVRYTl8bNcveY26B9KC/RnBnKUWuii05AA9oiykqj7VNy+RQMNeiAUGr2JvjJCwfIGxOqOJNcKoTGEAJVHZjELgDfQME+mjeY6FowMMTC8vpvj9tdWQtgbihA8mKSmVziN1IwNAGOjZf8wl2HMTmMGzIdiF+BVrsC4mJEbmrawpcTjKTgjXl1T+ebQ6vVKx0LMXcURGeFrc/77HMSyFB9TLGOe008YN2+EpBSC0EZ3mHsFUMISmJY/Olfp3eVGrt0B3ALAexqAa7axbJwmvBYNG/xR9nRLlHLCrA136wYojg3KxlnmmQFx2AHPcLammem4DUkIABPLeMsvhgBQ8a2Mal2BYpffLvAPtSgx1tb860q2ITX2nramgU4MMgdSXuNDSQiFWf5cmU10uOL8F1Ei17D1l924+5aAhAf9Cs9BrljZPb8Jjv3XOHZu47P5bqICo6oBh0ZfQQzdIyXmPXDPNAVHJB4XeNvQFE44AP+CWbTL2wlcZOQA80dzaJBHitE88K3hmqREQp29QmcTyuGDD+APrJgs6GEIAFNwRvIRCNw+ywJC7weXse+9sA1wPLM995Sl9bW2BKffqQAlsSw+GOychoje9WbFltxwNZnjwYcQwwCRkfaIWhbTmRvKRFxJ13t5blyx7XNj9PBH2P9Ifqq6A5EYXffA3jrp/aImHRL2hiJ9V08IBXvKD7axwdivQn/8Ne01DMFN8SbtcsxKcUAi4aW5wemGwdZig2IZfNQG8rgAzGBDfA90gaCSH8gQ9QBUfAep1+P+jFp/eROmZR26Cc4xFTbQpMNAL5mcj9QwiymGm9PuLEzK8dqjMDRjXWjKEckxOKAfvOetoPtcKyq7cXX3lnASHy2b4oA2MhhcLc5xWfpu4ggafqeYzWipyS6xxRokRYdcS2kEz9S3GEnCSqvcpCzMLV+y1adjw1zjBg3KR2IxQHGxbW1GTAyl+JaljL5VPHaLjA2tfANtzpZXviPdAckHEV8j3mxOKADh7onNLYQiJlvbdmT9+4gAzFXm+BuAYHYYazdLK6NR3iDV7Aa66sOEhvA+snVxQYc2TfEmX4Cl+ySkIEYQMGD+UJ0gEYmNGBXp55IWwHXAq/BBt2OlAPfaNlR54O3ujuitdcd+VMFfTtkAwMVb+w/wuTiwNBiBJk4fBPgLWxdiFBzp6ytGvM4HHGJNnTyabvEHQvAa+Rie0DbS+dz7UfDeXFKpBZT1lmpn2Q3Bw6ZIzXBOKXqTyQAB8zPxJac+xwImTEBeIxpKzD4X3NmwLEpT8gxT5vsmBS4SWVtCuxoE1eTzTweA7DL65MUIZ1WjCVIfaDlmvokjzudFrh/5eQggUMUcEjILbDTlpnX1dpTiOrPuANBzOP5gIUpcIDyiqHhDpexgbemoalrCOzgfLxrYdbBATuGwC7uW7neAjhkBQ5x1UvnzYGV6S61Gfhj/9f1WWaZZZZZZpllllmmIjKXxru3jXdll9z0tP686bnKzUBn/e0/f/SMGTaaRqsN4Ex+8AG3u5sisJT/cgLXu5smsPzNCiynDyx/sQLL6QNLXuBfbwAM8/S/NcCl3HT3qu0ONRqjaQnaR89tpQG3u5se8H/5Gy9MwM3upgcsuo2QCtx8ZwaegWfgGVgTOVxef6nKwCUuJLdMwM3uQKPpacUBD4d6rTe+8QD/bnaHDzztAt+yRlp/bmmjGQEYGksDgbXh8OSABSvwq2AFvq3LCwOw4AUWvMAc01KPAbIAIyae8ebhvvqOOfAfMUnggSOpXvpnq3YyVeAfPMBiqGo5kdCS7Rnuv/K0gP/uH6IB8K/pAhfELzzAxauX6QKLdqRgAvwNOpW+HfBrK3cwSh5eWyoeD/imLn19vLKWaUVfoNsYzQ/QWE0K8VKXHr7yAH9pdtc9mltYZGoF+IvsTNmpBYAv3debELB46TzCtMQjpwvcPUQy8DfZNTdPCvif+igMgcvuGIBnmWWWWWaZZZZZZpllFkHdP1x98Zj+WLQyh+KvRStBO79Ytju6nlEG/KvivZX8eu362Di30ijEQ3aJp85q9fn3Y0cxN73iXf6euLLUqxNVYNEGXkr5YAx8qgDX86zGub2ZXBew7AaWg8Bf5fWKf8ka1qWzY3n4onVz9MB/HS8jWpUXPFVOzd8uz6011jPsZS2BzHstDq40Lso+u/sRzxfg5+zn1y7g5wcT4Pw4+VACp8edn5z81DtZO7fSeCdP/cAreTYb0Ql8lEPA5ws8PD3K8pg6cKb1wqZpwMf8Vwl8Eo/yeur5tCvwtXHVuO81YJE9qOnBncD5y37gdCTHRdZ+KoBXmRTND4Wp9wIPVBXSM1b5HSuA8zt7KgeaGv11TNXG5mrN/XVQadPqSWTGIVuNi3OfQ8CP+XnpcasCeJlJ4bJK703UcKqM889VZSKQFc1kVyhfVxovHlHKxUUv10HJc6+yAnxtzIBFpaljYDJnlkXLordgSAP+vpJX4Oe6613mlJfXtcan4phFl0mn/WW2123S+U3sB15mb6VmmxlXC2u5SOW7CXDaciqBU4VlcvaRxam5spqNy2HgpazYbRNYrI5DwDI75i51pHctrDtZpSMCn42tAP5+/nU8VoEvE99do/FhCFgsFwPA2U0cAq7N4pdnOD/vEvfcy0rLCQlc+sZiEjwP6HrqXTmCWuPibBmn2jPcvFTtGV5WgI+yHzg3jnTOvy+jo2sUdTnmVI1bFnTg433x8qly6v3lYvXG9CmuXq4WaTWBq5FW66a8o6L0IvUgc7ozyyyz5PI/yAnxfkvypbwAAAAASUVORK5CYII=" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>香港</em><b style="color:var(--gold-deep)">分红险</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods" id="home-mods"><h2>按模块学习</h2></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <div class="foot">内容取材自承瑞「香港分红险101」顾问培训课程及《客户问答与演练手册》；产品实例为周大福人寿「匠心·传承」储蓄寿险计划2（尊尚版）。利率、实现率、偿付能力等市场及公司数据会变动，展示前须核对最新公开资料。仅供承瑞内部顾问培训使用，不得发给客户；向客户介绍时，以保险公司最新的产品小册子、建议书及保单条款为准。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* 香港分红险 · 问答特训 — 内容数据
+   内容来源：承瑞「香港分红险101 · 顾问培训」视频课程及《客户问答与演练手册》《课后测验》。
+   产品实例：周大福人寿「匠心·传承」储蓄寿险计划2（尊尚版）计划一览表及课程案例。
+   市场与公司数据（利率、实现率、偿付能力、评级）以课程资料为准，展示前须核对最新公开资料。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "一句话讲清分红险", color: "brown" },
+  { id: "m1", no: "01", name: "产品结构", sub: "保证 + 非保证", color: "gold" },
+  { id: "m2", no: "02", name: "钱去了哪里", sub: "分红基金、投资组合、公司实力", color: "slate" },
+  { id: "m3", no: "03", name: "6.5% 与回报率", sub: "演示上限、IRR、回本时间", color: "ci" },
+  { id: "m4", no: "04", name: "分红实现率", sub: "怎么看、怎么讲", color: "med" },
+  { id: "m5", no: "05", name: "独有功能", sub: "转换受保人、类信托、分拆、换币", color: "teal" },
+  { id: "m6", no: "06", name: "复利与提取密码", sub: "X-Y-Z 与两个案例", color: "plum" },
+  { id: "m7", no: "07", name: "客户异议", sub: "8 个最常听到的问题", color: "orange" },
+  { id: "m8", no: "08", name: "合规红线", sub: "哪些话不能说", color: "red" }
+];
+
+window.PRODUCTS = {
+  cf: "产品实例 · 周大福人寿「匠心·传承2」（尊尚版）",
+  c1: "课程案例一 · 40 万美元，每年提取 2 万",
+  c2: "课程案例二 · 爷爷给孙子的 100 万美元",
+  mk: "课程资料数据 · 展示前须核对最新数字"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "分红险是什么？一句话怎么讲？",
+    a: "分红险是一份长期储蓄型寿险：客户交几年保费，保险公司把钱放进分红基金长期投资，每年把投资盈余的一部分以红利形式分给保单。\n跟客户讲一句就够：「一部分写进合同保证给你，另一部分跟着公司的长期投资表现走，时间越长，复利越明显。」",
+    k: ["长期储蓄", "保证 + 非保证", "靠时间和复利"],
+    t: "不要把分红险讲成「存款」或「理财产品」。它是保险合约，红利不保证，提前退保可能亏本。" },
+
+  { m: "m0",
+    q: "什么样的客户适合分红险？",
+    a: "适合有一笔 5 年内用不到、希望长期增值的闲钱，并且想做以下规划的客户：子女教育金、退休现金流、财富传承、美元资产配置。\n不适合：短期要用钱、只能接受保本保息、无法承受红利波动的客户。",
+    k: ["闲钱", "长期持有", "有明确目的"],
+    t: "先做需求分析（FNA）再推荐。客户说「放一两年就拿出来」，要直接告诉他这不是合适的工具。" },
+
+  { m: "m0",
+    q: "香港分红险和内地的增额寿、分红险有什么不同？",
+    a: "三点最大的不同：\n· 投资范围：香港分红基金可以投 50–75% 在股票类资产，并且全球配置；内地险企的权益类投资占总资产比例较低。\n· 演示上限：香港美元保单演示回报上限 6.5%，内地分红险演示上限已降至 3.5%（2026 年 7 月起）。\n· 功能：香港保单普遍有无限次转换受保人、多币种转换、保单分拆等，适合跨代传承。",
+    k: ["全球配置", "演示上限不同", "传承功能"],
+    eg: "mk",
+    e: "内地：预定利率约 1.75%；分红险演示上限 3.9% → 3.5%（2026-07-01 起）。\n香港：美元保单演示上限 6.5%、港元 6%（2025-07-01 起）。",
+    t: "不要贬低内地产品，说「内地的不行」。讲清楚两边的规则差别，让客户自己比较。" },
+
+  /* ---------- 01 产品结构 ---------- */
+  { m: "m1",
+    q: "一份分红险由哪几个部分组成？",
+    a: "四个基本要素：\n· 保费：每期交多少钱。\n· 缴费年期：交多少年，交满就完成本金投入。\n· 现金价值：退保时可以拿回的钱，也是日后提取的来源。\n· 保证 + 非保证：保证部分写进合同；红利由公司每年厘定，可升可跌。",
+    k: ["保费", "缴费年期", "现金价值", "保证/非保证"],
+    eg: "cf",
+    e: "最低年缴：4,500 美元（2 年缴）或 1,560 美元（5 年缴），也可一笔过预缴。\n投保年龄上限：80 岁（2 年缴）/ 75 岁（5 年缴）。\n保障期：至受保人 128 岁。" },
+
+  { m: "m1",
+    q: "建议书上的「退保发还总额」是怎么算出来的？",
+    a: "退保发还总额 = 保证现金价值 + 复归红利 + 终期分红。\n只有第一项是合同保证的，后两项都是非保证红利，由保险公司每年根据投资表现厘定。",
+    k: ["三项相加", "只有一项保证"],
+    t: "客户指着总额问「这是我能拿到的吗？」，一定要指出哪一行是保证、哪两行是非保证。" },
+
+  { m: "m1",
+    q: "复归红利和终期分红有什么区别？",
+    a: "复归红利：每年宣布一次，一经派发就加进保单、成为保证部分，之后不会再被拿走。\n终期分红：只是一个「浮动数」，要到退保、提取或理赔那一刻才真正兑现，期间每年都可能调整。\n简单讲：复归红利是「落袋为安」，终期分红是「到时再算」。",
+    k: ["复归红利派了就保证", "终期分红兑现时才确定"],
+    t: "不要说「终期分红每年都派」。它要到退保、提取或理赔时才兑现，中途可以上调也可以下调。" },
+
+  { m: "m1",
+    q: "为什么前几年退保会亏本？",
+    a: "保单早期，保费要覆盖保险公司的开支、佣金和保障成本，红利也还没累积起来，所以早年的现金价值通常低于已交保费。\n分红险是为长期持有设计的，一般要持有多年才回本，越往后复利越明显。",
+    k: ["早期现金价值低", "长期持有"],
+    eg: "cf",
+    e: "课程案例（不提取）：第 5 年内部回报率约 0.3%，基本只是回本；第 10 年约 4.2%；第 15 年约 5.3%。",
+    t: "签单前要让客户清楚看到早年的退保价值，不要只给他看第 20、30 年的数字。" },
+
+  { m: "m1",
+    q: "保证部分和非保证部分，哪一部分占大头？",
+    a: "前期保证部分占比较高，越往后非保证红利占比越大。长期的增长主要来自红利和复利。\n这也是为什么要讲清楚：长线数字越漂亮，越依赖非保证部分。",
+    k: ["前期靠保证", "后期靠红利"],
+    eg: "c1",
+    e: "保证现金价值占总价值的比例：\n· 第 5 年：约 44%\n· 第 21 年：约 34%\n· 第 41 年：约 9%\n· 第 101 年：约 0.2%",
+    t: "不要只讲后段的大数字。客户需要知道这些数字大部分是非保证的。" },
+
+  /* ---------- 02 钱去了哪里 ---------- */
+  { m: "m2",
+    q: "客户问：「我交的钱去了哪里？」",
+    a: "保费进入保险公司的分红基金，由专业团队长期投资，主要是债券等固定收益资产加上股票类资产。\n每年保险公司根据投资回报、开支和理赔经验，决定派多少红利给保单持有人。",
+    k: ["分红基金", "长期投资", "每年厘定红利"] },
+
+  { m: "m2",
+    q: "什么是「平滑机制」？",
+    a: "好年份不把盈余一次派完，留一部分起来；差年份拿留存的盈余补贴，让每年派发的红利不会大起大落。\n平滑机制能减少波动，但不能消除波动。遇到长期市场下跌，红利仍然可能下调。",
+    k: ["好年留存", "差年补贴", "减少但不消除波动"],
+    t: "不要说「有平滑机制所以红利不会跌」。它只是让波动变小。" },
+
+  { m: "m2",
+    q: "分红基金的盈余，有多少分给保单持有人？",
+    a: "香港的分红保单，可分配盈余的九成以上分给保单持有人，其余归股东。内地分红险一般规定不低于 70% 分给保单持有人。\n这个比例反映的是盈余怎么分，不是回报有多高。",
+    k: ["香港 90%+", "内地 ≥70%"],
+    eg: "mk",
+    e: "以课程资料为准；不同公司、不同产品的分配政策不同，具体以保险公司公布的红利政策为准。" },
+
+  { m: "m2",
+    q: "分红基金投资什么？股票占多少？",
+    a: "产品有一个目标资产组合，一般是固定收益 25–50%、股票类 50–75%。股票比例越高，长期潜在回报越高，波动也越大。",
+    k: ["固收 25–50%", "股票类 50–75%"],
+    eg: "cf",
+    e: "目标组合：固定收益 25–50%，股票类 50–75%。\n「财富跃进选项」：股票类 60–85%，追求更高增长。\n「稳健资产户口」：100% 固定收益，用来锁定部分价值。\n公司整体：约 78% 投资于债券，其中约 71% 评级 A− 或以上。",
+    t: "股票比例高不等于回报一定高。要讲清楚这是目标比例，实际配置会随市场调整。" },
+
+  { m: "m2",
+    q: "香港分红险和内地保险在投资上有什么不同？",
+    a: "香港分红基金可以全球配置，股票类比例可以较高；内地险企受监管限制，权益类投资占总资产的比例较低，主要投资国内债券。\n在利率下行的环境下，内地产品的长期回报空间相对受限。",
+    k: ["全球配置", "股票比例更高"],
+    eg: "mk",
+    e: "内地险企权益类投资上限约占总资产 10–15%（金融监管总局，2025）。" },
+
+  { m: "m2",
+    q: "怎么向客户说明保险公司的实力？",
+    a: "看两个指标：\n· 偿付能力充足率：实际资本 ÷ 最低资本要求。数字越高，代表应付极端情况的缓冲越厚。\n· 信用评级：国际评级机构对公司财务实力的评价。\n另外可以讲母公司背景和在香港的经营年期。",
+    k: ["偿付能力充足率", "信用评级"],
+    eg: "mk",
+    e: "周大福人寿：偿付能力充足率 314%（监管最低 150%）；惠誉 A−，穆迪 A3。",
+    t: "偿付能力和评级数字会变动，展示前要核对公司最新公布的数据，并注明日期。" },
+
+  { m: "m2",
+    q: "客户问：「保险公司倒闭了怎么办？」",
+    a: "香港保险业受保险业监管局监管，保险公司要持续满足偿付能力要求，并定期提交报告。万一公司出现财务问题，监管机构可以介入，保单通常会被转移给其他保险公司继续生效。\n建议客户选偿付能力充足、评级良好、背景稳健的公司。",
+    k: ["保监局监管", "偿付能力要求"],
+    t: "不要说「香港保险公司绝对不会倒」或「政府全额兜底」。只说监管机制和公司实力。" },
+
+  /* ---------- 03 6.5% 与回报率 ---------- */
+  { m: "m3",
+    q: "客户问：「6.5% 是保证的吗？」",
+    a: "不是。6.5% 是香港保险业监管局规定的美元保单演示回报上限（港元保单是 6%），意思是建议书演示的非保证回报不能超过这个数。\n它不是保证，也不是承诺。实际派发可以高于演示，也可以低于演示。",
+    k: ["监管演示上限", "美元 6.5% / 港元 6%", "不是保证"],
+    eg: "mk",
+    e: "2025 年 7 月 1 日起：美元保单演示上限 6.5%，港元保单 6%。",
+    t: "最常见的违规说法：「保证 6.5%」「每年 6.5%」「年化 6.5%」。都不能说。" },
+
+  { m: "m3",
+    q: "客户问：「6.5% 是每年都有 6.5% 吗？」",
+    a: "不是。6.5% 是长期演示的上限，而且指的是长期的内部回报率，不是每年的收益率。\n分红险前几年回报很低，甚至退保会亏本，回报率是随持有时间慢慢爬升的。",
+    k: ["不是每年", "长期才接近"],
+    eg: "cf",
+    e: "课程案例（不提取）内部回报率：\n· 第 5 年：约 0.3%\n· 第 10 年：约 4.2%\n· 第 15 年：约 5.3%\n每年提取 2 万美元的案例：第 21 年约 4.8%，第 101 年约 6.3%。" },
+
+  { m: "m3",
+    q: "什么是内部回报率（IRR）？",
+    a: "内部回报率是把每一笔交进去的钱和每一笔拿出来的钱，按时间算出的年化回报。它考虑了钱的时间价值，比「总共翻了几倍」更能比较不同方案。\n看建议书时，要看某一年退保的 IRR，而不是看总额翻了几倍。",
+    k: ["年化", "考虑时间", "用来比较方案"],
+    t: "「20 年翻 3 倍」和「年化 6%」是两回事，不要混着讲，客户会误解。" },
+
+  { m: "m3",
+    q: "客户问：「6.5% 是怎么做到的？是不是吹的？」",
+    a: "可以用简单的股债组合来说明这个数并不夸张：\n假设一半投美国 10 年期国债、一半投标普 500，按历史回报估算，长期组合回报大约在 8–10% 之间。扣除保险公司开支、保障成本和股东份额后，长期演示 6.5% 左右是有依据的。\n但这只是历史推算，不代表未来回报。",
+    k: ["股债组合推算", "扣除成本后", "历史不代表未来"],
+    eg: "mk",
+    e: "课程推算（截至 2026-10-01）：美国 10 年期国债约 5.24%。\n一半国债 + 一半标普 500（近 10 年年化约 15.4%）≈ 10.3%。\n若用标普 500 长期平均约 12.2% 计算 ≈ 8.7%。\n对比：中国 10 年期国债约 1.8%。",
+    t: "这是帮助理解的推算，不能说成「保险公司就是这样投资的」或「所以一定能做到」。利率数据要更新。" },
+
+  { m: "m3",
+    q: "客户问：「要多少年才能回本？」",
+    a: "要看产品和缴费方式，一般要持有多年，退保价值才会超过已交保费。具体请客户看建议书里「退保发还总额」高于「已缴保费总额」的那一年，并且分开看保证部分要几年才回本。",
+    k: ["看建议书", "分开看保证与总额"],
+    t: "不要只讲「几年回本」。要同时说明这是基于非保证红利的演示。" },
+
+  { m: "m3",
+    q: "缴费期间手头紧，交不了保费怎么办？",
+    a: "部分产品有「保费假期」：在条款允许的情况下，可以暂停缴费一段时间，保单继续有效。另外也可以考虑减额缴清或保单贷款，但都会影响长期价值。\n最好的做法是投保前就确认这笔钱在缴费期内交得起。",
+    k: ["保费假期", "减额缴清", "保单贷款"],
+    eg: "cf",
+    e: "课程资料：可申请最长 2 年的保费假期（须符合条款条件）。",
+    t: "不要用「交不起可以停」来促成签单。停缴会影响保单价值，具体以条款为准。" },
+
+  /* ---------- 04 分红实现率 ---------- */
+  { m: "m4",
+    q: "什么是分红实现率？",
+    a: "分红实现率 = 实际派发的非保证利益 ÷ 当初建议书演示的非保证利益。\n100% 代表公司做到了当初演示的水平；高于 100% 代表派得比演示多；低于 100% 代表派得比演示少。",
+    k: ["实际 ÷ 演示", "100% = 做到演示"],
+    t: "实现率是过去的表现，不代表未来，讲的时候要加这句。" },
+
+  { m: "m4",
+    q: "在哪里可以查到分红实现率？",
+    a: "香港保险公司须按保险业监管局的要求，在公司网站上公布各分红产品的红利实现率。可以直接到保险公司官网查，也可以在保险业监管局的相关页面找到索引。",
+    k: ["保险公司官网", "按监管要求公布"] },
+
+  { m: "m4",
+    q: "怎么解读分红实现率？有哪四个问题要问？",
+    a: "四个问题：\n· 看长期：只看一两年没有意义，要看多年的走势。\n· 分开看：复归红利和终期分红的实现率要分开看。\n· 同类比较：同类型产品、同一年份发出的保单之间比较。\n· 连到方案：实现率变化对客户的提取方案有什么影响。",
+    k: ["看长期", "分两种红利", "同类同年比", "连到提取方案"] },
+
+  { m: "m4",
+    q: "香港分红险的实现率一般是多少？",
+    a: "大部分产品的实现率在 80–110% 之间，不同公司、不同年份差别不小。要以保险公司最新公布的数据为准。",
+    k: ["多数 80–110%", "以最新公布为准"],
+    eg: "mk",
+    e: "课程资料：2023 年香港市场实现率约 85–107%；周大福人寿相关产品 2023 年实现率达 100% 或以上。",
+    t: "不要说「这家公司实现率一直 100%」。要说明年份、产品和数据来源。" },
+
+  { m: "m4",
+    q: "客户问：「实现率低于 100% 是不是很差？」",
+    a: "不一定。要看低了多少、持续多久、是哪一种红利。终期分红跟市场走，市况差的年份暂时低于 100% 是正常的；如果复归红利长期偏低，才需要注意。\n也要看同类产品在同一年份的表现，再下结论。",
+    k: ["看幅度和年期", "看是哪种红利", "同类比较"] },
+
+  /* ---------- 05 独有功能 ---------- */
+  { m: "m5",
+    q: "什么是「无限次转换受保人」？",
+    a: "保单持有人可以把受保人换成另一位家人，保单继续生效，现金价值继续累积，不需要退保重买。可以一代接一代地延续下去，适合做跨代传承。",
+    k: ["保单不中断", "可多次转换", "跨代传承"],
+    eg: "cf",
+    e: "第 6 个保单周年日起可申请。\n新受保人：0–65 岁，且不能比原受保人大 10 岁或以上。\n须与保单持有人有可保权益（如祖父母、父母、配偶、子女或公司员工）。\n年缴保费超过 80 万美元时，须回答一条健康问题。\n转换后保障至新受保人 128 岁。",
+    t: "条件以条款为准。不要说「随时可换、什么人都可以换」。" },
+
+  { m: "m5",
+    q: "什么是「类信托」安排？",
+    a: "保单持有人可以预先指定，在受保人身故后，身故赔偿怎么付给受益人：一笔过、分期，或者先付一部分再分期。这样可以避免下一代一次过拿到大笔钱。\n效果类似信托，但它不是法律意义上的信托。",
+    k: ["预设支付方式", "分期给受益人", "不是法律信托"],
+    eg: "cf",
+    e: "最多可指定 2 位后续持有人。\n支付方式：一笔过；10 / 20 / 30 年分期；每年递增 3%；或先付 5% 以上，余数分期。\n未支付的余额每年按 2% 累积。\n支付方式须由保单持有人在受保人在世时决定。",
+    t: "不能说「这就是信托」或「有信托的法律保护」。只能说「类似信托的效果」。" },
+
+  { m: "m5",
+    q: "保单可以分拆吗？有什么用？",
+    a: "可以把一份保单拆成几份，分给不同的家人，每份各自独立。适合将来分给几个子女，或者分开用作不同用途。",
+    k: ["一拆多份", "分给不同家人"],
+    eg: "cf",
+    e: "第 5 个保单年度终结后可申请分拆（须符合条款条件）。" },
+
+  { m: "m5",
+    q: "可以转换保单货币吗？",
+    a: "可以。客户将来可能在不同国家或地区生活或用钱，可以把保单转成需要的货币。",
+    k: ["多币种", "免核保"],
+    eg: "cf",
+    e: "第 3 个保单周年日起可申请，无需核保。\n可选：美元、港元、人民币，以及另外 5 种货币。",
+    t: "转换货币时按当时汇率计算，会有汇率风险。不要说「随时换、没有损失」。" },
+
+  { m: "m5",
+    q: "什么是「财富增值调配」？",
+    a: "保单持有人可以把保单的一部分价值，在不同风险程度的投资方案之间调配，例如把部分价值转到较稳健的户口，锁定已累积的价值。",
+    k: ["调配风险", "锁定价值"],
+    eg: "cf",
+    e: "第 15 个保单周年日起可用。\n富先生例子：30 岁，每年 10 万美元 × 5 年。\n· 第 15 年：三种方案都约 41 万\n· 第 20 年：增进约 78 万 / 均衡约 67 万 / 保守约 56 万\n保守方案流动性最高，增进方案潜在增长最高。",
+    t: "这些都是演示数字，含非保证红利。不要说「选增进方案一定拿 78 万」。" },
+
+  { m: "m5",
+    q: "这几个功能，哪一个最打动客户？",
+    a: "看客户的目的：\n· 想传承给下一代：转换受保人 + 类信托。\n· 有几个子女要分：保单分拆。\n· 子女将来出国：货币转换。\n· 担心市场波动、想锁定收益：财富增值调配。\n先问客户的需要，再挑功能讲，不要一口气全部讲完。",
+    k: ["按需要挑功能", "不要全讲"] },
+
+  /* ---------- 06 复利与提取密码 ---------- */
+  { m: "m6",
+    q: "为什么说分红险的复利「集中在后段」？",
+    a: "复利是利滚利：前期本金小、时间短，增长看起来很慢；越往后，累积的红利本身也在产生红利，增长就越来越快。\n所以分红险最大的价值，在于长期持有，不在于头几年。",
+    k: ["利滚利", "越后越快", "长期持有"],
+    eg: "c1",
+    e: "40 万美元保单，第 2 年起每年提取 2 万美元：\n· 第 21 年：累计提取 40 万，户口约 40 万\n· 第 41 年：累计提取 80 万，户口约 81 万\n· 第 61 年：户口约 247 万\n· 第 101 年：户口约 4,400 万",
+    t: "这些长线数字是演示，依赖非保证红利。要讲「按演示」「如果红利按建议书派发」。" },
+
+  { m: "m6",
+    q: "什么是「提取密码」X-Y-Z？",
+    a: "用三个数字快速描述一个提取方案：\n· X：缴费年期\n· Y：从第几年开始提取\n· Z：每年提取总保费的百分比\n例如 5-6-7：交 5 年，第 6 年开始，每年提取总保费的 7%。",
+    k: ["X = 缴费年期", "Y = 开始提取", "Z = 每年提取%"],
+    eg: "cf",
+    e: "2-2-5：每年 5 万美元 × 2 年（总保费 10 万），第 2 年起每年提取 5%，即 5,000 美元。\n5-6-7：每年 2 万美元 × 5 年（总保费 10 万），第 6 个周年日起每年提取 7%，即 7,000 美元。",
+    t: "提取百分比是按演示计算的可持续水平，含非保证红利。不能说「保证每年领 7%」。" },
+
+  { m: "m6",
+    q: "提取密码怎么帮客户做规划？",
+    a: "先问客户三件事：手上有多少钱可以交、交几年、什么时候开始要用钱、每年要用多少。然后对应成一个 X-Y-Z，再用建议书确认这个方案在演示下能不能持续，以及在悲观情境下会怎样。",
+    k: ["先问需要", "对应 X-Y-Z", "看悲观情境"] },
+
+  { m: "m6",
+    q: "「VIP 小姐」案例怎么讲？",
+    a: "VIP 小姐选择 2-2-5 方案：每年交 20 万美元，交 2 年，总保费 40 万；从第 2 年起每年提取 2 万美元，一直领到 128 岁。\n重点讲三件事：提取很早开始、每年的现金流稳定、提取多年后户口价值仍然在增长。",
+    k: ["2-2-5", "早开始", "长期现金流"],
+    eg: "c1",
+    e: "保证现金价值占总价值的比例：第 5 年 44%、第 21 年 34%、第 41 年约 9%、第 61 年约 2.6%、第 101 年约 0.2%。\n第 21 年累计提取 40 万，户口约 40 万；第 41 年累计提取 80 万，户口约 81 万。",
+    t: "讲案例时要同时出示保证部分占比，让客户知道越往后越依赖非保证红利。" },
+
+  { m: "m6",
+    q: "「爷爷给孙子」案例怎么讲？",
+    a: "爷爷为孙子投保，每年交 50 万美元 × 2 年，总保费 100 万，并附加保费豁免。孙子成长的每个阶段都有钱可以用：读大学、结婚、置业，之后还有长期现金流，保单还可以继续传下去。",
+    k: ["隔代传承", "按人生阶段提取", "保费豁免"],
+    eg: "c2",
+    e: "提取安排：\n· 17–22 岁：每年 10 万（大学）\n· 25 岁：20 万；30 岁：20 万\n· 32 岁：200 万（置业）\n· 37 岁起：每年 10 万\n按演示：30 岁时累计提取 100 万、户口约 425 万（本金约 4.2 倍）；第 75 个保单年度累计提取约 700 万、户口约 2,980 万。",
+    t: "这是演示，红利非保证。孙子的年龄、用途要按客户实际情况做，不要照搬。" },
+
+  { m: "m6",
+    q: "客户问：「提取了，会不会影响后面的增长？」",
+    a: "会。每提取一笔，户口里用来复利的钱就少一些，后面的价值就会比不提取的少。提取越早、越多，影响越大。\n规划时要在「现在要用多少」和「将来留多少」之间平衡，并且看悲观情境下方案是否仍然可持续。",
+    k: ["提取会减少复利", "早用 vs 多留"] },
+
+  /* ---------- 07 客户异议 ---------- */
+  { m: "m7",
+    q: "「非保证的东西，我怎么相信？」",
+    a: "先认同：「你有这个顾虑很合理。」\n然后讲三点：保证部分写进合同；非保证部分有平滑机制，而且保险公司须公开历年分红实现率，可以查；选一家实力好、实现率记录稳定的公司。\n最后让客户自己看悲观情境的数字，确认最坏情况下也能接受。",
+    k: ["先认同", "保证 + 实现率 + 公司实力", "看悲观情境"] },
+
+  { m: "m7",
+    q: "「放银行定期不是更安全吗？」",
+    a: "定期存款适合短期、要随时用的钱；分红险适合长期、5 年以上用不到的钱。两者不是二选一。\n可以说：「短期要用的钱放定期，长期不用的钱可以考虑分红险，因为它能锁定较长的时间，长期复利空间更大。」",
+    k: ["短期 vs 长期", "不是二选一"],
+    t: "不要拿分红险的长期演示回报和定期存款利率直接比较，说「比存款高几倍」。" },
+
+  { m: "m7",
+    q: "「买基金、买股票不是更好吗？」",
+    a: "股票和基金流动性好、潜在回报高，但波动大，要自己管理。分红险有保证部分、有平滑机制、有保险功能和传承功能，适合当作长期稳定的底仓。\n可以说：「两者用途不同，分红险是长期的底仓，股票基金是进攻的部分。」",
+    k: ["底仓 vs 进攻", "功能不同"] },
+
+  { m: "m7",
+    q: "「我要去香港签单，太麻烦了。」",
+    a: "先认同。然后说明：按香港法规，香港保单须在香港签署，这是对客户的保障。\n可以帮客户把行程安排好，把体检、开户、了解香港其他金融服务一起安排，一趟办完。",
+    k: ["必须在港签", "一趟办完"],
+    t: "绝对不能建议在内地签单、寄送文件签署，或者事后补签。" },
+
+  { m: "m7",
+    q: "「钱放进去 5 年都拿不出来？」",
+    a: "早期可以退保或提取，但现金价值较低，可能亏本。这是长期产品，所以只建议用 5 年以上用不到的闲钱。\n如果客户中途可能要用钱，可以考虑保单贷款，或者调整保费金额，留足流动资金。",
+    k: ["早期退保会亏", "只用闲钱", "留足流动性"] },
+
+  { m: "m7",
+    q: "「我年纪大了，还适合买吗？」",
+    a: "适合，而且常常是做传承的好时机。即使投保人年纪大，也可以通过转换受保人，把保单延续给子女或孙辈，保单不会因为第一位受保人离世就结束（视乎条款）。\n要提醒客户：投保年龄有上限，越早规划，复利时间越长。",
+    k: ["传承工具", "转换受保人", "注意投保年龄上限"],
+    eg: "cf",
+    e: "投保年龄上限：80 岁（2 年缴）/ 75 岁（5 年缴）。" },
+
+  { m: "m7",
+    q: "「美元汇率会不会有风险？」",
+    a: "会。如果客户将来用人民币消费，美元保单兑回人民币时会有汇率风险。\n但美元是国际主要储备货币，对很多客户来说，持有一部分美元资产本身就是分散风险。如果将来需要，保单也可以转换货币。",
+    k: ["有汇率风险", "美元配置", "可转换货币"],
+    t: "不要说「美元一定升值」或「没有汇率风险」。" },
+
+  { m: "m7",
+    q: "「我再考虑一下。」",
+    a: "先问清楚是哪一点还没想好：金额、年期、红利不确定，还是要和家人商量？针对那一点补充资料，不要逼单。\n可以留下建议书和悲观情境的数字，约好下次跟进的时间。",
+    k: ["找出真正的顾虑", "不逼单", "约好跟进"] },
+
+  /* ---------- 08 合规红线 ---------- */
+  { m: "m8",
+    q: "哪些说法绝对不能说？",
+    a: "以下说法都不能说：\n· 「保证 6.5%」「年化 6.5%」「每年 6.5%」\n· 「稳赚不赔」「保本保息」\n· 「一定能拿到这个数」「肯定会派」\n· 「这就是信托」\n· 「比银行存款高几倍」\n· 「这是投资产品 / 理财产品」",
+    k: ["不能说保证", "不能说一定", "不能比存款"] },
+
+  { m: "m8",
+    q: "讲长线数字时，正确的说法是什么？",
+    a: "每个数字前面加限定：「按建议书演示」「如果红利按演示派发」「这部分是非保证的」。\n同时出示保证部分和悲观情境的数字，让客户知道最坏情况下会怎样。",
+    k: ["加限定词", "出示保证部分", "出示悲观情境"] },
+
+  { m: "m8",
+    q: "引用「市场首创」「独有」等说法要注意什么？",
+    a: "只能引用保险公司公开资料中的说法，并注明保险公司的比较基准和日期。不要自己加「最好」「唯一」「最高回报」这类说法。",
+    k: ["引用公司原文", "注明比较日期", "不自创最高级"] },
+
+  { m: "m8",
+    q: "签单流程中，有哪些合规要求？",
+    a: "· 先做财务需要分析（FNA），确认产品适合客户。\n· 客户须亲身在香港签署投保文件。\n· 讲清楚保证与非保证利益、早期退保的损失、汇率风险。\n· 告知 21 天冷静期：在冷静期内取消，可以取回已交保费（扣除市值调整，如适用）。",
+    k: ["FNA", "在港签署", "21 天冷静期"],
+    t: "不能帮客户代填健康申报或财务资料，不能把签名页寄回内地签。" },
+
+  { m: "m8",
+    q: "这个 H5 可以发给客户看吗？",
+    a: "不可以。这是承瑞内部顾问培训材料，里面有内部案例、话术和市场推算。\n向客户介绍时，只用保险公司最新的产品小册子、建议书和保单条款，并以这些文件为准。",
+    k: ["仅限内部", "对客户用官方文件"] }
+];
+
+window.QUIZ = {
+  m1: [
+    { q: "「退保发还总额」由哪几项组成？",
+      o: ["保证现金价值 + 复归红利 + 终期分红", "已缴保费 + 复归红利", "保证现金价值 + 身故赔偿", "已缴保费 × 演示回报率"], a: 0,
+      x: "退保发还总额 = 保证现金价值 + 复归红利 + 终期分红，只有第一项是合约保证。" },
+    { q: "关于复归红利和终期分红，以下哪项正确？",
+      o: ["两者每年派发后都成为保证", "终期分红每年派发到户口", "复归红利派发后成为保证，终期分红在退保、提取或理赔时才兑现", "复归红利只在身故时派发"], a: 2,
+      x: "复归红利一经派发就成为保证；终期分红要到退保、提取或理赔时才兑现。" },
+    { q: "按课程案例，长期持有下保证现金价值占比的变化是？",
+      o: ["越来越高", "保持不变", "越来越低", "先低后高"], a: 2,
+      x: "第 5 年约 44%、第 21 年约 34%、第 41 年约 9%、第 101 年约 0.2%。越往后越依赖非保证红利。" }
+  ],
+  m2: [
+    { q: "平滑机制的作用是？",
+      o: ["保证红利不会下调", "好年份留存盈余、差年份补贴，减少波动", "提高长期回报", "把盈余全部分给股东"], a: 1,
+      x: "平滑机制减少波动，但不能消除波动。" },
+    { q: "以下哪个户口 100% 投资固定收益？",
+      o: ["产品目标组合", "财富跃进选项", "股票类户口", "稳健资产户口"], a: 3,
+      x: "稳健资产户口 100% 投资固定收益；50–75% 是目标组合的股票比例，60–85% 是财富跃进选项。" },
+    { q: "偿付能力充足率 314% 是什么意思？",
+      o: ["年回报率 314%", "实际资本约为最低资本要求的 3 倍多", "红利实现率 314%", "保单价值是保费的 3 倍"], a: 1,
+      x: "偿付能力充足率 = 实际资本 ÷ 最低资本要求。数字会变动，展示前须核对。" }
+  ],
+  m3: [
+    { q: "美元分红保单的 6.5% 是什么？",
+      o: ["保证回报", "每年固定收益", "保监局设定的演示回报上限", "公司承诺的最低回报"], a: 2,
+      x: "6.5%（港元 6%）是演示上限，不是保证也不是承诺。" },
+    { q: "关于演示上限，以下哪项正确？",
+      o: ["监管只限制演示，实际派发可以高于或低于演示", "实际派发不能高于演示", "实际派发不能低于演示", "演示上限就是实际回报"], a: 0,
+      x: "监管限制的是建议书怎么演示，不是实际派发多少。" },
+    { q: "课程案例中不提取时，第 10 年内部回报率约为？",
+      o: ["0.3%", "4.2%", "5.3%", "6.5%"], a: 1,
+      x: "第 5 年约 0.3%、第 10 年约 4.2%、第 15 年约 5.3%。" }
+  ],
+  m4: [
+    { q: "分红实现率的计算方法是？",
+      o: ["实际派发 ÷ 已缴保费", "演示非保证 ÷ 实际派发", "实际派发非保证利益 ÷ 演示非保证利益", "保证现金价值 ÷ 总现金价值"], a: 2,
+      x: "实现率 = 实际派发的非保证利益 ÷ 演示的非保证利益。" },
+    { q: "以下哪项不是解读实现率的四个问题之一？",
+      o: ["看长期走势", "分开两种红利看", "同类同年比较", "只看最近一年"], a: 3,
+      x: "四个问题：看长期、分开两种红利、同类同年比较、连到提取方案。" },
+    { q: "实现率 95% 代表？",
+      o: ["回报率 95%", "实际派发是演示非保证利益的 95%", "保证部分是 95%", "有 95% 的保单派了红利"], a: 1,
+      x: "低于 100% 代表派得比演示少，还要看是哪种红利、持续多久。" }
+  ],
+  m5: [
+    { q: "转换受保人从什么时候开始可以申请？",
+      o: ["第 3 个保单周年日起", "第 6 个保单周年日起", "第 5 个保单年度终结后", "第 15 个保单周年日起"], a: 1,
+      x: "第 3 个周年日是货币转换，第 5 年度终结后是保单分拆，第 15 个周年日是财富增值调配。" },
+    { q: "关于类信托安排，以下哪项正确？",
+      o: ["它是法律意义上的信托", "受益人可以自行更改支付方式", "最多指定两位后续持有人，只是类似信托的效果", "只能一笔过支付"], a: 2,
+      x: "最多指定两位；支付方式由保单持有人在受保人在世时决定；只是「类似」信托。" },
+    { q: "货币转换的条件是？",
+      o: ["第 3 个保单周年日起，无需核保", "随时可换，须核保", "只能在美元和港元之间转换", "只能在缴费期内转换"], a: 0,
+      x: "第 3 个保单周年日起无需核保；可选美元、港元、人民币及另外五种货币。" }
+  ],
+  m6: [
+    { q: "提取密码 5-6-7、总保费 10 万美元，每年提取多少？",
+      o: ["5,000 美元", "6,000 美元", "7,000 美元", "70,000 美元"], a: 2,
+      x: "X-Y-Z = 缴费年期 – 开始提取年份 – 每年提取总保费的百分比。10 万 × 7% = 7,000。" },
+    { q: "案例一中，累计提取 40 万、户口约 40 万的是第几年？",
+      o: ["第 21 年", "第 41 年", "第 61 年", "第 101 年"], a: 0,
+      x: "第 21 年累计提取 40 万、户口约 40 万；第 41 年累计提取 80 万、户口约 81 万。" },
+    { q: "爷爷给孙子的案例中，孙子 30 岁时户口约有多少？",
+      o: ["100 万", "约 425 万", "约 700 万", "约 2,980 万"], a: 1,
+      x: "30 岁时累计提取 100 万、户口约 425 万（本金约 4.2 倍）；2,980 万是第 75 个保单年度。" }
+  ],
+  m7: [
+    { q: "客户说「放银行定期不是更安全吗？」，最合适的回应是？",
+      o: ["分红险回报比定期高几倍", "两者用途不同：短期用钱放定期，长期闲钱可考虑分红险", "定期存款会亏本", "分红险也是保本的"], a: 1,
+      x: "不要直接拿长期演示回报和存款利率比较。" },
+    { q: "客户嫌去香港签单麻烦，正确做法是？",
+      o: ["把文件寄到内地签", "先在内地签，下次来港补签", "说明须在港签署，并帮客户安排好行程", "用视频方式远程签"], a: 2,
+      x: "香港保单须在香港签署，不能在内地签或事后补签。" },
+    { q: "客户担心美元汇率，以下哪个说法合规？",
+      o: ["美元一定升值", "美元保单没有汇率风险", "会有汇率风险，但持有部分美元资产可以分散风险，保单也可转换货币", "汇率风险由保险公司承担"], a: 2,
+      x: "要承认有汇率风险，不能说美元一定升值。" }
+  ],
+  m8: [
+    { q: "以下哪句话是合规的？",
+      o: ["这份保单保证每年 6.5%", "按建议书演示，如果红利按演示派发，第 20 年约有这个数", "稳赚不赔，比存款高几倍", "这就是一个信托"], a: 1,
+      x: "长线数字要加限定词，说明依赖非保证红利。" },
+    { q: "长线演示数字为什么不能说「一定有」？",
+      o: ["因为数字太小", "因为依赖非保证红利", "因为保险公司不允许查", "因为汇率会变"], a: 1,
+      x: "长线数字是演示，依赖非保证红利，不能说「一定有」或「保证」。" },
+    { q: "冷静期是多少天？",
+      o: ["7 天", "14 天", "21 天", "30 天"], a: 2,
+      x: "香港个人寿险一般有 21 天冷静期，在期内取消可取回已交保费（扣除市值调整，如适用）。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"],teal:["--teal","--teal-t"],plum:["--plum","--plum-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem("ht-par-pos"),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  function save(){ try{ localStorage.setItem("ht-par-pos", String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod",type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  modList($("home-mods"), startAt);
+  modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1)); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    $("chip").textContent=m.no+" "+m.name;
+    $("chip").style.background=acc(m);
+    var pct=Math.round((pos+1)/FLOW.length*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("count").textContent=(pos+1)+" / "+FLOW.length;
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    $("btn-next").textContent = !nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张"));
+    save(); window.scrollTo(0,0);
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["香港分红险 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>

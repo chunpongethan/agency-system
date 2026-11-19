@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>私行房产收益方案问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --teal:#1F5F6B; --teal-t:#E1EFF1; --plum:#6A2C6B; --plum-t:#F3E6F2;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>私行</em><b style="color:var(--gold-deep)">房产收益方案</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods" id="home-mods"><h2>按模块学习</h2></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <div class="foot">内容取材自承瑞《房产活化收息方案 · 顾问培训》视频课程、课后测验及《SPIN 案例分析与演示话术》。利率、债券价格、汇率等市场数据为 2026 年 10 月初示意，面谈前须更新；测算为示意，非保证。仅供承瑞内部顾问培训使用，不得发给客户；向客户介绍时，以私人银行报价、授信条款及债券发行文件为准。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* 私行房产收益方案 · 问答特训 — 内容数据
+   内容来源：承瑞《房产活化收息方案 · 顾问培训》视频课程（2026 年 10 月版）、《课后测验》、
+   《内地客户应用私行房产收益方案 · SPIN 案例分析与演示话术》。
+   市场数据为 2026 年 10 月初示意，面谈前须更新；案例为虚构，测算为示意，非保证。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "账面财富 ≠ 现金流", color: "brown" },
+  { id: "m1", no: "01", name: "三步方案", sub: "活化、买债、私行授信", color: "gold" },
+  { id: "m2", no: "02", name: "债券基础", sub: "债主、次序、术语、可借成数", color: "slate" },
+  { id: "m3", no: "03", name: "发行人与价格", sub: "D-SIB、买入价、价格波动", color: "teal" },
+  { id: "m4", no: "04", name: "融资工具", sub: "循环贷款、利差、瑞郎、保单", color: "ci" },
+  { id: "m5", no: "05", name: "风险与适合性", sub: "五大风险、缓冲、适合谁", color: "plum" },
+  { id: "m6", no: "06", name: "客户异议", sub: "8 个最常听到的问题", color: "orange" },
+  { id: "m7", no: "07", name: "合规红线", sub: "哪些话不能说、哪些事不能做", color: "red" }
+];
+
+window.PRODUCTS = {
+  k: "课程示意 · 2,000 万房产，融资 1,000 万",
+  mk: "市场数据 · 2026 年 10 月初，面谈前须更新",
+  bd: "债券实例 · 汇丰 8.113% 2033 二级资本债",
+  rec: "实证 · 某私行收息组合（2018–2023）"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "私行房产收益方案，一句话怎么讲？",
+    a: "利用客户闲置的房产，通过融资「活化」，在私人银行配置投资级收息债券，产生每年的现金流。\n跟客户讲一句就够：「房子不用卖，升值仍然是您的；我们让它每年多带来一笔现金流。」",
+    k: ["闲置资产", "活化 + 配置", "每年现金流"],
+    t: "不要讲成「高收益产品」。方案的本质是用低成本负债换取利差，利差会随利率、汇率和债价变化。" },
+
+  { m: "m0",
+    q: "课程里的北京客户故事是怎样的？",
+    a: "客户二十年前以 200 万买入北京一套房，今天市值约 2,000 万，升值十倍。孩子要出国读书，每年要付一大笔学费，但客户不愿意卖房：地段好，怕卖了就再也买不回来。\n这就是「账面财富不等于现金流」：房子不卖，1,800 万的升值就变不成每年要付的学费。",
+    k: ["200 万 → 2,000 万", "不愿卖房", "缺现金流"] },
+
+  { m: "m0",
+    q: "方案的三个重点是什么？",
+    a: "· 只用闲置房产：房子继续持有，日后升值仍归客户。\n· 不动用客户手上的资金：本金来自融资。\n· 每年产生额外现金流：来自债券票息与融资成本之间的利差。",
+    k: ["只用闲置房产", "不动用现金", "每年现金流"],
+    t: "三个重点里没有「保本」。方案有利率、追保、发行人、汇率、流动性五大风险。" },
+
+  { m: "m0",
+    q: "什么样的客户会对这个方案感兴趣？",
+    a: "资产多、现金流少的客户：手上有已升值的闲置房产，同时有明确的每年开支，例如子女留学、退休生活、企业周转。\n先找出这个「痛点」，再谈方案。",
+    k: ["资产多、现金流少", "有明确开支"] },
+
+  /* ---------- 01 三步方案 ---------- */
+  { m: "m1",
+    q: "第一步「闲置房产活化」是什么意思？",
+    a: "以闲置房产作抵押取得低成本融资，把「死」的资产变成可以配置的资金。课程例子：2,000 万的房产，融资约一半，即 1,000 万。",
+    k: ["房产抵押融资", "约市值一半"],
+    eg: "k",
+    e: "课程例子用内地抵押类经营贷，年利率约 2.5%（部分银行低至 2.2%）。\n香港物业按揭示意利率：1 个月 HIBOR 2.94% + 1.3% ≈ 4.2%。",
+    t: "内地经营贷只能用于境内真实经营，不能出境投资。资金要合规到香港，须用香港物业按揭、已有的境外资产，或企业自有资金经 ODI 出资。" },
+
+  { m: "m1",
+    q: "第二步用融资买什么？为什么？",
+    a: "在国际性私人银行配置银行二级资本债（Tier 2），优先选择发钞银行等高评级发行人。\n特点：票息固定、每半年派发，到首个赎回日前不变；持有至到期或赎回、发行人不违约，可取回本金。",
+    k: ["Tier 2", "发钞银行优先", "票息固定"],
+    eg: "k",
+    e: "汇丰 8.113% 2033（A−），今天买入约 6.3%，计算保守取 6.2%。\n利差：6.2% − 2.5% = 3.7%\n1,000 万每年净收益约 37 万。",
+    t: "不能说「保本」或「保证利息」。正确说法：「持有到期、发行人不违约，可取回本金。」" },
+
+  { m: "m1",
+    q: "第三步怎样「提高现金流」？",
+    a: "以第二步买入的债券作抵押，向私人银行申请 1:1 授信，再买入第二批债券，合共持有两倍规模的债券。同时可配置一份贷款人抵押保险，增加授信、做风险兜底。",
+    k: ["债券作抵押", "1:1 授信", "第二批债券"],
+    eg: "k",
+    e: "美元授信 SOFR + 1%，约 4.9%：\n＋ 债券收益 2,000 万 × 6.2% = 124 万\n− 经营贷 1,000 万 × 2.5% = 25 万\n− 授信 1,000 万 × 4.88% = 48.8 万\n＝ 净收益约 50.2 万，相对 1,000 万融资约 5.0%\n未计保单保费及汇率变动。",
+    t: "第二层杠杆今天只多赚约 1.3 个百分点（3.7% → 5.0%），风险却加了一层。原方案 1.5% 融资成本是低息时期的数字，不能再用。" },
+
+  { m: "m1",
+    q: "第三步的另一选择：瑞郎授信是什么？",
+    a: "私行循环额度是多币种的，同一个额度可以改用瑞士法郎提款，再换成美元买债券。瑞士央行维持零利率，SARON 约为零，所以瑞郎授信成本只有约 1%。",
+    k: ["多币种额度", "SARON ≈ 0", "成本约 1%"],
+    eg: "k",
+    e: "瑞郎授信、汇率不变时：\n124 万 − 25 万 − 10 万 = 89 万，约 8.9%\n比美元授信每年多约 39 万。",
+    t: "8.9% 只在汇率不变时成立。借瑞郎买美元资产，瑞郎升值会直接加重负债，汇率风险没有上限。" },
+
+  { m: "m1",
+    q: "把三步连起来，客户最后持有什么？",
+    a: "客户最后持有两批、合共约两倍融资额的收息债券，房子仍然在自己名下。负债方是第一步的房产融资和第三步的私行授信；收入方是两批债券的票息。\n每年的现金流 = 票息 − 两层融资成本。",
+    k: ["两批债券", "两层负债", "房子仍在名下"],
+    eg: "k",
+    e: "房产 2,000 万 → 融资 1,000 万 → 第一批债券 1,000 万\n债券 + 保单作抵押 → 私行授信 1,000 万 → 第二批债券 1,000 万\n合共债券 2,000 万，约 6.2%。" },
+
+  { m: "m1",
+    q: "只做两步和做满三步，怎么选？",
+    a: "看客户要的是「稳定一笔现金流」还是「最大化利差」。\n只做两步：杠杆一层，利率上升时收入下降较少。\n做满三步：收入较高，但对利率、债价和汇率更敏感，还要面对追加保证金。\n让客户在了解两种后果后自己选择，并书面记录选择理由。",
+    k: ["稳 vs 多", "客户自己选", "记录理由"] },
+
+  /* ---------- 02 债券基础 ---------- */
+  { m: "m2",
+    q: "为什么方案只买投资级债券，而不是 10% 以上的高息债？",
+    a: "同样想要更高收益，有两条路：一是直接买票息 10–12% 的低评级高息债，违约率高很多；二是只买票息约 6–8% 的投资级债券，再用两层配置放大收益。方案选的是第二条路。",
+    k: ["只买投资级", "两层配置放大"] },
+
+  { m: "m2",
+    q: "客户买了债券，他是什么身份？",
+    a: "买债券就是把钱借给发行人：客户是债主，不是股东。发行人按约定付利息、到期还本；公司赚多少钱与债主无关，但公司出问题时债主排在股东前面受偿。",
+    k: ["债主，不是股东"] },
+
+  { m: "m2",
+    q: "银行倒闭时，谁先拿回钱？Tier 2 排在哪里？",
+    a: "清偿次序由先到后：存款 → 高级债 → 二级资本债（Tier 2）→ 额外一级资本（AT1）→ 普通股。\nTier 2 排在存款和高级债之后，所以收益较高；在银行无法生存时可以被减记。",
+    k: ["存款 → 高级债 → T2 → AT1 → 股", "次级所以收益高"],
+    t: "二级资本债属损失吸收产品，只能向专业投资者推荐。不要说「银行债就是存款」。" },
+
+  { m: "m2",
+    q: "看债券资料卡，最重要的三个词是什么？",
+    a: "· 票面息率（Coupon）：按面值 100 计算的固定年息。\n· 到期孳息率（YTM）：按实际买入价持有到期的预计年回报。\n· 赎回孳息率（YTC）：持有到提早赎回日的预计年回报，只适用于可赎回债券。\n另外要懂：发行人、保证人、到期日、面值、买入价。",
+    k: ["票息", "YTM", "YTC"] },
+
+  { m: "m2",
+    q: "票面息率 8% 的债券，回报就是 8% 吗？",
+    a: "不一定。票面息率按面值 100 计算；如果买入价高于 100，实际孳息率就低于票息；买入价低于 100，孳息率就高于票息。\n计算方案收益要用孳息率，不能用票息。",
+    k: ["票息 ≠ 回报", "看孳息率"],
+    eg: "bd",
+    e: "票息 8.113%，指示价约 108.94，赎回孳息率约 6.32%（2026-10-06）。课程计算保守取 6.2%。",
+    t: "最常见的错误：直接用 8.1% 票息计算利差。课程最新版本统一用 6.2% 孳息率。" },
+
+  { m: "m2",
+    q: "私人银行用债券作抵押，可以借几成？",
+    a: "按债券评级决定（以各私行规定为准，常见水平）：\n· AAA 至 BBB+：约八成\n· BBB / BBB−：约六成\n· BB：约五成\n· B+：约两成半\n评级越高、可借成数越高；降级时可借额会减少。",
+    k: ["评级决定成数", "AAA–BBB+ 约八成", "降级 → 可借额减少"] },
+
+  /* ---------- 03 发行人与价格 ---------- */
+  { m: "m3",
+    q: "什么是 D-SIB？",
+    a: "D-SIB（Domestic Systemically Important Bank）是本地系统重要性银行，俗称「大到不能倒」的银行。香港金融管理局每年检讨名单，这些银行须额外持有资本缓冲（HLA），占普通股权一级资本的 1% 至 3.5%。",
+    k: ["本地系统重要性银行", "额外资本缓冲 HLA"] },
+
+  { m: "m3",
+    q: "香港有哪几家 D-SIB？",
+    a: "按金管局 2025 年底检讨，共五家：\n· 汇丰：HLA 2.5%\n· 中银香港、渣打香港：1.5%\n· 恒生、工银亚洲：1.0%\n东亚银行自 2022 年起不在名单内。",
+    k: ["5 家", "汇丰 HLA 最高"],
+    eg: "mk",
+    e: "名单于 2025-12-31 检讨后不变；HLA 数字取自各银行 2026 年 KM1 披露。展示前须核对金管局最新名单。",
+    t: "D-SIB 不等于「不会出事」。它代表监管要求更高，不代表债券没有风险。" },
+
+  { m: "m3",
+    q: "为什么优先选 D-SIB 和发钞银行的 Tier 2？",
+    a: "这些银行规模大、受更严格监管、资本缓冲更厚，信用评级较高，违约机会相对低；同时作为抵押品，私行给的可借成数也较高。\n但仍要分散到不同发行人和到期年份。",
+    k: ["监管更严", "评级高、可借成数高", "仍要分散"] },
+
+  { m: "m3",
+    q: "同一只债券，买入时机会影响回报吗？",
+    a: "会。买入价越高，孳息率越低。所以选债不能只看票息，还要看当前价格和孳息率。",
+    k: ["买入价越高回报越低"],
+    eg: "bd",
+    e: "2025 年 8 月价格升到约 117 时买入，持有至 2032 年赎回，年回报只有约 5.2%。\n2026 年 10 月约 108.94 买入，赎回孳息率约 6.3%。" },
+
+  { m: "m3",
+    q: "债券价格会波动吗？会不会亏钱？",
+    a: "会波动。中途价格随利率和市况上落，但只要持有到期、发行人不违约，到期回到面值 100。\n如果中途需要卖出，或者价格下跌触发追加保证金，就可能真正亏钱。这也是杠杆方案必须预留缓冲的原因。",
+    k: ["中途波动", "到期回到 100", "中途卖出可能亏"],
+    eg: "mk",
+    e: "和记黄埔 6.25%（2004–2014）：大致 95–110，2008 年跌至 84，到期回到 100。\n渣打 5.2%（2013–2024）：大致 100–111，2016 年短暂跌破 95，到期回到约 100。\n（按年度走势近似，过往表现不代表将来）" },
+
+  /* ---------- 04 融资工具 ---------- */
+  { m: "m4",
+    q: "私人银行的多币种循环短期贷款有什么特点？",
+    a: "· 循环：额度内可提取、偿还、重复使用。\n· 短期：每笔提款一般 6 或 12 个月，到期续借。\n· 多币种：可用港元或等值美元、瑞郎等提款。\n· 浮动利率：同业拆息加固定利差，每期重定。",
+    k: ["循环", "短期续借", "多币种", "浮动利率"],
+    eg: "mk",
+    e: "真实授信函例子：额度港元 2,000 万，利率同业拆息 + 1% p.a.，每笔提款最长 6 个月。",
+    t: "不是固定利率。每期重定，SOFR 上升，成本就上升。" },
+
+  { m: "m4",
+    q: "授信利率怎么算？今天大约多少？",
+    a: "授信利率 = 该币种基准利率 + 银行利差（课程例子 1%）。",
+    k: ["基准 + 利差", "每期重定"],
+    eg: "mk",
+    e: "美元：SOFR 3.88% + 1% ≈ 4.9%\n瑞郎：SARON 约 −0.04% + 1% ≈ 1.0%（瑞士央行政策利率 0%）\n港元：1 个月 HIBOR 2.94%\n美联储利率区间 3.75–4.00%；美国 10 年期国债约 5.28%。" },
+
+  { m: "m4",
+    q: "利率高峰期，这个方案还赚钱吗？",
+    a: "课程用汇丰 8.113% 债券票息对比美元授信成本（SOFR + 1%），回看 2022 年 11 月至今：\n· 发行时利差约 +3.4%\n· 2023 年底至 2024 年中利率高峰，借钱成本约 6.34%，利差最窄约 +1.8%，仍是正数\n· 今天约 +3.2%\n所以按票息计，即使在高峰期利差也没有转负，但空间明显收窄。",
+    k: ["最窄 +1.8%", "仍为正数", "空间会收窄"],
+    t: "这里用的是票息对比，不是孳息率；今天买入的孳息率约 6.2–6.3%，利差会比图上小。SOFR 升穿约 5.2%，第二层就不再赚钱。" },
+
+  { m: "m4",
+    q: "瑞郎授信的风险在哪里？",
+    a: "借瑞郎、买美元债，等于同时做空瑞郎。瑞郎兑美元升值，负债以美元计就变重。\n瑞郎往往在市场恐慌时升值，那时债券价格也可能下跌，两头受压，容易触发追保。",
+    k: ["做空瑞郎", "升值加重负债", "危机时两头受压"],
+    eg: "mk",
+    e: "USD/CHF 由 2022 年 11 月均值约 0.966 降至 0.829，瑞郎升值约 16%。\n对瑞郎授信的客户：负债以美元计加重约一成六。\n今天瑞郎利差约 +7.1%，但一次汇率波动可抵消数年利差。",
+    t: "不要说「瑞郎很稳」。瑞郎稳是对它自己的购买力，对借瑞郎的人来说，瑞郎「强」恰恰是风险。" },
+
+  { m: "m4",
+    q: "方案中的「贷款人抵押保险」有什么作用？",
+    a: "三个作用：\n· 风险对冲：受保人身故，保险赔偿可用来清偿相关贷款，不把债务留给家人。\n· 提升授信：保单现金价值是优质抵押品，增加可借额度。\n· 长期增值：现金价值随时间增长（非保证部分视分红而定），可部分抵消瑞郎升值的压力。",
+    k: ["风险对冲", "提升授信", "长期增值"],
+    t: "保单不能保证债券不违约，也不是汇率对冲工具。保费要计入方案成本。" },
+
+  /* ---------- 05 风险与适合性 ---------- */
+  { m: "m5",
+    q: "方案有哪五大风险？",
+    a: "· 利率风险：授信是浮动利率；SOFR 升穿约 5.2%，第二层不再赚钱。\n· 追加保证金：债券价格下跌或降级，可借额减少，要补钱或被迫卖出。\n· 发行人风险：发行人违约；银行次级债在极端情况下可被减记。\n· 汇率风险：人民币负债、美元资产；瑞郎授信时瑞郎升值加重负债。\n· 流动性：中途需要资金卖出债券，价格可能低于买入价。",
+    k: ["利率", "追保", "发行人", "汇率", "流动性"],
+    t: "五大风险不包括「通胀风险」——考试常考。每一个都要向客户讲清楚。" },
+
+  { m: "m5",
+    q: "什么是「追加保证金」？",
+    a: "私行按债券价值乘以可借成数决定可借额。债券价格下跌或被降级，可借额就减少；如果已借金额超过新的可借额，银行会要求客户在短时间内补钱或补抵押品，否则可能强制卖出债券。\n例如融资占债券价值约 50%，债券价格下跌 10% 后会升到约 56%，接近上限时可能被要求追加抵押。",
+    k: ["价格跌 / 降级", "可借额减少", "补钱或被迫卖出"] },
+
+  { m: "m5",
+    q: "怎样管理这些风险？",
+    a: "课程给出的三个建议：\n· 持有组合 5 年以上，不做短炒。\n· 借额限制在 1 : 1，不把可借额用尽。\n· 保留至少一年利息（或按揭供款）的现金储备。\n另外要分散发行人与到期年份；非美元融资要事先约定止损线。",
+    k: ["持有 5 年+", "借额 ≤ 1:1", "一年利息储备", "分散"] },
+
+  { m: "m5",
+    q: "什么客户适合，什么客户不适合？",
+    a: "适合：持有已升值、无贷款的闲置房产；有明确的每年现金流需要；理解并接受利率及追保风险；有现金储备应付利率上升或补仓。\n不适合：收入不稳定、没有现金储备；完全不能接受本金波动。\n落地前必须完成风险承受能力评估和适合性分析。",
+    k: ["有闲置房产", "有储备", "能接受波动"] },
+
+  { m: "m5",
+    q: "有没有实际组合的表现可以参考？",
+    a: "课程展示了一个真实收息组合的私行月结单（客户资料已隐去）。讲的时候要同时讲三个限制：组合本身用了杠杆；期间大部分是低息环境；计算没有调整资金存取。它说明低息时期可以做到什么，但过往表现不代表将来。",
+    k: ["真实月结单", "有杠杆", "低息时期"],
+    eg: "rec",
+    e: "2018-04 资产净值 HKD 800 万 → 2023-03 HKD 1,216 万\n增长 416 万（+52%），4.9 年年化约 8.9%\n贷款由约 1,565 万增至约 1,993 万。",
+    t: "不能把 8.9% 讲成「这个方案的年回报」。" },
+
+  /* ---------- 06 客户异议 ---------- */
+  { m: "m6",
+    q: "「宣传上说 10%，怎么才这么点？」",
+    a: "「宣传上的案例条件和您不同。您的融资成本、债券买入价都和例子不一样，所以利差会小。我宁可现在给您算低一点，也不想以后让您失望。」\n然后拿出按客户条件重新算的测算表，并加一行「利率 +1%」的压力情景。",
+    k: ["按客户条件重算", "主动校正预期"],
+    t: "宣传单页「预计总收益 9.1%–11.7%」「确保收益稳健」等表述与示意测算差距大，面谈时必须主动校正，否则日后就是投诉。" },
+
+  { m: "m6",
+    q: "「债券安全吗？」",
+    a: "「我们只选投资级，以大银行为主。但二级资本债是次级债，银行无法生存时本金可能被减记，所以要分散到不同发行人和到期年份，也要求您是专业投资者。」",
+    k: ["投资级 + 大银行", "次级可被减记", "分散"] },
+
+  { m: "m6",
+    q: "「房子会不会被收走？」",
+    a: "「只要按时供款就不会。但如果债券收入中断，按揭还是要供，所以我们会保留至少一年的供款备用金。」",
+    k: ["按时供款", "一年备用金"] },
+
+  { m: "m6",
+    q: "「直接用经营贷的钱去香港买债不是更省事吗？」",
+    a: "「省事一时，风险一直在。经营贷按合同只能用于境内经营，用途不符银行可以提前收贷；ODI 也要证明是企业自有资金。您的留存利润足够，没必要冒这个险。」",
+    k: ["用途不符会收贷", "ODI 须自有资金"],
+    t: "承瑞不协助任何把经营贷、消费贷等受限用途贷款资金转出境外的安排。" },
+
+  { m: "m6",
+    q: "「瑞郎这么多年一直很稳，为什么不全部借瑞郎？」",
+    a: "「瑞郎稳是相对它自己的购买力，对美元它是会升值的，2022 年 11 月至今就升了约 16%。对借瑞郎的人来说，『稳』恰恰是风险。我把汇率升值的情景也算给您看，让您自己决定能接受多少。」",
+    k: ["瑞郎会升值", "算压力情景", "客户自己定上限"] },
+
+  { m: "m6",
+    q: "「加点私行融资，多赚一些？」",
+    a: "「我们算过，杠杆每多一层，新增收息有限，利率一升就可能没了，还要面对追加保证金。先把不加融资的方案跑一年，熟悉债券波动后再讨论。」",
+    k: ["边际收益递减", "先跑一年"] },
+
+  { m: "m6",
+    q: "「利率升了怎么办？」",
+    a: "「授信是浮动利率，利率上升，成本就上升，净收息会减少，加了杠杆的方案减得更多，利率上升 1% 就可能让收息减少一半以上。所以我们会做压力测试，并保留一年利息的现金储备。」",
+    k: ["浮动利率", "做压力测试", "保留储备"] },
+
+  { m: "m6",
+    q: "「分红保单能不能也拿去融资？」",
+    a: "「可以作为备用抵押品，但我不建议用它主动加杠杆。它是家庭的长期储备，追保时能用上就够了。」",
+    k: ["备用抵押品", "不主动加杠杆"] },
+
+  /* ---------- 07 合规红线 ---------- */
+  { m: "m7",
+    q: "哪些话绝对不能说？",
+    a: "· 「保本」「保证 X% 收益」「零风险」「稳赚利差」\n· 「确保收益」「轻松覆盖」等绝对化表述\n· 「银行不会要求追加保证金」\n· 「汇率不会变」「瑞郎一直很稳」\n正确说法：「只要持有到期、发行人不违约，就可以取回本金；但方案有五大风险，落地前要先做风险承受能力评估和适合性分析。」",
+    k: ["不说保本", "不说保证收益", "讲五大风险"] },
+
+  { m: "m7",
+    q: "哪些事绝对不能做？",
+    a: "· 建议、协助或暗示把内地房产抵押贷款、经营贷、消费贷等受限用途贷款资金转出境外投资。\n· 建议拆分购汇、使用个人购汇额度或任何地下渠道转移资金。\n· 设计或协助「名为营运、实为理财」的 ODI 结构。\n· 未确认专业投资者资格就推荐二级资本债。\n· 替客户决定杠杆水平。",
+    k: ["受限贷款不出境", "不拆分购汇", "不替客户定杠杆"],
+    t: "任何一条红线被触碰，该案立即暂停，不论客户意愿多强。" },
+
+  { m: "m7",
+    q: "展示测算时有什么要求？",
+    a: "· 收益率一律写作「示意」，实际以私行报价与债券条款为准。\n· 每个方案都做两张：不加杠杆 vs 加杠杆。\n· 至少加一个压力情景：「利率 +1%」或「汇率 +10%」或「债价 −10%」。\n· 市场数据注明日期，面谈前更新。",
+    k: ["写明示意", "两张测算", "压力情景"] },
+
+  { m: "m7",
+    q: "签约前要检查哪些事项？",
+    a: "· 物业产权、现有负债与按揭审批结果已确认。\n· 境外资金来源合法可证明，未使用内地受限用途贷款。\n· 已完成专业投资者资格确认与风险承受能力评估。\n· 已逐条解释私行融资条款：抵押率、追保线、利率基准、银行调整权。\n· 非美元融资已说明汇率风险并约定止损规则。\n· 客户已保留至少一年供款或追保备用金。\n· 已说明境外金融账户信息属 CRS 申报范围。\n· 已记录客户在 N 阶段的原话与最终选择理由。",
+    k: ["资金来源", "专业投资者", "条款逐条解释", "CRS"] },
+
+  { m: "m7",
+    q: "法律、税务问题，顾问可以回答吗？",
+    a: "不可以自行给出法律或税务意见。ODI 结构、境外税务与利润汇回安排，须由内地律师与税务顾问确认；顾问负责债券和私行这一部分。",
+    k: ["转介律师、税务顾问", "顾问只管债券与私行"] },
+
+  { m: "m7",
+    q: "这个 H5 可以发给客户看吗？",
+    a: "不可以。这是承瑞内部顾问培训材料，里面有内部案例、话术和示意测算。向客户介绍时，以私人银行报价、授信条款及债券发行文件为准。",
+    k: ["仅限内部"] }
+];
+
+window.QUIZ = {
+  m1: [
+    { q: "第二步配置什么资产？",
+      o: ["银行二级资本债，优先发钞银行等高评级发行人", "票息 10–12% 的低评级高息债", "股票型基金", "内地银行理财产品"], a: 0,
+      x: "配置银行 Tier 2 债券，优先发钞银行等高评级发行人。" },
+    { q: "按课程最新测算（6.2% 孳息率），做满三步、美元授信，相对 1,000 万融资约多少收益率？",
+      o: ["3.7%", "5.0%", "8.9%", "12.7%"], a: 1,
+      x: "124 万 − 25 万 − 48.8 万 ≈ 50.2 万，约 5.0%。8.9% 是瑞郎授信、汇率不变时的数字。" },
+    { q: "关于内地经营贷，以下哪项正确？",
+      o: ["可以直接出境买债", "可以作为 ODI 出资", "只能用于境内真实经营", "可以拆分后汇出"], a: 2,
+      x: "经营贷只能用于境内经营。境外部分须用香港按揭、已有境外资产或企业自有资金经 ODI 出资。" }
+  ],
+  m2: [
+    { q: "银行倒闭时，清偿次序（由先到后）哪项正确？",
+      o: ["普通股 → AT1 → Tier 2 → 高级债 → 存款", "存款 → Tier 2 → 高级债 → AT1 → 普通股", "存款 → 高级债 → Tier 2 → AT1 → 普通股", "高级债 → 存款 → AT1 → Tier 2 → 普通股"], a: 2,
+      x: "Tier 2 收益较高，正因为排在存款和高级债之后。" },
+    { q: "债券买入价高于面值 100 时？",
+      o: ["实际孳息率高于票息", "实际孳息率低于票息", "票息会上调", "对回报没有影响"], a: 1,
+      x: "票面息率不等于回报；买入价高于 100，实际孳息率低于票息。" },
+    { q: "评级 AAA 至 BBB+ 的债券，私行通常可借几成？",
+      o: ["两成半", "五成", "六成", "八成"], a: 3,
+      x: "AAA 至 BBB+ 约八成；BBB/BBB− 六成；BB 五成；B+ 两成半。" }
+  ],
+  m3: [
+    { q: "D-SIB 是指什么？",
+      o: ["全球系统重要性保险公司", "发行港元纸币的银行", "本地系统重要性银行", "香港金融管理局"], a: 2,
+      x: "Domestic Systemically Important Bank，俗称「大到不能倒」的银行。" },
+    { q: "以下哪一家不在香港五家 D-SIB 名单内？",
+      o: ["东亚银行", "恒生银行", "工银亚洲", "渣打香港"], a: 0,
+      x: "五家为汇丰、中银香港、渣打香港、恒生、工银亚洲；东亚银行自 2022 年起不在名单内。" },
+    { q: "在什么前提下，债券中途波动不影响取回面值？",
+      o: ["持有到期，而且发行人不违约", "价格始终高于买入价", "市场利率下降", "只要是 D-SIB 发行"], a: 0,
+      x: "中途卖出或触发追加保证金，就可能实现亏损。" }
+  ],
+  m4: [
+    { q: "私行多币种循环短期贷款的特点不包括？",
+      o: ["额度内可循环使用", "固定利率，十年不变", "可用美元、瑞郎等提款", "每笔 6 或 12 个月，到期续借"], a: 1,
+      x: "利率是同业拆息加固定利差，属浮动利率，每期重定。" },
+    { q: "瑞郎授信便宜的原因是？",
+      o: ["瑞士银行补贴", "瑞郎长期贬值", "有保单作抵押", "瑞士央行维持零利率，SARON 约为零"], a: 3,
+      x: "SARON 约为零，加 1% 利差，成本约 1%。" },
+    { q: "2022 年 11 月至今瑞郎兑美元升值约 16%，对瑞郎授信客户代表？",
+      o: ["债券票息提高", "资产增值约 16%", "负债以美元计加重约一成六", "没有影响"], a: 2,
+      x: "瑞郎授信的风险在汇率，升值直接加重负债。" }
+  ],
+  m5: [
+    { q: "课程列出的五大风险不包括？",
+      o: ["利率风险", "汇率风险", "通胀风险", "流动性风险"], a: 2,
+      x: "五大风险：利率、追加保证金、发行人、汇率、流动性。" },
+    { q: "以下哪一项不是课程的风险管理建议？",
+      o: ["持有组合 5 年以上", "借额限制在 1:1", "保留至少一年利息的现金储备", "把可借额用尽以提高收益"], a: 3,
+      x: "用尽可借额会加大追加保证金风险。" },
+    { q: "哪类客户不适合这个方案？",
+      o: ["持有已升值房产、有明确现金流需要", "收入不稳定、没有现金储备、不能接受本金波动", "理解并接受利率和追保风险", "想建立退休现金流"], a: 1,
+      x: "落地前须完成风险承受能力评估和适合性分析。" }
+  ],
+  m6: [
+    { q: "客户说「宣传上说 10%，怎么才这么点？」最合适的回应是？",
+      o: ["按客户条件重算，主动校正预期", "说宣传数字是保证的", "建议加杠杆达到 10%", "改推高息债"], a: 0,
+      x: "宁可现在算低一点，也不要日后让客户失望。" },
+    { q: "客户问「房子会不会被收走？」，正确回应包含？",
+      o: ["绝对不会", "只要按时供款就不会，并保留一年供款备用金", "银行不会处置物业", "房子不在方案里"], a: 1,
+      x: "债券收入中断时按揭仍要供，所以要保留备用金。" },
+    { q: "客户想全部借瑞郎，理由是「瑞郎很稳」，你应该？",
+      o: ["同意，瑞郎确实稳", "说明瑞郎对美元会升值，并算汇率升值情景", "说汇率风险由银行承担", "建议改借人民币"], a: 1,
+      x: "对借瑞郎的人来说，瑞郎「稳」恰恰是风险。" }
+  ],
+  m7: [
+    { q: "向客户介绍时，哪种说法最恰当？",
+      o: ["这个方案保本保息", "收益率 8.9% 是保证的", "持有到期、发行人不违约可取回本金；但有五大风险，须先做适合性分析", "银行不会要求追加保证金"], a: 2,
+      x: "永不对客户说「保本」或保证收益。" },
+    { q: "二级资本债可以推荐给谁？",
+      o: ["所有客户", "已确认资格的专业投资者", "只要客户同意即可", "只限企业客户"], a: 1,
+      x: "二级资本债属损失吸收产品，未完成专业投资者资格确认不得下单。" },
+    { q: "关于杠杆水平，以下哪项正确？",
+      o: ["由顾问按最高收益决定", "由银行决定", "由客户了解追保机制后自行选择并书面确认", "一律用尽可借额"], a: 2,
+      x: "不得替客户决定杠杆水平。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"],teal:["--teal","--teal-t"],plum:["--plum","--plum-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem("ht-prop-pos"),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  function save(){ try{ localStorage.setItem("ht-prop-pos", String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod",type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  modList($("home-mods"), startAt);
+  modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1)); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    $("chip").textContent=m.no+" "+m.name;
+    $("chip").style.background=acc(m);
+    var pct=Math.round((pos+1)/FLOW.length*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("count").textContent=(pos+1)+" / "+FLOW.length;
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    $("btn-next").textContent = !nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张"));
+    save(); window.scrollTo(0,0);
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["私行房产收益方案 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>

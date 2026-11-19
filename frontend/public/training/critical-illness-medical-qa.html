@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>重疾险与高端医疗问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>重疾险</em> &amp; <b>高端医疗</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods" id="home-mods"><h2>按模块学习</h2></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <div class="foot">产品实例资料来源：保诚「诚保一生」危疾保系列产品小册子（05/23）、高端医疗自由行计划产品小册子（08/24）及对应建议书摘要（30 岁女性示例）。仅供承瑞内部顾问培训使用，不得发给客户；向客户介绍时，以保险公司最新的产品小册子、建议书及保单条款为准。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* 重疾险 & 高端医疗 · 问答特训 — 内容数据
+   产品资料来源：保诚「诚保一生」危疾保系列小册子 MKTX/QB0352C (05/23)；
+   「诚保一生」危疾保险计划建议书摘要（30岁女性，非吸烟，10万美元，20年缴）；
+   高端医疗自由行计划小册子 MKTX/QB0358C (08/24)；
+   高端医疗自由行计划建议书摘要（30岁女性，非吸烟，计划1）。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "一句话分清两险", color: "brown" },
+  { id: "m1", no: "01", name: "重疾险基础", sub: "给付型 · 保收入", color: "ci" },
+  { id: "m2", no: "02", name: "高端医疗基础", sub: "报销型 · 保费用", color: "med" },
+  { id: "m3", no: "03", name: "两险怎么搭配", sub: "缺口、预算与人生阶段", color: "gold" },
+  { id: "m4", no: "04", name: "核保与理赔", sub: "如实告知、签单、索偿", color: "slate" },
+  { id: "m5", no: "05", name: "客户异议", sub: "11 个最常听到的问题", color: "orange" },
+  { id: "m6", no: "06", name: "合规红线", sub: "哪些话不能说", color: "red" }
+];
+
+window.PRODUCTS = {
+  ci: "产品实例 · 保诚「诚保一生」危疾保",
+  med: "产品实例 · 保诚高端医疗自由行计划",
+  both: "产品实例 ·「诚保一生」及高端医疗自由行计划"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "重疾险和高端医疗，一句话怎么分？",
+    a: "重疾险是「给付型」：确诊符合合同定义的疾病，保险公司一次性赔一笔约定金额，钱怎么用由客户决定，主要弥补收入损失和康复开支。\n高端医疗是「报销型」：实际花了多少合资格医疗费，就在限额内按条款报销，主要解决医院的账单。\n跟客户讲一句就够：「医疗管医院的账，重疾管家里的账。」",
+    k: ["重疾保收入", "医疗保费用", "两者互补"],
+    t: "不要说「买了医疗就不用买重疾」或反过来。两者解决的是不同的问题。" },
+
+  /* ---------- 01 重疾险基础 ---------- */
+  { m: "m1",
+    q: "重疾险到底是什么？",
+    a: "受保人确诊保单列明、并且符合合同定义的疾病时，保险公司一次性赔付保额。赔多少与实际花了多少医疗费无关。\n这笔钱可以用来治疗，也可以还房贷、付子女学费，或者作为休养期间的生活费。",
+    k: ["一笔过赔付", "须符合合同定义", "用途不限"],
+    t: "「确诊就赔」后面要补一句「须符合合同对该病况的定义」，例如癌症有分期要求。" },
+
+  { m: "m1",
+    q: "重疾险和医疗险有什么区别？",
+    a: "医疗险报销实际医疗费，凭单据赔，用来付医院的账。\n重疾险是确诊即给付约定金额，不看花了多少，用来补家庭的收入和长期开支。\n一场大病，医疗费只是一部分；休养期间没有收入、请护工、长期复诊，这些通常要靠重疾赔款。",
+    k: ["报销型 vs 给付型", "补费用 vs 补收入"] },
+
+  { m: "m1",
+    q: "早期疾病和严重疾病有什么不同？",
+    a: "严重疾病（如癌症、心脏病发作、中风）赔 100% 保额。\n早期疾病（如原位癌、冠状动脉血管成形术）赔一部分保额，让客户在病情较轻、刚开始治疗时也能拿到钱。",
+    k: ["严重 = 100%", "早期 = 部分保额", "早期赔款是预支"],
+    eg: "ci",
+    e: "保障 127 种病况：56 种严重、49 种早期、22 种儿童病况（儿童保障至翌年岁 18 岁）。\n早期病况每次赔基本保额 20%；原位癌、冠状动脉血管成形术、早期甲状腺或前列腺癌、次级侵害性恶性肿瘤赔 25%。原位癌、冠状动脉血管成形术最多各赔 2 次。\n早期 + 儿童 + 深切治疗（ICU）赔款合共不超过基本保额 95%，并会从日后的严重疾病或身故赔款中扣除。",
+    t: "早期赔款属于「预支」，不是另外加送的。客户问「早期赔了 25%，之后重疾还赔 100% 吗？」答案是重疾时扣除已赔的 25%。" },
+
+  { m: "m1",
+    q: "什么是多次赔付？为什么重要？",
+    a: "癌症、心脏病、中风都可能复发或再次发生。单次赔付的保单，赔完一次就结束；多次赔付的保单，在第一次严重疾病赔付后，仍为之后的严重疾病提供保障。",
+    k: ["复发也有保障", "有间隔期", "按组别设上限"],
+    eg: "ci",
+    e: "首次严重疾病赔 100% 后，翌年岁 86 岁前还有「严重疾病延伸保障」，每次赔基本保额 100%：\n· 癌症：最多再赔 200%\n· 心脏病发作 / 中风：最多 200%\n· 主要器官及功能相关疾病：最多 200%\n· 其他严重病况：最多 200%\n· 脑退化症 / 帕金森病：最多 100%\n合共最多 900%，加首次 100%，重疾保障最高为基本保额 1000%。\n两次索偿的诊断日期须相隔至少 1 年；两次同属癌症须相隔至少 3 年。",
+    t: "「高达 1000%」是上限。一定要讲清楚间隔期和每个组别的上限，不要让客户以为可以无限次赔。" },
+
+  { m: "m1",
+    q: "保额买多少才够？",
+    a: "常见参考是 3 至 5 年的家庭收入，覆盖治疗和康复期间没有收入的时间。\n再加上房贷、子女教育等固定支出，减去客户已有的保障，就是缺口。\n预算有限时，先保证保额够用，再考虑其他附加项目。",
+    k: ["3–5 年收入（常见参考）", "先算缺口", "再定预算"],
+    t: "不要只按「客户愿意付多少保费」倒推保额，先做需要分析。" },
+
+  { m: "m1",
+    q: "赔付金额会增长吗？",
+    a: "部分香港重疾险是分红计划：除了保证的保额，还有非保证红利，令赔付金额有机会随时间增长，抵消部分通胀。\n红利派不派、派多少，由保险公司按投资表现、索偿经验等决定，可升可跌。",
+    k: ["保证保额", "非保证红利", "可升可跌"],
+    eg: "ci",
+    e: "特别红利由第 5 个保单周年日起公布，是一次性的非保证红利：\n· 赔付重疾或身故时，支付红利「面值」\n· 退保时，支付红利的「现金价值」（并非面值）\n红利不会累积滚存，也不会永久附加在保单上。",
+    t: "绝不能说「保额每年保证增长」。" },
+
+  { m: "m1",
+    q: "升级保障是什么意思？",
+    a: "在保单头几年额外加大保障，适合事业起步、房贷和育儿负担最重的阶段。",
+    k: ["首 10 年 +50%", "第 11 年起回到基本保额"],
+    eg: "ci",
+    e: "首 10 个保单年度内确诊严重病况或身故，额外再赔基本保额 50%（即 100% + 50%）。\n10 万美元保额的保单，首 10 年严重疾病 / 身故保障为 15 万美元。\n升级保障完结前后 1 个月内，可免健康证明转换为指定的寿险计划。",
+    t: "要讲清楚第 11 年起升级保障结束，保障回到基本保额（加上非保证红利）。" },
+
+  { m: "m1",
+    q: "生病后还要继续交保费吗？",
+    a: "很多重疾险设有保费豁免：赔付后免交部分或全部往后保费，减轻患病期间的经济压力。",
+    k: ["早期 → 免 12 个月", "严重 → 免全部"],
+    eg: "ci",
+    e: "· 赔付早期疾病或严重儿童病况：豁免往后 12 个月保费\n· 赔付严重疾病：豁免往后所有保费\n· 亲子保费豁免（为 1–18 岁孩子或「挚爱宝」投保）：保单持有人或配偶身故，豁免保费至孩子翌年岁 26 岁；设 2 年等候期，意外身故除外。",
+    t: "亲子保费豁免有 2 年等候期，讲的时候不要漏掉。" },
+
+  { m: "m1",
+    q: "有什么情况不赔？",
+    a: "常见不赔情况：\n· 投保前已存在的病况，或已出现相关征状\n· 保单生效后的等候期内确诊（意外引致的除外）\n· 自杀或蓄意自残、滥用药物或酗酒\n· 艾滋病（因输血或职业感染除外）",
+    k: ["已存在病况", "90 日等候期", "如实告知"],
+    eg: "ci",
+    e: "等候期为保单生效（或复效）起 90 日：期内确诊或出现征状的病况不赔，但意外发生后 90 日内因该意外确诊的病况除外。",
+    t: "客户有任何病史，一定要在投保时如实申报。" },
+
+  { m: "m1",
+    q: "这份保单还有什么特别之处？",
+    a: "介绍产品特色时，先讲客户关心的人生阶段（生、老、病、死），再对应保障。",
+    k: ["脑退化年金", "人寿延伸", "挚爱宝"],
+    eg: "ci",
+    e: "· 老：翌年岁 86 岁前确诊严重脑退化症或帕金森病，确诊 1 年后每年赔基本保额 6%，直至身故（须提交在生证明）\n· 死：首次严重疾病确诊至少 1 年后、翌年岁 86 岁前身故，再赔基本保额 100%（人寿延伸保障）\n· 生：「挚爱宝」可在怀孕 22 周起为未出生的孩子投保，出生即保，涵盖先天性病况；另有严重初生婴儿黄疸、新任母亲产后抑郁保障\n· 增值服务「安心医」：第二医疗意见、海外治疗安排",
+    t: "小册子写「市场首创 / 市场独有」，是保诚按 2023 年 4 月 21 日的市场资料比较，引用时要说明出处。" },
+
+  { m: "m1",
+    q: "30 岁女士买 10 万美元，要交多少？",
+    a: "用计划书例子讲，一定要同时讲清楚保证和非保证部分。",
+    k: ["每天约 9.5 美元", "保证 vs 非保证", "前 2 年退保为 0"],
+    eg: "ci",
+    e: "例子：翌年岁 30 岁女性，非吸烟，基本保额 10 万美元，20 年缴费\n· 每年保费 3,473 美元（另付保监局征费 3.47 美元），平均每天约 9.5 美元\n· 20 年共缴 69,460 美元\n· 首 10 年严重疾病 / 身故保障 15 万美元（含升级保障）\n· 第 20 年末退保价值预期约 59,433 美元，其中保证 24,946 美元\n· 66 岁时预期严重疾病 / 身故赔付约 271,416 美元，其中保证 100,000 美元，其余为非保证特别红利\n· 第 1、2 年末退保价值为 0",
+    t: "以上为建议书示例，非保证部分可高可低。实际保费按年龄、性别、吸烟习惯、国籍及居住地等计算。" },
+
+  /* ---------- 02 高端医疗基础 ---------- */
+  { m: "m2",
+    q: "高端医疗是什么？",
+    a: "高端医疗是报销型医疗险：住院、手术、检查等合资格医疗费用，在限额内按条款报销。\n与普通医疗险相比，年度限额高，可选私家医院、特需部、国际部和海外就医，并配套直付、就医协助等服务。",
+    k: ["实报实销", "高限额", "可选就医地区"] },
+
+  { m: "m2",
+    q: "我有社保 / 惠民保，还需要吗？",
+    a: "社保是基础，很重要。但社保有药品目录、报销限额和自付比例，进口药、自费药、特需部和私立医院大多不能报。\n高端医疗是补充：可覆盖特需部、国际部及私家医院，以及质子重离子、CAR-T 等新疗法。",
+    k: ["社保是基础", "高端医疗是补充"],
+    t: "不要贬低社保。说「补充」，不说「替代」。" },
+
+  { m: "m2",
+    q: "和香港的自愿医保有什么分别？",
+    a: "自愿医保（VHIS）是香港政府订立最低标准的医疗险认证计划，很多标准计划的住院、手术等项目设有分项赔偿上限。\n高端医疗的主要项目通常「全数保障」，即不设分项上限，年度限额更高，并可选大中华或全球保障地区。",
+    k: ["VHIS 多有分项上限", "高端医疗不设分项上限"],
+    eg: "med",
+    e: "高端医疗自由行计划判断「复杂 / 大型手术」时，参考的正是自愿医保的手术表（用于决定出院后跟进门诊是否由 90 日延长至 365 日）。" },
+
+  { m: "m2",
+    q: "「全数保障」是不是没有上限？",
+    a: "不是。「全数保障」指不设分项上限，但仍然受每年最高保障限额、终身赔偿限额和自付额限制。",
+    k: ["不设分项上限", "仍有年度 / 终身限额", "先扣自付额"],
+    eg: "med",
+    e: "每年最高保障限额：计划 1 港元 500 万｜计划 2 港元 800 万｜计划 3 港元 2,000 万｜计划 4 港元 3,000 万\n终身赔偿保障限额：计划 1、2 港元 2,400 万｜计划 3 港元 6,000 万｜计划 4 港元 7,000 万",
+    t: "绝不能说「全数保障 = 无上限」。" },
+
+  { m: "m2",
+    q: "自付额是什么？",
+    a: "自付额（内地常说「免赔额」）是每个保单年度客户要先自己承担的金额，超出部分才由保险公司赔，每个保单周年日重置。\n自付额越高，保费越低。",
+    k: ["每年先自付", "周年日重置", "越高越便宜"],
+    eg: "med",
+    e: "· 计划 1：内地港元 1 万；内地以外港元 3 万\n· 计划 2–4：可选 0 自付额，或同样的 1 万 / 3 万\n· 一生有一次权利：在 50、55、60、65、70 或 75 岁生日当日或之后的保单周年日，免体检调低自付额" },
+
+  { m: "m2",
+    q: "保障地区怎么选？",
+    a: "先问客户平时在哪里生活、生病想去哪里看，再选地区。地区越广，保费越高。",
+    k: ["大中华", "全球（美国除外）", "全球"],
+    eg: "med",
+    e: "· 计划 1：大中华（香港、澳门、台湾只保受保癌症、心脏病发作、中风，及意外）\n· 计划 2：大中华\n· 计划 3：全球（美国除外）\n· 计划 4：全球\n在保障地区以外，只赔纯粹因意外引致的治疗。",
+    t: "选计划 1 的客户，在香港看一般疾病（例如肺炎住院）不获赔，投保前一定要讲清楚。" },
+
+  { m: "m2",
+    q: "可以住什么病房？",
+    a: "按计划级别和就医地区而定。住高于受保级别的病房，赔偿会打折。",
+    k: ["内地：标准单人间", "港澳及海外：半私家 / 私家", "升级病房会打折"],
+    eg: "med",
+    e: "· 内地：标准单人间（含特需部、国际部合资格病房）；住更高级别，按标准单人间费用赔\n· 香港、澳门及其他地区：按计划级别入住半私家或私家病房\n· 受保半私家却住私家：只赔应付金额 50%\n· 住套房、豪华或贵宾病房：只赔 25%" },
+
+  { m: "m2",
+    q: "看病要不要先垫钱？",
+    a: "很多高端医疗设有直付：在网络医院就医，经预先批核的费用由保险公司直接结算，客户不用先付。",
+    k: ["先申请预先批核", "网络医院直付"],
+    eg: "med",
+    e: "· 内地指定二甲或以上公立医院及直付网络机构：可直付\n· 网络内医疗机构：一般 2 个工作天内知道预先批核结果\n· 网络外：可申请协助担保及费用垫付，一般需提前 5 个工作天",
+    t: "直付需要预先批核，不是所有医院、所有项目都可以直付。" },
+
+  { m: "m2",
+    q: "保证终身续保，保费会涨吗？",
+    a: "保证终身续保：不论健康变化或理赔记录，保险公司都要让客户每年续保。\n但保费不是固定的，会随年龄、医疗通胀和理赔经验调整；保障条款也可能在续保时修订，保险公司会提前 30 日书面通知。",
+    k: ["保证可续保", "保费非保证", "条款可修订"],
+    t: "绝不能说「保费终身不变」。" },
+
+  { m: "m2",
+    q: "癌症治疗保得全吗？",
+    a: "癌症是高端医疗最常见的大额理赔之一，重点看新疗法和进口药是否保障。",
+    k: ["新疗法全数保障", "进口药限香港"],
+    eg: "med",
+    e: "· 全数保障：质子治疗、重离子治疗、伽玛刀、数码导航刀、化疗、标靶、荷尔蒙治疗、免疫治疗（如 CAR-T）\n· 标靶治疗所需的基因测试也保\n· 未在香港注册的进口癌症药物：须由香港主诊医生书面建议，只限在香港治疗使用\n· 增值服务「全球找药」协助寻找内地未能提供的药物",
+    t: "所有赔付仍受年度限额、终身限额及自付额限制。" },
+
+  { m: "m2",
+    q: "除了住院，还有什么保障？",
+    a: "好的高端医疗覆盖「预防—诊断—治疗—复康」整个过程。",
+    k: ["体检 / 疫苗", "跟进门诊", "复康护理"],
+    eg: "med",
+    e: "· 预防：每第 2 次续保后的保单年度（第 3、5、7 年……）可选 1 项体检或疫苗，计划 1–2 港元 1,000，计划 3–4 港元 1,500\n· 诊断：CT、MRI、PET 等指定影像检测，以及住院前门诊\n· 复康：出院后 90 日内跟进门诊全数保障（复杂 / 大型手术延至 365 日）、复康期中医（含针灸）、家中看护、复康中心" },
+
+  { m: "m2",
+    q: "平时看门诊能报吗？",
+    a: "基本计划主要保住院、手术，以及住院前后相关的门诊和意外门诊。日常小病门诊，一般要另加门诊附加保障。",
+    k: ["基本计划：住院相关", "门诊宝：日常门诊"],
+    eg: "med",
+    e: "自选附加「门诊宝」：\n· 适用于内地、香港、澳门任何医院或诊所\n· 每年最高港元 3 万，每年最多 12 次诊治，设 30% 共同保险\n· 人在内地可用 24/7 线上问诊和送药" },
+
+  { m: "m2",
+    q: "有什么情况不赔？",
+    a: "常见不赔情况：投保前已存在的病况；等候期内诊断的疾病；正常怀孕和分娩；牙科（意外除外）；体检（计划内健康保障除外）；整形；近视等屈光矫正；8 岁前已有征状的先天性疾病。",
+    k: ["已存在病况", "30 日等候期", "妊娠分娩不保"],
+    eg: "med",
+    e: "· 一般等候期：生效 30 日内诊断的疾病不保（受伤除外）\n· 妊娠期并发症：等候期 300 日\n· 儿童发展障碍：自闭症 90 日；语言障碍、特殊学习障碍、ADHD 180 日" },
+
+  { m: "m2",
+    q: "30 岁女士买计划 1，要多少钱？",
+    a: "用建议书例子讲，并说明保费每年会调整。",
+    k: ["每天约 13.7 港元", "保费按年调整"],
+    eg: "med",
+    e: "例子：翌年岁 30 岁女性，非吸烟，计划 1（大中华），自付额内地港元 1 万、内地以外港元 3 万\n· 首年保费港元 5,010.40（另付保监局征费港元 5.01），平均每天约 13.7 港元\n· 保费按年龄、自付额、计划级别、国籍及居住国家等每年调整，并非保证不变",
+    t: "选 0 自付额或更高计划，保费会明显较高，要按客户情况另出建议书。" },
+
+  /* ---------- 03 两险怎么搭配 ---------- */
+  { m: "m3",
+    q: "我已经有高端医疗了，还要重疾险吗？",
+    a: "需要。医疗险付医院的账；但大病期间可能较长时间无法正常工作，房贷、子女学费、家庭开支照样要付，这部分要靠重疾赔款。\n反过来，只有重疾，大额治疗费会很快耗掉赔款。两者互补。",
+    k: ["医疗付账单", "重疾补收入"] },
+
+  { m: "m3",
+    q: "预算有限，先买哪一个？",
+    a: "看客户最大的风险：\n· 没有足够储蓄应付大额医疗费 → 先配医疗\n· 家庭依赖他的收入 → 重疾保额不能少\n实务上，可以选较高自付额降低医疗保费，把预算留给重疾保额。",
+    k: ["先找最大风险", "用自付额省保费"] },
+
+  { m: "m3",
+    q: "不同人生阶段怎么配？",
+    a: "· 单身 / 新婚：医疗 + 基础重疾，趁年轻健康锁定保费\n· 有子女：提高父母的重疾保额（首 10 年升级保障可加强），并为孩子投保\n· 中年：检视重疾保额是否追上收入，医疗考虑扩大保障地区\n· 临近退休：重点在医疗和保证续保，并关注长期护理风险（如脑退化症年金）",
+    k: ["按家庭责任调整", "定期检视"] },
+
+  { m: "m3",
+    q: "孩子要不要买？",
+    a: "孩子保费较低，健康状况通常最好，较容易核保，也能及早锁定保障。",
+    k: ["保费低", "易核保", "及早锁定"],
+    eg: "both",
+    e: "「诚保一生」保障 22 种儿童病况至翌年岁 18 岁（如严重哮喘、川崎病、严重湿疹），并有亲子保费豁免。\n高端医疗自由行计划也涵盖严重自闭症、ADHD 等儿童发展障碍治疗（0–17 岁，设 20% 共同保险，计划 1 每次最多港元 1,000、每年 12 次）。" },
+
+  /* ---------- 04 核保与理赔 ---------- */
+  { m: "m4",
+    q: "健康问卷一定要每项都如实填吗？",
+    a: "一定要。保险公司根据投保时的资料决定是否承保和收多少保费。隐瞒或误报病史，日后理赔可能被拒赔，甚至保单被取消。\n不确定的就写上，并附上体检或病历报告，由核保判断。",
+    k: ["如实告知", "不确定就写", "附报告"],
+    t: "绝不能教客户「这个不用写」。这是最严重的违规之一。" },
+
+  { m: "m4",
+    q: "我有甲状腺结节 / 高血压，还能买吗？",
+    a: "不一定不能买。核保结果可能是：标准承保、加费承保、对相关部位或病况除外承保，或者延期。\n先如实申报，准备好近期体检和病历，由核保决定。",
+    k: ["标准 / 加费 / 除外 / 延期"],
+    t: "不要在核保前向客户保证一定能标准承保。" },
+
+  { m: "m4",
+    q: "我是内地客户，买香港保险要注意什么？",
+    a: "· 必须亲身在香港签署投保文件，在内地不能进行销售或签单\n· 带齐有效身份证明、通行证及入境记录、地址证明等（以保险公司要求为准）\n· 保费以美元或港元计，要考虑汇率\n· 投保时健康告知同样要如实",
+    k: ["亲身到港签单", "证件齐全", "汇率风险"],
+    t: "小册子写明「只供在香港派发」。不要在内地推销或签单。" },
+
+  { m: "m4",
+    q: "理赔要准备什么？",
+    a: "· 重疾险：理赔申请表、诊断证明、病理或检查报告、病历；符合病况定义即赔付\n· 高端医疗：优先申请预先批核和直付；如自行垫付，保留发票正本、收据、费用清单、出院小结",
+    k: ["重疾看定义", "医疗看单据"],
+    eg: "both",
+    e: "两款产品都有「智安排」：客户可预先指定家人，在自己精神上失去行为能力时代为申请及领取理赔，免去复杂法律程序。" },
+
+  { m: "m4",
+    q: "在内地看病，香港保险能赔吗？",
+    a: "· 重疾险：一般不限确诊地点，符合保单定义即可索偿\n· 高端医疗：要看保障地区；选大中华或全球计划的，内地属保障范围",
+    k: ["重疾：看定义", "医疗：看保障地区"],
+    eg: "med",
+    e: "高端医疗自由行计划覆盖内地逾 14,000 间二级或以上医院，各计划都保内地公立医院标准单人间（含特需部、国际部），计划 2–4 更覆盖私家医院，并设内地直付网络和医疗绿通。\n（「诚保一生」的深切治疗保障若在港澳以外，须为三级医院，赔额调整为基本保额 10%。）" },
+
+  { m: "m4",
+    q: "签了单后悔怎么办？",
+    a: "有冷静期：在保单或冷静期通知书交付之日起 21 个历日内（以较早者为准），只要未曾索偿，可以书面通知取消，退回已缴保费及征费。\n冷静期后退保，前期现金价值可能远低于已缴保费。",
+    k: ["21 个历日", "未索偿", "书面通知"] },
+
+  /* ---------- 05 客户异议 ---------- */
+  { m: "m5",
+    q: "「我有社保 / 医保了。」",
+    a: "先认同，再补充：\n「社保是基础，很重要。不过社保有目录和限额，进口药、自费药、特需部和私立医院大多要自己出；而且社保管医疗费，不管您休养期间的收入。高端医疗补前者，重疾险补后者。」",
+    k: ["先认同", "讲缺口"] },
+
+  { m: "m5",
+    q: "「太贵了。」",
+    a: "把保费拆到每天，再在预算内调整：\n「以 30 岁女士为例，10 万美元重疾险每天约 9.5 美元。如果预算紧，我们可以调整保额、选较长缴费期，医疗选较高自付额。先确定您最需要保的是什么，再在预算内取舍。」",
+    k: ["拆到每天", "调保额 / 年期 / 自付额"],
+    t: "不要为了成交随意压低保额而不讲清楚缺口。" },
+
+  { m: "m5",
+    q: "「我身体很好，不需要。」",
+    a: "「保险只能在健康的时候买。身体好，正是能以标准费率投保的时候；等身体有状况，可能要加费、除外，甚至买不到。」",
+    k: ["健康时才买得到"] },
+
+  { m: "m5",
+    q: "「香港保险理赔难吗？」",
+    a: "「理赔以合同条款和定义为准，条款透明，保险公司受香港保险业监管局监管。我会在投保时帮您如实填好资料，理赔时协助准备文件。」",
+    k: ["按条款理赔", "如实告知是关键"],
+    t: "不要说「百分百赔」或「一定赔」。" },
+
+  { m: "m5",
+    q: "「为什么不买内地的？」",
+    a: "不贬低内地产品，只讲事实差异：\n· 美元或港元保单，可作货币分散\n· 多次赔付、分红等产品设计\n· 高端医疗可覆盖港澳及海外就医\n同时提醒：要亲身到港签单，有汇率风险。",
+    k: ["讲差异不讲贬低", "风险一并说明"] },
+
+  { m: "m5",
+    q: "「汇率会不会有风险？」",
+    a: "会，要如实说明。保费和赔款以美元或港元计，换回人民币时金额会随汇率变动。\n对有海外开支（如子女留学）或想分散单一货币的家庭，美元资产本身也是配置的意义。",
+    k: ["承认风险", "讲配置意义"] },
+
+  { m: "m5",
+    q: "「年纪大了还能买吗？」",
+    a: "要看产品的投保年龄。年龄越大，保费越高、核保越严，所以越早越好。",
+    k: ["看投保年龄", "越早越好"],
+    eg: "both",
+    e: "「诚保一生」投保年龄（翌年岁）：5 年或 10 年缴 1–65 岁；15 年缴 1–60 岁；20 年缴 1–55 岁；25 年缴 1–50 岁。\n高端医疗自由行计划：0–69 岁可投保，保证终身续保。" },
+
+  { m: "m5",
+    q: "「重疾和医疗，只能选一个呢？」",
+    a: "回到客户最大的风险：没有储蓄应付大额医疗费，先医疗；家庭靠他的收入，先重疾。\n同时说明两者解决不同问题，日后预算宽松时应补齐。",
+    k: ["先最大风险", "日后补齐"] },
+
+  { m: "m5",
+    q: "「保险公司倒闭怎么办？」",
+    a: "如实说明：保单价值和保障受保险公司的信贷风险影响，产品小册子的「主要风险」有列明。\n香港保险公司受保险业监管局监管，须符合资本和偿付能力要求。建议选择财务稳健的保险公司。",
+    k: ["如实讲信贷风险", "讲监管"],
+    t: "不要说「保险公司不可能倒闭」。" },
+
+  { m: "m5",
+    q: "「我再考虑一下。」",
+    a: "尊重客户，帮他理清要考虑什么：保额、预算、家人意见。提供计划书和产品小册子，约好下一次沟通的时间。\n可以提醒：健康状况会变，核保以投保时的情况为准。",
+    k: ["理清顾虑", "约下次时间"],
+    t: "不能用「明天就涨价」等不实理由催促客户。" },
+
+  { m: "m5",
+    q: "「我买储蓄险就够了，不需要保障。」",
+    a: "「储蓄险解决的是长期增值，重疾和医疗解决的是突发大额开支。如果没有保障，一场大病可能要提前取出储蓄，打乱原本的规划。保障是储蓄的『防火墙』。」",
+    k: ["保障保护储蓄"] },
+
+  /* ---------- 06 合规红线 ---------- */
+  { m: "m6",
+    q: "哪些话绝对不能说？",
+    a: "· 「确诊就一定赔」（须符合合同定义）\n· 「红利保证派发」「保额每年保证增长」\n· 「医疗保费终身不变」\n· 「全数保障就是没有上限」\n· 「这个病史不用告诉保险公司」\n· 「在内地签单也可以」\n· 「零风险」「比存款更稳」",
+    k: ["不夸大", "不误导", "不教隐瞒"] },
+
+  { m: "m6",
+    q: "销售前要做什么程序？",
+    a: "要先了解客户的财务状况、保障需要和承受能力。销售长期保险（如重疾险）须完成财务需要分析（FNA）等程序，并按公司要求记录。\n医疗险也要确认计划、保障地区和自付额符合客户需要。",
+    k: ["需要分析", "适当性", "留记录"],
+    t: "具体表格和流程以公司合规部指引为准。" },
+
+  { m: "m6",
+    q: "讲计划书例子时要注意什么？",
+    a: "· 保证与非保证部分一起讲\n· 说明非保证红利可升可跌，建议书亦列出悲观和乐观情景\n· 使用小册子和建议书原文，不要只截取最高数字\n· 提醒提前退保可能损失",
+    k: ["保证 + 非保证一起讲"],
+    eg: "ci",
+    e: "「诚保一生」建议书的悲观 / 乐观情景，是假设投资回报每年比现时预期低 / 高约 1%。例如 66 岁时的预期赔付，悲观情景约 213,518 美元，乐观情景约 337,513 美元（保证部分均为 100,000 美元）。" },
+
+  { m: "m6",
+    q: "「市场首创」「市场独有」可以随便讲吗？",
+    a: "可以引用小册子的说法，但要说明这是保险公司在某个日期按当时市场资料作的比较，不要自行延伸成「最好」「唯一」。",
+    k: ["引用要注明出处"],
+    eg: "both",
+    e: "「诚保一生」：按 2023 年 4 月 21 日的市场资料比较。\n高端医疗自由行计划的「香港市场罕有」「中、港市场罕有」：按 2024 年 6 月的市场资料比较。" },
+
+  { m: "m6",
+    q: "客户想退掉旧保单换新的，怎么办？",
+    a: "必须解释换保单的代价：旧保单退保可能有损失；新保单要重新核保，等候期重新计算，保费按现在年龄计算。并按要求填写保单替换的相关声明。",
+    k: ["讲清损失", "重新核保", "等候期重算"],
+    t: "不能为了新单而误导客户退旧保单。" }
+];
+
+/* 每个模块的小测：a = 正确选项序号（0 起） */
+window.QUIZ = {
+  m1: [
+    { q: "「诚保一生」两次癌症索偿，诊断日期须相隔至少多久？",
+      o: ["1 年", "3 年", "5 年", "没有要求"], a: 1,
+      x: "严重疾病延伸保障：两次索偿一般须相隔至少 1 年；两次同属癌症须相隔至少 3 年。" },
+    { q: "客户先获赔早期疾病 25%，之后确诊严重疾病，重疾赔多少？",
+      o: ["100% 照赔", "100% 扣除已赔的 25%", "125%", "不再赔付"], a: 1,
+      x: "早期疾病赔款属预支，会从严重疾病或身故赔款中扣除。" },
+    { q: "「诚保一生」升级保障额外 50% 适用于？",
+      o: ["终身", "首 10 个保单年度", "首 20 年", "只限儿童"], a: 1,
+      x: "升级保障只在首 10 个保单年度内提供，第 11 年起结束。" }
+  ],
+  m2: [
+    { q: "高端医疗的「全数保障」是什么意思？",
+      o: ["没有任何上限", "不设分项上限，但受年度、终身限额及自付额限制", "保费全数退还", "门诊全数报销"], a: 1,
+      x: "全数保障只是不设分项上限，仍受每年最高限额、终身限额和自付额限制。" },
+    { q: "选计划 1（大中华）的客户在香港因一般肺炎住院，能否获赔？",
+      o: ["可以", "不可以，港澳台只保受保癌症、心脏病发作、中风及意外", "赔 50%", "视乎病房"], a: 1,
+      x: "计划 1 在香港、澳门、台湾只保指定疾病及意外。" },
+    { q: "「保证终身续保」代表？",
+      o: ["保费终身不变", "无论健康或理赔记录都可续保，但保费会调整", "保障条款永不修改", "可免体检加保"], a: 1,
+      x: "续保有保证，保费和条款不保证，会按年调整。" }
+  ],
+  m3: [
+    { q: "客户已有高端医疗，重疾险主要补什么？",
+      o: ["医院账单", "休养期间的收入和家庭开支", "门诊费用", "体检费"], a: 1,
+      x: "医疗管医院的账，重疾管家里的账。" },
+    { q: "预算有限，想降低医疗险保费，常用的合规做法是？",
+      o: ["选较高自付额", "少报年龄", "不申报病史", "不交征费"], a: 0,
+      x: "自付额越高，保费越低。其他做法都违规。" },
+    { q: "高端医疗自由行计划的儿童发展障碍治疗，以下哪项正确？",
+      o: ["没有等候期", "设 90 / 180 日等候期及 20% 共同保险", "全数保障", "只保 18 岁以上"], a: 1,
+      x: "自闭症等候期 90 日，ADHD、语言障碍等 180 日，设 20% 共同保险。" }
+  ],
+  m4: [
+    { q: "冷静期是多少日？",
+      o: ["7 日", "14 日", "21 个历日", "30 日"], a: 2,
+      x: "保单或冷静期通知书交付之日起 21 个历日内，以较早者为准。" },
+    { q: "「诚保一生」生效后多少日内确诊（非意外）的病况不赔？",
+      o: ["30 日", "60 日", "90 日", "180 日"], a: 2,
+      x: "重疾等候期 90 日；高端医疗一般等候期则是 30 日。" },
+    { q: "内地客户投保香港保险，以下哪项正确？",
+      o: ["可在内地视频签单", "须亲身在香港签署", "可邮寄签名", "可由亲友代签"], a: 1,
+      x: "须亲身在香港签署投保文件，不可在内地销售或签单。" }
+  ],
+  m5: [
+    { q: "客户说「太贵了」，较好的回应是？",
+      o: ["马上答应打折", "先确认缺口，再调整保额、年期或自付额", "说明天就涨价", "放弃这个客户"], a: 1,
+      x: "拆分保费、在预算内取舍。不能用不实理由催促。" },
+    { q: "客户问汇率风险，正确做法是？",
+      o: ["说没有风险", "承认风险，并说明美元资产的配置意义", "转移话题", "保证汇率不变"], a: 1,
+      x: "汇率风险要如实说明。" },
+    { q: "客户问「保险公司倒闭怎么办」，应该？",
+      o: ["说保险公司不可能倒闭", "如实说明信贷风险及香港的监管要求", "建议客户不要买", "说政府会全额赔偿"], a: 1,
+      x: "小册子「主要风险」列明了保险公司的信贷风险，要如实讲。" }
+  ],
+  m6: [
+    { q: "以下哪句话可以对客户说？",
+      o: ["红利保证派发", "医疗保费终身不变", "红利属非保证，可升可跌", "病史不用申报"], a: 2,
+      x: "其余三句都是违规说法。" },
+    { q: "讲计划书例子时必须？",
+      o: ["只讲最高数字", "同时讲保证与非保证部分", "只讲乐观情景", "不用提退保损失"], a: 1,
+      x: "保证与非保证一起讲，并提醒提前退保可能损失。" },
+    { q: "引用「市场首创」时应该？",
+      o: ["说成全港最好", "说明是保险公司按某日期市场资料作的比较", "不用注明", "说是唯一"], a: 1,
+      x: "「诚保一生」按 2023 年 4 月 21 日比较；高端医疗按 2024 年 6 月比较。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem("ht-ci-med-pos"),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  function save(){ try{ localStorage.setItem("ht-ci-med-pos", String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod",type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  modList($("home-mods"), startAt);
+  modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1)); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    $("chip").textContent=m.no+" "+m.name;
+    $("chip").style.background=acc(m);
+    var pct=Math.round((pos+1)/FLOW.length*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("count").textContent=(pos+1)+" / "+FLOW.length;
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    $("btn-next").textContent = !nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张"));
+    save(); window.scrollTo(0,0);
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["重疾险 & 高端医疗 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>
