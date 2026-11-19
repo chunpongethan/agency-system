@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>承瑞家办问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --teal:#1F5F6B; --teal-t:#E1EFF1; --plum:#6A2C6B; --plum-t:#F3E6F2;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mod .done{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--med);background:var(--med-t);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.mod.is-done{border-color:#B9D3A6}
+.mod.is-done .no{box-shadow:0 0 0 3px var(--med-t)}
+.reset{align-self:center;background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-weight:700;padding:8px 18px;min-height:40px}
+.reset.armed{border-color:var(--red);color:var(--red);background:var(--red-t)}
+.donebar{font-size:13px;font-weight:700;color:var(--brown);margin:0 0 4px}
+.chip .tick{margin-left:6px}
+.finish{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--med-t);color:var(--med);border-radius:16px;padding:16px}
+.finish strong{font-size:17px}
+.finish span{font-size:13px;color:var(--ink)}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>承瑞</em><b style="color:var(--gold-deep)">家族办公室</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods"><h2>按模块学习</h2><p class="donebar" id="donebar"></p><div class="mods" id="home-mods"></div></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <button class="reset" id="btn-reset" type="button">重置学习进度</button>
+    <div class="foot">内容取材自承瑞家族办公室简介、核心服务及四大优势资料，《承瑞资产活化研讨会 · 客户简报》、《承瑞商学院 3 天代理启动课程》及承瑞各门顾问培训课程。公司数据（服务家庭数、委托规模、通过率、复购率、合作机构等）以公司最新正式口径为准，对外引用前须核对。仅供承瑞内部顾问培训使用，不得发给客户。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* 承瑞家办 · 问答特训 — 内容数据
+   来源：承瑞家族办公室简介与核心服务、四大优势及实力印证资料；
+   《承瑞资产活化研讨会 · 客户简报》（welcome / whyus / safety / journey / concept / engine）；
+   《承瑞商学院 3 天代理启动课程》海报；承瑞分红险、私行房产、重疾医疗、香港身份、CRS 各门顾问培训课程。
+   公司数据以公司最新正式口径为准，对外引用前须核对。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "一句话介绍承瑞", color: "brown" },
+  { id: "m1", no: "01", name: "核心服务", sub: "六大服务、全生命周期规划", color: "gold" },
+  { id: "mg", no: "02", name: "集团架构", sub: "海道教育、格理昂、德萃、BDO", color: "ci" },
+  { id: "m2", no: "03", name: "优势与实力", sub: "四大优势、数据、合作机构", color: "slate" },
+  { id: "m3", no: "04", name: "服务流程", sub: "五步陪伴、专属小组", color: "teal" },
+  { id: "m4", no: "05", name: "资金安全", sub: "三重安全边际", color: "med" },
+  { id: "m5", no: "06", name: "方案地图", sub: "什么客户配什么方案", color: "plum" },
+  { id: "m6", no: "07", name: "客户异议", sub: "8 个最常听到的问题", color: "orange" },
+  { id: "m7", no: "08", name: "合规红线", sub: "介绍公司时不能说的话", color: "red" }
+];
+
+window.PRODUCTS = {
+  co: "公司资料 · 以最新正式口径为准",
+  sv: "服务流程 · 以实际服务协议为准",
+  grp: "集团架构 · 以公司最新正式口径为准",
+  pl: "相关培训 · 承瑞商学院问答特训"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "承瑞是做什么的？一句话怎么讲？",
+    a: "「承瑞是专注服务华人高净值家庭的联合家族办公室。我们以『家族全生命周期规划』为核心，从子女教育规划切入，协同身份布局和财富策略，帮家族财富长期增长、跨代延续。」",
+    k: ["联合家族办公室", "全生命周期规划", "教育切入"],
+    eg: "co",
+    e: "中文名：承瑞家族办公室（承瑞家办）\n英文名：Heritree Family Office\n品牌：承瑞信诚 / Heritree Wealth Management" },
+
+  { m: "m0",
+    q: "什么是「联合家族办公室」？和单一家办有什么不同？",
+    a: "单一家族办公室只服务一个家族，通常要资产规模很大才划算。联合家族办公室同时服务多个家庭，共享专业团队和机构资源，让更多高净值家庭也能用上家办式的整体规划。",
+    k: ["单一家办服务一个家族", "联合家办服务多个家庭", "共享团队与资源"] },
+
+  { m: "m0",
+    q: "承瑞主要服务哪些客户？",
+    a: "华人高净值家庭，尤其是：\n· 孩子要出国或来港读书的家庭；\n· 想规划香港身份的企业主、高管；\n· 资产多集中在内地房产、存款，想做美元和全球配置的家庭；\n· 关心财富传承的家庭。",
+    k: ["高净值家庭", "子女教育", "身份", "全球配置", "传承"] },
+
+  /* ---------- 01 核心服务 ---------- */
+  { m: "m1",
+    q: "承瑞有哪六大核心服务？",
+    a: "· 全球财富策略：多币种、多区域的策略组合。\n· 定制化投资管理：基于家庭现金流、风险偏好和长期目标，打造「稳健收益 + 灵活调度」的组合。\n· 资产活化规划：用结构化金融工具，把资产转化为流动性更好的「规划资本」。\n· 国际教育规划：留学备考、名校申请到就业指导。\n· 全球身份规划：以香港为主，从政策解读、材料准备到续签规划。\n· 税务筹划与合规咨询：整体税务规划，确保 CRS / FATCA 等合规申报。",
+    k: ["财富策略", "投资管理", "资产活化", "教育", "身份", "税务合规"] },
+
+  { m: "m1",
+    q: "为什么说承瑞「从子女教育切入」？",
+    a: "教育是高净值家庭最常见、也最有时间表的需求：孩子几岁、去哪里读、要花多少钱，都很具体。从教育出发，自然会带出身份（孩子要什么身份读书）、资金（学费从哪里来）、传承（钱怎样留给下一代）。三件事一起规划，比分开处理更省力、更不容易出错。",
+    k: ["教育有时间表", "带出身份和资金", "三件事一起规划"] },
+
+  { m: "m1",
+    q: "「家族全生命周期规划」具体指什么？",
+    a: "按家庭成员的人生阶段规划：\n· 子女 K12 到硕士的教育金和升学路径；\n· 父母的身份布局、事业和退休现金流；\n· 长辈的财富传承安排。\n每个阶段的需要不同，方案也会随时间调整，不是一次性卖一个产品。",
+    k: ["按人生阶段", "持续调整", "不是卖单一产品"] },
+
+  { m: "m1",
+    q: "「资产活化」是什么意思？",
+    a: "让「沉睡的资产」动起来：把闲置房产、低息定存，通过专属资产配置计划转化为持续现金流，而且不用出售变卖。用途包括覆盖子女教育金、做家庭现金流稳定器、作为全球化资产的起点。",
+    k: ["闲置资产", "不用出售", "持续现金流"],
+    eg: "pl",
+    e: "详细内容见《私行房产收益方案问答特训》。" },
+
+  /* ---------- 02 集团架构 ---------- */
+  { m: "mg",
+    q: "承瑞的集团架构是怎样的？",
+    a: "· 母公司：海道教育（HD EDU），全资拥有承瑞家办。\n· 承瑞家办（Heritree Family Office）：集团营运核心。\n· 股权投资：格理昂资产管理（Carlyon Asset Management）、德萃保险顾问（DC Insurance）。\n· 策略合作：BDO 立信会计师事务所。\n一句话：教育、家办、资产管理、保险、跨境架构，在一个集团里协同。",
+    k: ["海道教育全资拥有", "承瑞是营运核心", "格理昂 + 德萃", "BDO 策略合作"],
+    eg: "grp",
+    e: "资料来源：《承瑞家族办公室：集团架构与专业服务版图》。" },
+
+  { m: "mg",
+    q: "海道教育是什么公司？和承瑞是什么关系？",
+    a: "海道教育（HD EDU）是承瑞家办的母公司，全资拥有承瑞家办。它的留学服务生态，就是承瑞「从子女教育切入」和「全景规划」的基础。\n公司资料把海道教育标注为「准美国 Nasdaq 上市公司」，即正在筹备上市。",
+    k: ["母公司", "全资拥有", "教育生态"],
+    t: "对外只能说「筹备在美国纳斯达克上市」，不能说「已上市」或「上市公司」，并以公司最新进度为准。" },
+
+  { m: "mg",
+    q: "格理昂资产管理负责什么？",
+    a: "格理昂资产管理（Carlyon Asset Management）是承瑞股权投资的资产管理平台，负责：\n· LPF 有限合伙基金：按香港《有限合伙基金条例》设立的基金结构。\n· EAM 外部资产管理：在客户自己的私人银行账户内提供投资管理。\n· QDII 私人银行 / 券商对接：协助对接合规渠道下的私行和券商服务。",
+    k: ["LPF 基金", "EAM 外部资产管理", "QDII 对接"],
+    t: "基金和资产管理服务只能按相关持牌机构的权限、向合资格客户（如专业投资者）提供。具体牌照以格理昂及合作机构的正式资料为准。" },
+
+  { m: "mg",
+    q: "德萃保险顾问负责什么？",
+    a: "德萃保险顾问（DC Insurance）是承瑞股权投资的保险平台，负责对接香港、新加坡、百慕达的保险公司业务，可以为客户比较不同市场、不同公司的产品。",
+    k: ["香港", "新加坡", "百慕达", "多家保险公司"],
+    t: "内地客户投保香港保单须亲身在港签署；推荐其他地区保单，也必须符合当地监管和销售规定。不能在内地销售境外保险。" },
+
+  { m: "mg",
+    q: "BDO 立信会计师事务所在架构里是什么角色？",
+    a: "BDO 立信是承瑞的策略合作伙伴，不属于集团内公司。它为 ODI 跨境企业架构提供咨询支持，例如企业主以自有资金经 ODI 在香港设立营运公司时，结构和税务由专业会计师把关。",
+    k: ["策略合作，非集团成员", "ODI 跨境架构", "专业把关"],
+    t: "顾问不自行给 ODI、税务意见，转介 BDO 等专业机构。经营贷等受限贷款资金不能用于 ODI 出资。" },
+
+  { m: "mg",
+    q: "「全资拥有」「股权投资」「策略合作」三种关系，怎样跟客户讲？",
+    a: "要讲准确：\n· 全资拥有：海道教育拥有承瑞家办 100% 股权。\n· 股权投资：承瑞持有格理昂、德萃的股权，但它们是各自独立的公司，各自持牌、各自负责。\n· 策略合作：BDO 是独立的会计师事务所，和承瑞是合作关系，没有股权关系。",
+    k: ["全资 = 100%", "股权投资 = 独立公司", "策略合作 = 无股权"],
+    t: "不能把股权投资或合作说成「我们自己的」，也不能把格理昂、德萃、BDO 的牌照或资质说成承瑞家办的。" },
+
+  { m: "mg",
+    q: "这个集团架构对客户有什么好处？",
+    a: "「孩子教育由海道教育的留学生态支持，整体规划由承瑞家办统筹；投资和基金由格理昂对接，保险由德萃比较多家公司，跨境企业架构有 BDO 支持。客户只要对接一个团队，背后各专业环节都有对应的机构负责。」",
+    k: ["一个团队对接", "各环节专业机构", "协同规划"] },
+
+  /* ---------- 03 优势与实力 ---------- */
+  { m: "m2",
+    q: "承瑞的四大优势是什么？",
+    a: "· 政策趋势前瞻：聚焦香港「全球固定收益及货币产品中心」和人才政策，把政策机遇转化为身份与财富方案。\n· 全景规划：依托集团（海道教育）的留学服务生态，提供从留学备考、名校申请到就业指导的全周期规划。\n· 深度定制：基于大量高优才家庭的服务实践，提供贴合家族长期愿景的一体化方案。\n· 合规根基：立足香港，遵循国际金融中心的法规与准则。",
+    k: ["政策前瞻", "全景规划", "深度定制", "合规根基"] },
+
+  { m: "m2",
+    q: "有哪些数据可以说明承瑞的实力？",
+    a: "公司资料中常用的数据：服务高净值家庭 700+；集团（海道教育）留学服务生态 40 万+ 留学生；客户平均委托规模超过 500 万港元；核心规划事项通过率 99%；服务复购率 85%。",
+    k: ["700+ 家庭", ">500 万港元平均委托", "通过率 99%", "复购率 85%"],
+    eg: "co",
+    e: "研讨会简报另列：满意率 99.37%。\n注意：40 万+ 是母公司海道教育的留学生服务生态，不是承瑞家办自己的客户数。",
+    t: "数据要按公司最新口径讲，并说明统计口径。不同资料中「700+」和「近千个」家庭的说法不一致，用之前先向公司确认。" },
+
+  { m: "m2",
+    q: "承瑞和哪些机构合作？",
+    a: "集团内：母公司海道教育；承瑞股权投资的格理昂资产管理、德萃保险顾问。\n集团外：研讨会简报列出的战略伙伴包括大新银行、国泰海通国际；BDO 立信会计师事务所为策略合作伙伴。代理启动课程的实地参访机构包括国泰海通（外部资产管理 EAM）、大新私人银行、德萃保险。\n承瑞采用开放式架构，直联全球金融机构，客户利益优先。",
+    k: ["集团内外分清", "大新银行", "国泰海通国际", "BDO 立信"],
+    t: "讲合作关系时，要说清楚是「合作」还是「隶属」，不能把合作机构的牌照、规模说成承瑞自己的。" },
+
+  { m: "m2",
+    q: "「开放式架构」对客户有什么好处？",
+    a: "承瑞不只卖某一家公司的产品，而是根据客户需要，在多家银行、保险公司和资管机构之间挑选合适的方案。好处是选择更多、更中立，方案围绕客户需要，而不是围绕某个产品。",
+    k: ["不绑定单一机构", "更中立", "围绕客户需要"] },
+
+  /* ---------- 03 服务流程 ---------- */
+  { m: "m3",
+    q: "客户和承瑞合作，流程是怎样的？",
+    a: "五步全程陪伴：\n· 需求诊断：深度访谈，了解家庭全貌与目标。\n· 方案定制：七个工作日内输出详细方案。\n· 文件准备：大部分材料由团队协助准备。\n· 赴港执行：陪同办理开户与配置手续。\n· 持续管理：季度双语报告，年度回顾。",
+    k: ["诊断", "定制", "文件", "赴港", "持续管理"],
+    eg: "sv",
+    e: "一般 8–12 周落地；3 人专属服务小组；透明收费。" },
+
+  { m: "m3",
+    q: "第一次见客户，需求诊断要问什么？",
+    a: "围绕家庭全貌：\n· 家庭成员和子女年龄、升学计划；\n· 资产结构：房产、存款、股票、企业，是否已有境外资产；\n· 现金流需要：学费、生活费、退休；\n· 身份打算和税务居民情况；\n· 风险偏好和投资经验。\n先听，再给方案。",
+    k: ["家庭成员", "资产结构", "现金流", "身份与税务", "风险偏好"],
+    t: "首次面谈不开户、不下单，也不要一开始就推产品。" },
+
+  { m: "m3",
+    q: "「3 人专属服务小组」是怎样分工的？",
+    a: "一个家庭由一个小组跟进，通常包括负责整体关系和需求的顾问，以及负责具体方案（如身份、投资、保险）的专业同事。好处是客户有固定的联系人，各个方案之间也能协调一致。",
+    k: ["固定联系人", "专业分工", "方案协调"],
+    eg: "sv",
+    e: "具体分工以公司实际安排为准。" },
+
+  { m: "m3",
+    q: "方案执行后，承瑞还做什么？",
+    a: "持续管理：季度双语报告，让客户随时了解资产状况；年度回顾，根据子女升学、身份续签、市场变化调整方案。家办服务的价值在长期陪伴，不在一次成交。",
+    k: ["季度双语报告", "年度回顾", "长期陪伴"] },
+
+  /* ---------- 04 资金安全 ---------- */
+  { m: "m4",
+    q: "客户问：「钱交给你们安全吗？」",
+    a: "「承瑞不接触客户资金。资金全程由持牌银行托管，开在您个人名下的香港私人银行账户里，资产所有权清晰，动态可查。」",
+    k: ["不接触客户资金", "持牌银行托管", "个人名下账户"] },
+
+  { m: "m4",
+    q: "「三重安全边际」是哪三重？",
+    a: "· 底层资产安全：以投资级发钞行债券为底层，并可配合保险做风险对冲。\n· 结构设计安全：个人名下香港私行专户，家庭与企业账户隔离，资产所有权清晰。\n· 操作流程安全：持牌银行托管资金，季度双语报告，合规操作、受监管保障。",
+    k: ["底层资产", "结构设计", "操作流程"],
+    t: "旧资料写「保证派息、到期还本」，不能这样讲。债券的正确说法是：「持有到期、发行人不违约，可取回本金。」" },
+
+  { m: "m4",
+    q: "安全是不是等于没有风险？",
+    a: "不是。安全边际是把风险降低、隔离，但投资仍有风险：利率、汇率、发行人、追加保证金、流动性。介绍方案时，安全措施和风险都要讲，并先做风险承受能力评估和适合性分析。",
+    k: ["降低不等于没有", "风险也要讲", "先做适合性"],
+    eg: "pl",
+    e: "五大风险详见《私行房产收益方案问答特训》。" },
+
+  /* ---------- 05 方案地图 ---------- */
+  { m: "m5",
+    q: "承瑞的方案背后有哪三个核心理念？",
+    a: "· 身份先行：通过香港身份规划，为子女升学和资产配置打好基础。\n· 资产托底：用私行房产收益方案，建立安全资产底层和家庭现金流。\n· 收益永续：运用分红险及保费融资方案，创造长期、跨代的现金流。",
+    k: ["身份先行", "资产托底", "收益永续"] },
+
+  { m: "m5",
+    q: "孩子要出国读书，学费压力大，配什么方案？",
+    a: "先看资产结构：\n· 有闲置房产、现金流少 → 私行房产收益方案，用票息覆盖学费。\n· 有一笔长期闲钱 → 分红险，按孩子的升学时间设计提取。\n· 孩子可以在香港读书 → 香港身份规划，配合受养人和居港要求。",
+    k: ["房产 → 私行方案", "闲钱 → 分红险", "香港升学 → 身份"],
+    eg: "pl",
+    e: "相关培训：私行房产收益方案、香港分红险、香港身份 · 升学 · 税务问答特训。" },
+
+  { m: "m5",
+    q: "客户最关心家庭保障和传承，配什么方案？",
+    a: "· 保障：重疾险、高端医疗，先把健康风险转移出去。\n· 传承：分红险的转换受保人、类信托、保单分拆等功能，安排财富跨代交接。\n· 税务：同时讲清楚 CRS 和内地申报，让传承安排合规。",
+    k: ["重疾 + 医疗", "分红险传承功能", "税务合规"],
+    eg: "pl",
+    e: "相关培训：重疾险与高端医疗、香港分红险、CRS 与境外保单税务问答特训。" },
+
+  { m: "m5",
+    q: "为什么一个家庭往往需要几个方案组合？",
+    a: "因为需要是连在一起的：孩子去哪读书决定身份，身份影响税务，资金来源影响用什么方案，传承又要考虑保单和信托结构。组合方案要由同一个团队统筹，避免各方案互相冲突。",
+    k: ["需要互相关联", "统筹规划", "避免冲突"] },
+
+  /* ---------- 06 客户异议 ---------- */
+  { m: "m6",
+    q: "「我直接找银行就好，为什么要找家办？」",
+    a: "「银行擅长自己的产品和服务，但孩子升学、香港身份、税务申报、保险传承这些需要，通常要几家机构配合。我们的价值是站在您家庭这一边，把这些需要放在一起规划，再对接合适的银行和机构。」",
+    k: ["整体规划", "站在客户一边", "对接多家机构"] },
+
+  { m: "m6",
+    q: "「你们是不是就是卖保险的？」",
+    a: "「保险是工具之一，不是全部。我们的服务包括教育规划、身份规划、投资管理、资产活化和税务合规。每个家庭用什么工具，要看需要，有的家庭可能根本不需要买保险。」",
+    k: ["保险是工具之一", "按需要选工具"] },
+
+  { m: "m6",
+    q: "「你们怎么收费？」",
+    a: "「我们坚持透明收费，在方案阶段会把收费方式和金额写清楚，您确认后才开始执行。」具体收费结构按公司当时的标准和服务协议说明。",
+    k: ["透明收费", "方案阶段说清楚"],
+    t: "不要自行承诺折扣或「免费」，以公司收费标准和服务协议为准。" },
+
+  { m: "m6",
+    q: "「你们规模不大，靠得住吗？」",
+    a: "「我们是联合家族办公室，专注服务高净值家庭。资金由持牌银行托管在您个人名下，我们不接触客户资金；同时和多家持牌金融机构合作，在方案中引用的都是他们的正式产品和条款。」",
+    k: ["不接触资金", "持牌机构合作", "正式产品条款"] },
+
+  { m: "m6",
+    q: "「99% 通过率是真的吗？」",
+    a: "「这是我们核心规划事项的统计结果，具体口径我可以帮您跟公司确认。不过我要说清楚，任何身份或申请的审批都由相关部门决定，我们不能保证每一个个案的结果。」",
+    k: ["说明统计口径", "不保证个案结果"],
+    t: "不能把「通过率 99%」讲成「保证批」。" },
+
+  { m: "m6",
+    q: "「你们的方案收益是多少？」",
+    a: "「要看您的资产结构和风险偏好。我们会按您的情况，用当前市场数据做一份测算，包括不加杠杆和加杠杆两种，并加上利率上升等压力情景。所有收益都是示意，不是保证。」",
+    k: ["按个人情况测算", "有压力情景", "示意非保证"],
+    t: "旧宣传资料中「预计总收益 9.1%–11.7%」「年化约 10%，轻松覆盖」等说法不能再用。" },
+
+  { m: "m6",
+    q: "「我的资料交给你们，会不会泄露？」",
+    a: "「我们只收集规划需要的资料，按公司的资料保护政策处理，不会用于其他用途。开户和投保的资料由银行和保险公司按各自的规定保管。」",
+    k: ["只收集需要的资料", "按资料保护政策"] },
+
+  { m: "m6",
+    q: "「我先考虑一下。」",
+    a: "先问清楚是哪一点还没想好：费用、风险、时间，还是要和家人商量。针对那一点补充资料，约好下次时间。可以邀请客户参加承瑞的研讨会或线上交流，先了解再决定，不要逼单。",
+    k: ["找出顾虑", "邀请研讨会", "不逼单"] },
+
+  /* ---------- 07 合规红线 ---------- */
+  { m: "m7",
+    q: "介绍公司时，哪些话不能说？",
+    a: "· 「保本」「保证收益」「保证派息、到期还本」「零风险」\n· 「预计总收益 9.1%–11.7%」「年化 10%，轻松覆盖」\n· 「保证批」「包续签」\n· 「通过我们可以不用交税 / 避开 CRS」\n· 把合作机构的牌照、规模说成承瑞自己的",
+    k: ["不承诺收益", "不承诺结果", "不说避税", "不混淆主体"] },
+
+  { m: "m7",
+    q: "介绍持牌和监管情况时要注意什么？",
+    a: "要准确说明是哪一家持牌机构、持有哪一类牌照、负责哪一部分服务。例如资金托管是持牌银行，保险由持牌保险公司或经纪公司安排，证券和资产管理由相关持牌机构负责。不确定的，先向公司合规确认再讲。",
+    k: ["说清楚主体", "说清楚牌照类别", "不确定先确认"] },
+
+  { m: "m7",
+    q: "引用公司数据和案例时要注意什么？",
+    a: "· 数据用公司最新正式口径，注明统计范围。\n· 案例要说明是真实（已隐去客户资料）还是虚拟示意。\n· 过往表现不代表将来。\n· 客户资料绝不能外传或用于宣传。",
+    k: ["最新口径", "注明真实或虚拟", "保护客户资料"] },
+
+  { m: "m7",
+    q: "这个 H5 可以发给客户看吗？",
+    a: "不可以。这是承瑞内部顾问培训材料。向客户介绍公司时，用公司正式的宣传资料和服务协议。",
+    k: ["仅限内部"] }
+];
+
+window.QUIZ = {
+  m1: [
+    { q: "承瑞的定位是？",
+      o: ["单一家族办公室", "专注服务华人高净值家庭的联合家族办公室", "保险公司", "私人银行"], a: 1,
+      x: "以「家族全生命周期规划」为核心，从子女教育切入。" },
+    { q: "以下哪项不是承瑞的六大核心服务之一？",
+      o: ["全球身份规划", "资产活化规划", "房地产中介", "税务筹划与合规咨询"], a: 2,
+      x: "六大服务：全球财富策略、定制化投资管理、资产活化、国际教育、全球身份、税务合规。" },
+    { q: "「资产活化」最准确的描述是？",
+      o: ["卖掉房产去投资", "让闲置房产、低息定存不用出售也能产生持续现金流", "用存款买股票", "只做保险配置"], a: 1,
+      x: "用途包括教育金、家庭现金流稳定器、全球化资产起点。" }
+  ],
+  m2: [
+    { q: "以下哪项是承瑞的四大优势之一？",
+      o: ["价格最低", "政策趋势前瞻", "保证收益", "只做内地业务"], a: 1,
+      x: "四大优势：政策趋势前瞻、全景规划、深度定制、合规根基。" },
+    { q: "「40 万+ 留学生」指的是？",
+      o: ["承瑞家办的客户数", "母公司海道教育的留学生服务生态", "香港留学生总数", "承瑞员工数"], a: 1,
+      x: "不能说成承瑞家办自己的客户数。" },
+    { q: "介绍合作机构时，正确做法是？",
+      o: ["说合作机构是承瑞的子公司", "把合作机构的牌照说成承瑞的", "说清楚是合作关系，各自负责哪部分", "不提合作机构"], a: 2,
+      x: "合作与隶属要分清楚。" }
+  ],
+  mg: [
+    { q: "承瑞家办的母公司是？",
+      o: ["格理昂资产管理", "海道教育（HD EDU）", "BDO 立信", "大新银行"], a: 1,
+      x: "海道教育全资拥有承瑞家办。" },
+    { q: "海道教育的上市状态，对外应该怎么说？",
+      o: ["已在纳斯达克上市", "筹备在美国纳斯达克上市，以公司最新进度为准", "香港上市公司", "不用提"], a: 1,
+      x: "资料标注为「准美国 Nasdaq 上市公司」。" },
+    { q: "BDO 立信和承瑞是什么关系？",
+      o: ["全资子公司", "股权投资", "策略合作，提供 ODI 跨境架构咨询支持", "母公司"], a: 2,
+      x: "格理昂和德萃才是承瑞股权投资的公司。" }
+  ],
+  m3: [
+    { q: "承瑞服务流程的第一步是？",
+      o: ["开户", "需求诊断", "签约付款", "赴港执行"], a: 1,
+      x: "五步：需求诊断、方案定制、文件准备、赴港执行、持续管理。" },
+    { q: "方案定制一般多久输出？",
+      o: ["当天", "七个工作日内", "三个月", "一年"], a: 1,
+      x: "整体一般 8–12 周落地。" },
+    { q: "持续管理阶段，客户会收到什么？",
+      o: ["每日短信", "季度双语报告和年度回顾", "不再跟进", "只在续保时联系"], a: 1,
+      x: "家办的价值在长期陪伴。" }
+  ],
+  m4: [
+    { q: "关于客户资金，以下哪项正确？",
+      o: ["存入承瑞公司账户", "承瑞不接触客户资金，由持牌银行托管在客户个人名下", "由顾问代管", "存入合作伙伴账户"], a: 1,
+      x: "个人名下香港私行专户，资产所有权清晰。" },
+    { q: "介绍底层债券时，正确说法是？",
+      o: ["保证派息、到期还本", "零风险", "持有到期、发行人不违约，可取回本金", "比存款更安全"], a: 2,
+      x: "旧资料中的「保证派息、到期还本」不能再用。" },
+    { q: "「三重安全边际」不包括？",
+      o: ["底层资产安全", "结构设计安全", "操作流程安全", "保证收益安全"], a: 3,
+      x: "安全边际是降低和隔离风险，不是保证收益。" }
+  ],
+  m5: [
+    { q: "承瑞方案的三个核心理念是？",
+      o: ["低价、快速、方便", "身份先行、资产托底、收益永续", "保本、保息、保批", "高杠杆、高收益、高周转"], a: 1,
+      x: "对应身份规划、私行房产方案、分红险与保费融资。" },
+    { q: "客户有闲置房产、缺现金流付学费，优先考虑？",
+      o: ["卖房", "私行房产收益方案", "高息债", "炒股"], a: 1,
+      x: "用票息覆盖学费，房子仍在名下。" },
+    { q: "为什么组合方案要由同一个团队统筹？",
+      o: ["收费更高", "各需要互相关联，避免方案冲突", "规定如此", "没有原因"], a: 1,
+      x: "升学、身份、税务、传承互相影响。" }
+  ],
+  m6: [
+    { q: "客户问「为什么不直接找银行」，最合适的回应是？",
+      o: ["银行不安全", "家办站在家庭一边做整体规划，再对接多家机构", "银行收费太高", "我们比银行收益高"], a: 1,
+      x: "不要贬低银行。" },
+    { q: "客户问「99% 通过率是真的吗」，正确回应是？",
+      o: ["保证批", "说明统计口径，并说明审批由相关部门决定，不保证个案", "当然是真的，放心", "不回答"], a: 1,
+      x: "不能把通过率讲成保证。" },
+    { q: "客户问方案收益，应该？",
+      o: ["说预计 9.1%–11.7%", "说年化 10% 轻松覆盖", "按客户情况用当前数据测算，并加压力情景，说明是示意", "说保证收益"], a: 2,
+      x: "旧宣传数字不能再用。" }
+  ],
+  m7: [
+    { q: "以下哪句话可以说？",
+      o: ["保证派息、到期还本", "资金由持牌银行托管在您个人名下，承瑞不接触客户资金", "通过我们可以避开 CRS", "保证批"], a: 1,
+      x: "讲安全措施，不承诺结果。" },
+    { q: "介绍持牌情况时，应该？",
+      o: ["笼统说「我们有牌照」", "说清楚是哪一家机构、哪类牌照、负责哪部分", "把合作银行的牌照说成自己的", "不用提"], a: 1,
+      x: "不确定的先向公司合规确认。" },
+    { q: "引用案例时，应该？",
+      o: ["用真实客户姓名增加可信度", "说明是真实（已隐去资料）还是虚拟示意", "夸大收益", "不提风险"], a: 1,
+      x: "过往表现不代表将来，客户资料绝不外传。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"],teal:["--teal","--teal-t"],plum:["--plum","--plum-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var KEY="ht-fo-pos", pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem(KEY),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  var DKEY=KEY+"-done", done={};
+  try{ done=JSON.parse(localStorage.getItem(DKEY)||"{}")||{}; }catch(e){ done={}; }
+  function markDone(mid){ if(done[mid]) return; done[mid]=true; try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
+  function save(){ try{ localStorage.setItem(KEY, String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    container.innerHTML="";
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod"+(done[m.id]?" is-done":""),type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        done[m.id] ? el("span",{class:"done",text:"✓ 已完成"}) : el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function refreshLists(){
+    modList($("home-mods"), startAt);
+    modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+    var k=0; M.forEach(function(m){ if(done[m.id]) k++; });
+    $("donebar").textContent = k ? ("已完成 "+k+" / "+M.length+" 个模块"+(k===M.length?"，可以挑战结业测验":"")) : "";
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  refreshLists();
+  updStart();
+
+  /* ---------- 重置进度：点两次确认 ---------- */
+  var resetTimer=null;
+  $("btn-reset").addEventListener("click",function(){
+    var b=$("btn-reset");
+    if(!b.classList.contains("armed")){
+      b.classList.add("armed"); b.textContent="再点一次，清除全部进度";
+      resetTimer=setTimeout(function(){ b.classList.remove("armed"); b.textContent="重置学习进度"; },4000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    done={}; seen={}; pos=0;
+    try{ localStorage.removeItem(DKEY); localStorage.removeItem(KEY); }catch(e){}
+    b.classList.remove("armed"); b.textContent="重置学习进度";
+    refreshLists(); updStart(); toast("已重置，可以从头开始");
+  });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    var answered=0, total=Q[mid].length;
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1,function(){
+      answered++;
+      if(answered===total){
+        wrap.appendChild(el("div",{class:"finish"},[el("strong",{text:"✓ 本模块已完成"}),el("span",{text:"看完解析后，点「完成，返回首页」。"})]));
+        markDone(mid); setChip(); setNext();
+      }
+    })); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    setChip();
+    $("chip").style.background=acc(m);
+    var cards=[], ci=0;
+    FLOW.forEach(function(x,i){ if(x.m===f.m && x.t==="card"){ cards.push(i); if(i===pos) ci=cards.length; } });
+    var n=cards.length, step = f.t==="card" ? ci : n;
+    var hasQ=!!Q[f.m], totalSteps=n+(hasQ?1:0), cur = f.t==="card" ? ci : totalSteps;
+    var pct=Math.round(cur/totalSteps*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("progbar").setAttribute("aria-label","本模块进度");
+    $("count").textContent = f.t==="card" ? (ci+" / "+n) : "小测";
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    setNext();
+    save(); window.scrollTo(0,0);
+  }
+  function setNext(){
+    var f=FLOW[pos], nx=FLOW[pos+1], last=!nx || nx.m!==f.m;
+    var willFinish = last && (done[f.m] || !Q[f.m]);
+    $("btn-next").textContent = willFinish ? "完成，返回首页" : (!nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张")));
+  }
+  function updStart(){ $("btn-start").textContent = pos>0 ? "继续学习" : "开始学习"; }
+  function setChip(){
+    var f=FLOW[pos], m=mod(f.m);
+    $("chip").textContent=m.no+" "+m.name+(done[f.m]?"  ✓ 已完成":"");
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    /* 没有小测的模块：读完最后一张卡往前走即算完成 */
+    var leaving = d>0 && (!FLOW[n] || FLOW[n].m!==FLOW[pos].m);
+    if(leaving && !Q[FLOW[pos].m]) markDone(FLOW[pos].m);
+    if(leaving && done[FLOW[pos].m]){
+      if(FLOW[n]){ pos=n; save(); }
+      show("home"); updStart();
+      var hm=$("home-mods"); if(hm && hm.scrollIntoView) setTimeout(function(){ hm.parentNode.scrollIntoView({behavior:"smooth",block:"start"}); },60);
+      return;
+    }
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["承瑞家办 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>
