@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>香港身份、升学及税务优势问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --teal:#1F5F6B; --teal-t:#E1EFF1; --plum:#6A2C6B; --plum-t:#F3E6F2;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mod .done{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--med);background:var(--med-t);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.mod.is-done{border-color:#B9D3A6}
+.mod.is-done .no{box-shadow:0 0 0 3px var(--med-t)}
+.reset{align-self:center;background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-weight:700;padding:8px 18px;min-height:40px}
+.reset.armed{border-color:var(--red);color:var(--red);background:var(--red-t)}
+.donebar{font-size:13px;font-weight:700;color:var(--brown);margin:0 0 4px}
+.chip .tick{margin-left:6px}
+.finish{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--med-t);color:var(--med);border-radius:16px;padding:16px}
+.finish strong{font-size:17px}
+.finish span{font-size:13px;color:var(--ink)}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>香港身份</em><b style="color:var(--gold-deep)">升学 · 税务</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods"><h2>按模块学习</h2><p class="donebar" id="donebar"></p><div class="mods" id="home-mods"></div></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <button class="reset" id="btn-reset" type="button">重置学习进度</button>
+    <div class="foot">内容取材自承瑞《王总线上交流 · 香港税务、身份与保险》、《香港高才通（A 类）申请流程与时间表》、海报《内地人拿香港身份 5 种方式》《香港身份规划》系列，以及香港入境事务处、教育局、税务局公开资料。身份、升学及税务政策变化快，整理至 2026 年 11 月，使用前以官方最新公布为准；承瑞不承诺任何申请结果，本材料不构成法律或税务意见。仅供承瑞内部顾问培训使用，不得发给客户。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* 香港身份、升学及税务优势 · 问答特训 — 内容数据
+   来源：承瑞《王总线上交流 · 香港税务、身份与保险》（2026-10）、《香港高才通（A 类）申请流程与时间表》（2026-10）、
+   海报《内地人拿香港身份 5 种方式》《香港身份规划》（子女升学 / 税务与 CRS / 申请路径）；
+   香港入境事务处、教育局、大学联招处公开资料；全国联招简章。整理至 2026 年 11 月。
+   承瑞不承诺任何申请结果；本材料不构成法律或税务意见。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "身份是平台，不是税务工具", color: "brown" },
+  { id: "m1", no: "01", name: "身份路径", sub: "高才、优才、专才、留学、投资", color: "gold" },
+  { id: "m2", no: "02", name: "续签与永居", sub: "通常居住满 7 年", color: "slate" },
+  { id: "m3", no: "03", name: "子女升学", sub: "名校、学费、联考、居港两年", color: "med" },
+  { id: "m4", no: "04", name: "香港税制", sub: "简单低税、地域来源", color: "teal" },
+  { id: "m5", no: "05", name: "身份与内地税务", sub: "真正要算的税在内地", color: "ci" },
+  { id: "m6", no: "06", name: "客户异议", sub: "8 个最常听到的问题", color: "orange" },
+  { id: "m7", no: "07", name: "合规红线", sub: "哪些话不能说、哪些事不能做", color: "red" }
+];
+
+window.PRODUCTS = {
+  imm: "入境处资料 · 以最新公布为准",
+  edu: "升学资料 · 以教育局及院校最新公布为准",
+  tax: "香港税务资料 · 以香港税务局最新公布为准",
+  cs: "虚拟案例 · 林女士（示意，已扣内地 20% 个税）"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "香港身份到底有什么用？一句话怎么讲？",
+    a: "「香港身份是一个平台：孩子多一条升学路，全家多一个生活和发展的选择，资产配置也更方便。但它不是省税工具，要真正在香港生活或经营，才能长期拿得住。」",
+    k: ["升学", "生活与发展", "资产配置", "不是省税工具"],
+    t: "不要把香港身份讲成「拿了就不用交税」。这是最常见、也最危险的误区。" },
+
+  { m: "m0",
+    q: "客户想办身份，先要想清楚哪三个前提？",
+    a: "· 要真实在香港生活或工作：续签和累计 7 年「通常居住」看实质，即工作、纳税、住址。\n· 身份不改变内地税务居民身份：主要在内地生活经营，全球收入仍须在内地申报。\n· 时间点要和孩子配合：受养人只限 18 岁以下未婚子女，窗口错过就没有了。",
+    k: ["真实在港", "不改变税务居民", "配合孩子年龄"] },
+
+  { m: "m0",
+    q: "什么样的家庭最值得办香港身份？",
+    a: "两条都成立，身份就值得办，而且越早越好：\n· 孩子会在香港升学或发展；\n· 家长愿意在香港有实际安排，例如工作、开公司、陪读。\n只想「备一个身份放着」、人和生意都不打算来香港的，续签会很难，要先讲清楚。",
+    k: ["孩子在港升学", "家长在港有实际安排"],
+    eg: "imm",
+    e: "首批高才通签证到期时，近一半持有人没有续签。身份要规划，不只是「办」。" },
+
+  /* ---------- 01 身份路径 ---------- */
+  { m: "m1",
+    q: "内地人拿香港身份，主要有哪几种方式？",
+    a: "· 高才通（高端人才通行证计划）：看收入或名校学历。\n· 优才（优秀人才入境计划）：综合打分。\n· 专才（一般就业政策 / 输入内地人才计划）：已获香港公司聘用。\n· 留学：读香港院校，毕业后申请 IANG 留港。\n· 新资本投资者入境计划：在港投资 3,000 万港元。\n都是通常居住满 7 年后，可申请永久居民。",
+    k: ["高才", "优才", "专才", "留学", "投资"] },
+
+  { m: "m1",
+    q: "高才通 A、B、C 类有什么分别？",
+    a: "· A 类：申请前一年收入 ≥ 250 万港元，不看学历。\n· B 类：合资格名校（如 QS 前 100）学士学位，加近 5 年内累计 ≥ 3 年工作经验。\n· C 类：合资格名校学士学位，近 5 年内毕业，工作经验不足 3 年；每年有名额上限（1 万个），名额通常较早用完。",
+    k: ["A 看收入", "B 名校 + 3 年经验", "C 有名额"],
+    eg: "imm",
+    e: "审批：一般 1–3 个月（A 类资料齐全约 4 周）。\n首次获批：A 类 3 年，B / C 类 2 年。" },
+
+  { m: "m1",
+    q: "高才通 A 类的「250 万收入」怎么算？",
+    a: "只计应课税的工作收入或经营收入，个人投资收益不计。收入必须能用完税记录、税单或公司报税文件证明。只有银行流水、没有对应纳税，通常不足以证明。\n所以很多企业主要先把内地的税务理顺，这一步也是在为高才 A 铺路。",
+    k: ["应课税收入", "投资收益不计", "要完税记录"],
+    t: "不实或前后不一致的资料会被拒，还会影响以后的申请。绝对不能帮客户「做」收入证明。" },
+
+  { m: "m1",
+    q: "优才计划现在还好申请吗？",
+    a: "优才看综合条件：12 项评核准则满足 6 项以上，或走成就计分制。没有名额上限，但 2024 年底政策调整后，审批通过率大幅下降（课程资料估计约 20%），审批也要 6–12 个月。\n适合履历扎实、但不满足高才条件的客户，要先做好心理准备。",
+    k: ["12 项满足 6 项", "通过率下降", "6–12 个月"] },
+
+  { m: "m1",
+    q: "专才和进修硕士这两条路，适合谁？",
+    a: "· 专才：已获香港公司聘用（本科学历，条件优秀可放宽），公司须实际运营。适合真的会来香港工作的人。\n· 进修硕士 + IANG：本科学历，读一年全日制授课式硕士，毕业后申请 IANG，续签要在港受雇或经营业务。适合时间充裕、愿意脱产读书的人。",
+    k: ["专才要真实雇主", "硕士读一年", "毕业后 IANG"],
+    t: "读书签证期间一般不能带受养人。如果孩子快 18 岁，进修硕士可能赶不上窗口。" },
+
+  { m: "m1",
+    q: "新资本投资者入境计划，内地客户能办吗？",
+    a: "要看身份：申请人须年满 18 岁，并且是外国人，或已取得外国永久居留身份的中国籍人士等。一般没有外国永居身份的内地居民不符合资格。\n符合资格的，净资产 ≥ 3,000 万港元，并在港投资 ≥ 3,000 万港元（住宅物业须成交价达 3,000 万港元，最多计入 1,000 万港元）。",
+    k: ["内地居民一般需外国永居", "投资 3,000 万港元"],
+    t: "不要向普通内地客户推销投资移民。先确认他有没有外国永居身份。" },
+
+  { m: "m1",
+    q: "怎么帮客户选路径？",
+    a: "按顺序问：\n· 过去一年应课税收入，能否用完税记录证明 ≥ 250 万港元？能 → 高才 A。\n· 是不是合资格名校毕业？→ 高才 B / C。\n· 有没有香港雇主？→ 专才。\n· 愿不愿意读一年书？→ 进修硕士。\n· 孩子几岁？快 18 岁的，优先选能带受养人、审批快的路径。",
+    k: ["先问收入", "再问学历和雇主", "看孩子年龄"],
+    t: "只问「能否证明达标」，不要追问客户具体收入数字。也不承诺任何申请结果。" },
+
+  /* ---------- 02 续签与永居 ---------- */
+  { m: "m2",
+    q: "怎样才能拿到香港永久居民身份？",
+    a: "以合资格身份在香港连续「通常居住」满 7 年，可以申请永久居民（居留权）。永居后可申领特区护照。\n「通常居住」看的是生活重心是否在香港：工作、纳税、住址、家人。长期住在内地，可能影响永居。",
+    k: ["连续通常居住 7 年", "看生活重心"] },
+
+  { m: "m2",
+    q: "高才通续签要满足什么条件？",
+    a: "首次获批期间没有其他逗留条件。续签时必须证明在香港有稳定工作，或已在香港开设或加入业务；入境处会看雇佣合约、营业额、本地雇员、在港报税和强积金等。\n续签要在到期前 3 个月内递交，须本人在香港办理。",
+    k: ["证明在港工作或经营", "到期前 3 个月内递交"],
+    eg: "imm",
+    e: "一般续签通常最长 3 年；以高才身份居留满 2 年、上一课税年度薪俸税应课税收入 ≥ 200 万港元的，可获 6 年续签。" },
+
+  { m: "m2",
+    q: "企业主人在内地，怎么准备续签？",
+    a: "最现实的方式是在香港注册并实际经营一家公司：有真实的业务、合同、办公和员工，在港报税。这一步要在入境后尽早开始，不要等到第 3 年才准备。",
+    k: ["香港公司要真实经营", "入境后尽早开始"],
+    t: "空壳公司、挂名就业很难通过续签，也可能构成虚假申报。" },
+
+  { m: "m2",
+    q: "孩子作为受养人，身份怎么延续？",
+    a: "受养人的逗留期限跟随主申请人。主申请人续签成功、仍是真正的香港居民，受养人就可以续签；主申请人续不了，受养人也会受影响。\n受养人只限合法配偶及 18 岁以下未婚子女，必须在孩子 18 岁生日前递交申请。",
+    k: ["跟随主申请人", "18 岁前递交"] },
+
+  { m: "m2",
+    q: "办身份要花多少钱、多长时间？",
+    a: "官方费用很低：高才每人申请费加签证费约几百港元（以入境处收费表为准）。主要支出是税务整理、翻译认证，以及在港生活成本。\n高才 A 从准备到入境领身份证，顺利的话约 7–10 周；最容易拖延的是收入证明。",
+    k: ["官方费用低", "主要成本在生活", "高才 A 约 2–3 个月"] },
+
+  /* ---------- 03 子女升学 ---------- */
+  { m: "m3",
+    q: "香港身份对孩子升学有什么好处？",
+    a: "三个好处：\n· 世界一流：多所大学排名全球前列。\n· 学费优惠：符合条件的本地生学费，约为非本地生的五分之一。\n· 多一条路：持香港居民身份证，可参加港澳台侨联考，报考内地名校。",
+    k: ["名校", "本地生学费", "联考"],
+    eg: "edu",
+    e: "QS 2027：香港大学第 11、香港中文大学第 18、香港科技大学第 33、香港理工大学第 50。\n港大 2027/28 学年每年学费：本地生约 4.95 万港元；非本地生 25–28 万港元。四年本科可省约 80–90 万港元。" },
+
+  { m: "m3",
+    q: "受养人子女，现在还能直接按本地生交学费吗？",
+    a: "不能直接了。政府已修订资助专上课程的资格：受养人子女须在港居住满两年，才可以本地生身份申请政府资助学额和本地学费。新规 2028/29 学年全面实施，2027/28 学年为过渡期，要求居港满一年。\n另外，持工作签证或入境计划签证的人士本人，不再符合申请政府资助学额的资格。",
+    k: ["居港满两年", "2028/29 全面实施", "2027/28 过渡一年"],
+    eg: "edu",
+    e: "2027 年度大学联招过渡安排：申请人须在 2026 年 6 月 1 日至 2027 年 5 月 31 日期间，在香港正规学校全日制就读，或期间离港不多于 90 天。",
+    t: "不要再说「拿了受养人身份，考 DSE 就能按本地生读港大」。孩子必须真正在香港读书生活。" },
+
+  { m: "m3",
+    q: "什么是港澳台侨联考？香港身份的孩子能考吗？",
+    a: "全国联考（普通高校联合招收华侨港澳台学生）是内地高校面向港澳台侨学生的入学考试，考生人数远少于高考，是不同赛道。\n香港考生须持有《港澳居民来往内地通行证》或《港澳居民居住证》，以及香港居民身份证，并具有高中毕业学历。名校门槛并不低，适合真正优秀的孩子。",
+    k: ["独立赛道", "需回乡证 + 香港身份证", "名校门槛不低"],
+    eg: "edu",
+    e: "每年 3 月报名。具体报名资格以当年招生简章为准。" },
+
+  { m: "m3",
+    q: "除了联考，还有什么升学路？",
+    a: "· 香港 DSE 文凭试：考香港本地大学；也可通过「内地高校招收香港中学文凭考试学生计划」报读内地高校，持香港永久或非永久居民身份证均可申请。\n· 香港国际学校、海外升学：香港身份方便申请和过渡。\n关键是孩子在哪里读中学、多早来香港。",
+    k: ["DSE", "DSE 收生计划", "越早来越好"] },
+
+  { m: "m3",
+    q: "孩子几岁开始规划最合适？",
+    a: "读小学、初中正是规划的时间点：\n· 受养人必须 18 岁前申请。\n· 要满足「居港两年」才能享本地生学费。\n· 越早来香港插班，越容易适应粤语、英文和 DSE 课程。\n孩子已经高中的，要尽快确认生日和居港时间是否赶得上。",
+    k: ["小学初中最好", "18 岁前申请", "居港两年要倒推"] },
+
+  /* ---------- 04 香港税制 ---------- */
+  { m: "m4",
+    q: "香港不收哪些税？",
+    a: "香港是简单低税制。不征：资本增值税、股息税、利息预扣税、遗产税（2006 年 2 月起取消）、增值税和销售税；资金汇入香港本身也不征税。",
+    k: ["无资本增值税", "无股息税", "无遗产税", "无增值税"] },
+
+  { m: "m4",
+    q: "香港主要征哪些税？",
+    a: "香港采用地域来源原则，只就源自香港的收入征税：\n· 薪俸税：在香港工作的工资，累进 2%–17%，或按标准税率 15%（应评税收入超过 500 万港元部分 16%），取较低者。\n· 利得税：在香港经营的公司利润，法团首 200 万港元 8.25%，其余 16.5%。\n· 另有物业税、印花税。",
+    k: ["地域来源", "薪俸税 ≤ 15%/16%", "利得税 8.25%/16.5%"],
+    eg: "tax",
+    e: "税率以香港税务局最新公布为准。" },
+
+  { m: "m4",
+    q: "客户问：「香港以后会不会加税？」",
+    a: "「低税政策写进了《基本法》第一百零八条：香港实行独立的税收制度，参照原在香港实行的低税政策，自行立法规定税种和税率。税率可以通过立法微调，比如 2024/25 年度起，高收入薪俸税加设 16% 一档，但方向一直是低税。」",
+    k: ["基本法 108 条", "可以微调", "方向是低税"],
+    t: "主动承认「税率可微调」，比说「永远不会变」更可信。" },
+
+  { m: "m4",
+    q: "家人真正搬到香港，税务上有什么好处？",
+    a: "如果家人真正在港生活、工作，成为香港税务居民，税负清晰简单：只就香港来源收入纳税，没有资本增值税、股息税和遗产税。\n在港设立真实经营的公司，也可以在合规前提下更灵活地布局资产。\n但是否还是内地税务居民，要按内地规则另行判断。",
+    k: ["真正在港才有意义", "税负清晰", "内地身份另行判断"] },
+
+  /* ---------- 05 身份与内地税务 ---------- */
+  { m: "m5",
+    q: "拿了香港身份，是不是就不是内地税务居民了？",
+    a: "不是。税务居民看的是家庭、生意和居住时间，不看手上的证件。在内地有住所，或一年在内地住满 183 天，通常仍是中国税收居民，境内外全部所得都要在内地申报。\n香港身份是居留身份，不是税务工具。",
+    k: ["看住所和居住时间", "不看证件", "全球所得在内地申报"] },
+
+  { m: "m5",
+    q: "那港险、港股、债券的收益，税在哪里交？",
+    a: "香港端：资金汇入、保单分红、债券利息、股息，个人一般不征税。\n内地端：中国税收居民的境外所得要在内地申报，利息、股息、红利按 20% 计税；境外账户和保单信息会经 CRS 交换回内地。\n所以「合理的税」不是香港收的，而是内地的 20%。",
+    k: ["香港端一般不征", "内地端 20%", "CRS 交换"],
+    t: "只讲「香港不收税」是讲了一半。主动讲内地 20%，最能建立信任。" },
+
+  { m: "m5",
+    q: "人和生意都在内地，自称香港税务居民会怎样？",
+    a: "这属于虚假申报。在金融机构的税务居民自我证明表上作不实声明，在香港本身就违法；内地也可能认定为逃避纳税义务。\n正确做法是如实声明，境外收入依法在内地申报。",
+    k: ["虚假申报", "在香港违法", "如实声明"] },
+
+  { m: "m5",
+    q: "扣了 20% 个税，香港美元分红险还划算吗？",
+    a: "用虚拟案例说明：同一笔钱放三个地方，全部扣税后比较。按演示，长期来看港险仍明显领先；但只看保证部分，港险反而略低于内地分红险。\n准确说法是：港险「长期预期更高，确定部分略低」，所以要分工配置。",
+    k: ["已扣 20%", "长期预期更高", "确定部分略低"],
+    eg: "cs",
+    e: "林女士 46 岁，每年 10 万美元 × 5 年，共 50 万美元（汇率不变）。\n76 岁（第 30 年）税后：港险按演示约 205 万；分红实现 80% 约 179 万；内地分红险约 115 万；内地定存约 71 万。\n只看保证部分：港险约 76 万，内地分红险约 80 万。",
+    t: "不要说「港险又高又稳」。也不要说这是任何具体产品的回报。" },
+
+  { m: "m5",
+    q: "为什么香港和内地的分红险差这么多？",
+    a: "三个结构性原因：\n· 演示上限不同：香港美元保单 6.5%，内地分红险 3.5%；背后是投资范围，香港保险资金可全球配置，权益类比例更高。\n· 利率环境不同：美元长期利率远高于内地预定利率。\n· 结构取舍不同：内地保证多、确定性强；香港非保证多，要看分红实现率。\n结论：要确定性的钱留内地，长期增值与美元需求放香港。",
+    k: ["演示上限", "利率环境", "保证 vs 预期"] },
+
+  /* ---------- 06 客户异议 ---------- */
+  { m: "m6",
+    q: "「办了香港身份，是不是就能省税？」",
+    a: "「不能。只要您主要在内地生活和经营，仍是内地税务居民，全球收入都要在内地申报。香港身份的价值在孩子升学、全家发展和资产配置，不在省税。」",
+    k: ["不能省税", "价值在升学和发展"] },
+
+  { m: "m6",
+    q: "「我先办个身份放着，以后再说。」",
+    a: "「可以先办，但要提前想好续签。首次签证到期时，要证明在香港有工作或经营业务；首批高才通有近一半人没有续签成功。我们可以从现在开始，规划在香港的实际安排。」",
+    k: ["续签要实质", "提前规划"] },
+
+  { m: "m6",
+    q: "「孩子拿了受养人身份，就能按本地生考港大吧？」",
+    a: "「现在要求受养人子女在香港居住满两年，才能按本地生申请资助学额和本地学费，2028/29 学年全面实施。所以孩子要真正来香港读书，而且越早越好。」",
+    k: ["居港两年", "要真正来港读书"] },
+
+  { m: "m6",
+    q: "「香港以后会不会也加税？」",
+    a: "「低税政策写在《基本法》第一百零八条，税率可以微调，但方向一直是低税。比如 2024/25 年度起，高收入薪俸税加了 16% 一档，调整幅度也在低税框架内。」",
+    k: ["基本法 108 条", "可微调"] },
+
+  { m: "m6",
+    q: "「你能保证我的申请一定批吗？」",
+    a: "「不能，任何人都不能保证。审批由香港入境事务处决定。我们能做的，是帮您选对路径、把材料准备真实完整，提高成功的把握。」",
+    k: ["不能保证", "入境处决定", "材料真实完整"] },
+
+  { m: "m6",
+    q: "「我收入大部分是投资收益，能办高才 A 吗？」",
+    a: "「高才 A 只计应课税的工作或经营收入，个人投资收益不计。可以看看您的工资、公司分红或经营所得，是否能用完税记录证明达到 250 万港元；不够的话，我们再看其他路径。」",
+    k: ["投资收益不计", "看工作和经营收入"] },
+
+  { m: "m6",
+    q: "「我在香港买了保险，有了身份是不是就不用申报了？」",
+    a: "「不是。您是不是内地税务居民，要看住所和居住时间，不看身份证。如果仍是内地税务居民，保单的境外收益仍要按内地规定申报，具体请您咨询税务师。」",
+    k: ["看税务居民", "仍需申报", "咨询税务师"] },
+
+  { m: "m6",
+    q: "「老大已经 22 岁了，还能一起办吗？」",
+    a: "「不能作为受养人了，受养人只限 18 岁以下未婚子女。老大可以走自己的路径，比如申请香港的硕士课程，毕业后申请 IANG 留港；如果在考公，家人办理前先确认报考单位的政审要求。」",
+    k: ["18 岁以上不能做受养人", "可读硕士走 IANG"] },
+
+  /* ---------- 07 合规红线 ---------- */
+  { m: "m7",
+    q: "哪些话绝对不能说？",
+    a: "· 「保证批」「包续签」「包永居」\n· 「拿了香港身份就不用交税 / 不是内地税务居民」\n· 「受养人考 DSE 就能按本地生读港大」\n· 「香港永远不会加税」\n· 「港险又高又稳」",
+    k: ["不承诺结果", "不说省税", "不夸大升学"] },
+
+  { m: "m7",
+    q: "哪些事绝对不能做？",
+    a: "· 协助制作或美化收入证明、雇佣证明、学历文件。\n· 安排空壳公司、挂名就业来应付续签。\n· 建议客户在税务居民自我证明上作不实声明。\n· 协助任何违规换汇或资金出境安排。",
+    k: ["不造材料", "不挂名", "不作不实声明", "不违规换汇"],
+    t: "提交虚假资料会导致申请被拒，并可能触犯香港法律。任何一条被触碰，该案立即暂停。" },
+
+  { m: "m7",
+    q: "介绍身份和升学时，要怎样引用政策？",
+    a: "只引用入境处、教育局、税务局和院校的官方公布，注明日期；政策变化快，用之前先核对。排名、学费、审批时间、通过率这些数字要写明来源和年份。\n每次介绍都要说明：以官方最新公布为准，承瑞不承诺任何申请结果。",
+    k: ["引官方来源", "注明日期", "不承诺结果"] },
+
+  { m: "m7",
+    q: "客户问到具体法律、税务问题，怎么办？",
+    a: "不要自己给结论。身份申请的法律问题，转介合作律师或持牌顾问；内地税务居民判断和申报，转介内地税务师；香港税务，转介香港会计师。顾问负责把客户的需要和时间线梳理清楚。",
+    k: ["转介律师", "转介税务师", "顾问管需要和时间线"] },
+
+  { m: "m7",
+    q: "这个 H5 可以发给客户看吗？",
+    a: "不可以。这是承瑞内部顾问培训材料，里面有内部案例和话术，也不构成法律或税务意见。向客户介绍时，以入境处、教育局、税务局及院校的官方资料为准。",
+    k: ["仅限内部"] }
+];
+
+window.QUIZ = {
+  m1: [
+    { q: "高才通 A 类的核心条件是？",
+      o: ["QS 前 100 学士", "申请前一年收入 ≥ 250 万港元", "在港投资 3,000 万港元", "香港公司 offer"], a: 1,
+      x: "A 类不看学历，只计应课税的工作或经营收入，须有完税记录证明。" },
+    { q: "以下哪项收入不计入高才 A 的 250 万？",
+      o: ["工资", "公司分红", "个体经营所得", "个人投资收益"], a: 3,
+      x: "个人投资收益不计。" },
+    { q: "新资本投资者入境计划，一般内地居民要办需要？",
+      o: ["本科学历", "香港公司 offer", "已取得外国永久居留身份", "无任何要求"], a: 2,
+      x: "一般没有外国永居身份的内地居民不符合资格。" }
+  ],
+  m2: [
+    { q: "申请香港永久居民的基本条件是？",
+      o: ["买房", "连续通常居住满 7 年", "在港读书 3 年", "缴税满 5 年"], a: 1,
+      x: "「通常居住」看生活重心是否在香港。" },
+    { q: "高才通续签时，须证明什么？",
+      o: ["在港有存款", "在港有稳定工作或已开设、加入业务", "孩子在港读书", "买了香港保险"], a: 1,
+      x: "空壳公司、挂名就业很难通过续签。" },
+    { q: "受养人子女须在几岁前递交申请？",
+      o: ["16 岁", "18 岁", "21 岁", "25 岁"], a: 1,
+      x: "受养人只限合法配偶及 18 岁以下未婚子女。" }
+  ],
+  m3: [
+    { q: "受养人子女要以本地生身份申请资助学额，新规要求？",
+      o: ["持身份即可", "在港居住满两年", "在港居住满七年", "考 DSE 即可"], a: 1,
+      x: "2028/29 学年全面实施，2027/28 学年过渡期要求一年。" },
+    { q: "香港考生报名全国联考需要持有？",
+      o: ["香港永久居民身份证", "回乡证或居住证，加香港居民身份证", "香港护照", "内地身份证"], a: 1,
+      x: "并须具有高中毕业学历；以当年简章为准。" },
+    { q: "港大本地生和非本地生学费大约相差？",
+      o: ["差不多", "本地生约为非本地生的五分之一", "本地生更贵", "相差 10%"], a: 1,
+      x: "2027/28 学年：本地生约 4.95 万，非本地生 25–28 万港元。" }
+  ],
+  m4: [
+    { q: "以下哪项香港不征收？",
+      o: ["薪俸税", "利得税", "资本增值税", "印花税"], a: 2,
+      x: "香港也不征股息税、遗产税、增值税。" },
+    { q: "香港的征税原则是？",
+      o: ["全球征税", "地域来源原则", "按国籍征税", "按居住地征全球所得"], a: 1,
+      x: "只就源自香港的收入征税。" },
+    { q: "香港低税政策写在哪里？",
+      o: ["《基本法》第一百零八条", "香港公司条例", "CRS 协议", "内地个税法"], a: 0,
+      x: "税率可通过立法微调，但方向是低税。" }
+  ],
+  m5: [
+    { q: "拿了香港身份、人和生意仍在内地，通常？",
+      o: ["自动成为香港税务居民", "仍是内地税务居民，全球所得在内地申报", "两地都不用交税", "只在香港交税"], a: 1,
+      x: "税务居民看住所和居住时间，不看证件。" },
+    { q: "内地税务居民持有的香港保单分红，个税按多少计？",
+      o: ["0%", "15%", "20%", "45%"], a: 2,
+      x: "利息、股息、红利所得按 20% 计税；香港端个人一般不征。" },
+    { q: "林女士案例中，只看保证部分，结论是？",
+      o: ["港险远高于内地", "港险略低于内地分红险", "两者完全一样", "定存最高"], a: 1,
+      x: "港险是长期预期更高，确定部分略低。" }
+  ],
+  m6: [
+    { q: "客户问「办了身份能省税吗」，正确回应是？",
+      o: ["能，香港税低", "不能，主要在内地生活经营仍是内地税务居民", "看情况，可以填香港税务居民", "只要不汇回内地就行"], a: 1,
+      x: "身份的价值在升学、发展和资产配置。" },
+    { q: "客户问「能保证批吗」，正确回应是？",
+      o: ["保证", "包续签", "不能保证，由入境处决定", "交钱就批"], a: 2,
+      x: "我们能做的是选对路径、准备真实完整的材料。" },
+    { q: "老大 22 岁，以下哪项正确？",
+      o: ["可作受养人", "不能作受养人，可走自己的路径如硕士 + IANG", "必须放弃", "可改年龄"], a: 1,
+      x: "受养人只限 18 岁以下未婚子女。" }
+  ],
+  m7: [
+    { q: "以下哪项是合规做法？",
+      o: ["帮客户美化收入证明", "安排挂名就业应付续签", "引用入境处公布并注明日期", "承诺包永居"], a: 2,
+      x: "政策变化快，用前先核对。" },
+    { q: "客户问内地税务居民判断，应该？",
+      o: ["自己给结论", "转介内地税务师", "叫客户填香港", "不理会"], a: 1,
+      x: "顾问不提供法律或税务意见。" },
+    { q: "以下哪句话不能说？",
+      o: ["以官方最新公布为准", "承瑞不承诺任何申请结果", "港险又高又稳", "续签要证明在港工作或经营"], a: 2,
+      x: "准确说法是「长期预期更高，确定部分略低」。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"],teal:["--teal","--teal-t"],plum:["--plum","--plum-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var KEY="ht-id-pos", pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem(KEY),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  var DKEY=KEY+"-done", done={};
+  try{ done=JSON.parse(localStorage.getItem(DKEY)||"{}")||{}; }catch(e){ done={}; }
+  function markDone(mid){ if(done[mid]) return; done[mid]=true; try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
+  function save(){ try{ localStorage.setItem(KEY, String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    container.innerHTML="";
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod"+(done[m.id]?" is-done":""),type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        done[m.id] ? el("span",{class:"done",text:"✓ 已完成"}) : el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function refreshLists(){
+    modList($("home-mods"), startAt);
+    modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+    var k=0; M.forEach(function(m){ if(done[m.id]) k++; });
+    $("donebar").textContent = k ? ("已完成 "+k+" / "+M.length+" 个模块"+(k===M.length?"，可以挑战结业测验":"")) : "";
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  refreshLists();
+  updStart();
+
+  /* ---------- 重置进度：点两次确认 ---------- */
+  var resetTimer=null;
+  $("btn-reset").addEventListener("click",function(){
+    var b=$("btn-reset");
+    if(!b.classList.contains("armed")){
+      b.classList.add("armed"); b.textContent="再点一次，清除全部进度";
+      resetTimer=setTimeout(function(){ b.classList.remove("armed"); b.textContent="重置学习进度"; },4000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    done={}; seen={}; pos=0;
+    try{ localStorage.removeItem(DKEY); localStorage.removeItem(KEY); }catch(e){}
+    b.classList.remove("armed"); b.textContent="重置学习进度";
+    refreshLists(); updStart(); toast("已重置，可以从头开始");
+  });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    var answered=0, total=Q[mid].length;
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1,function(){
+      answered++;
+      if(answered===total){
+        wrap.appendChild(el("div",{class:"finish"},[el("strong",{text:"✓ 本模块已完成"}),el("span",{text:"看完解析后，点「完成，返回首页」。"})]));
+        markDone(mid); setChip(); setNext();
+      }
+    })); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    setChip();
+    $("chip").style.background=acc(m);
+    var cards=[], ci=0;
+    FLOW.forEach(function(x,i){ if(x.m===f.m && x.t==="card"){ cards.push(i); if(i===pos) ci=cards.length; } });
+    var n=cards.length, step = f.t==="card" ? ci : n;
+    var hasQ=!!Q[f.m], totalSteps=n+(hasQ?1:0), cur = f.t==="card" ? ci : totalSteps;
+    var pct=Math.round(cur/totalSteps*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("progbar").setAttribute("aria-label","本模块进度");
+    $("count").textContent = f.t==="card" ? (ci+" / "+n) : "小测";
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    setNext();
+    save(); window.scrollTo(0,0);
+  }
+  function setNext(){
+    var f=FLOW[pos], nx=FLOW[pos+1], last=!nx || nx.m!==f.m;
+    var willFinish = last && (done[f.m] || !Q[f.m]);
+    $("btn-next").textContent = willFinish ? "完成，返回首页" : (!nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张")));
+  }
+  function updStart(){ $("btn-start").textContent = pos>0 ? "继续学习" : "开始学习"; }
+  function setChip(){
+    var f=FLOW[pos], m=mod(f.m);
+    $("chip").textContent=m.no+" "+m.name+(done[f.m]?"  ✓ 已完成":"");
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    /* 没有小测的模块：读完最后一张卡往前走即算完成 */
+    var leaving = d>0 && (!FLOW[n] || FLOW[n].m!==FLOW[pos].m);
+    if(leaving && !Q[FLOW[pos].m]) markDone(FLOW[pos].m);
+    if(leaving && done[FLOW[pos].m]){
+      if(FLOW[n]){ pos=n; save(); }
+      show("home"); updStart();
+      var hm=$("home-mods"); if(hm && hm.scrollIntoView) setTimeout(function(){ hm.parentNode.scrollIntoView({behavior:"smooth",block:"start"}); },60);
+      return;
+    }
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["香港身份、升学及税务优势 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>

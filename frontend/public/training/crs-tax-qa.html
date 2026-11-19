@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CRS与境外保单税务问答特训</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+/* 承瑞金：暖金底 + 深棕字；每个模块一个识别色。单一亮色主题。
+   版式：手机竖屏一屏一卡，桌面居中成手机宽度的栏。 */
+:root{
+  --ground:#F7EEDC; --paper:#FFFBF3; --ink:#3B220F; --muted:#6E5238;
+  --gold:#C9862E; --gold-deep:#8A5200; --line:#E7D5B2;
+  --brown:#5A2E12; --brown-t:#F3E7D8;
+  --ci:#A8261A; --ci-t:#FBEAE4;
+  --med:#2F6B1F; --med-t:#EAF2DC;
+  --goldm:#8A5200; --goldm-t:#FCEFCC;
+  --slate:#4B3F35; --slate-t:#EEE7DE;
+  --orange:#B4470E; --orange-t:#FDE9DA;
+  --red:#7A1F1F; --red-t:#F6E3E1;
+  --teal:#1F5F6B; --teal-t:#E1EFF1; --plum:#6A2C6B; --plum-t:#F3E6F2;
+  --ok:#2F6B1F; --bad:#A8261A;
+  --display:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;background:var(--ground)}
+@media (min-width:600px){.app{box-shadow:0 0 0 1px var(--line),0 20px 60px rgba(90,46,18,.12)}}
+[hidden]{display:none!important}
+h1,h2,h3{text-wrap:balance;margin:0}
+
+/* ---------- 首页 ---------- */
+.home{padding:28px 20px 32px;display:flex;flex-direction:column;gap:22px}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.brand img{width:88px;height:auto}
+.tag{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--gold-deep);border:1px solid var(--gold);border-radius:999px;padding:3px 12px}
+.hero{display:flex;flex-direction:column;gap:10px}
+.hero .kicker{font-size:14px;font-weight:700;color:var(--gold-deep);letter-spacing:.2em}
+.hero h1{font-family:var(--display);font-weight:900;font-size:38px;line-height:1.2;color:var(--brown)}
+.hero h1 em{font-style:normal;color:var(--ci)}
+.hero h1 b{color:var(--med)}
+.hero p{margin:0;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center}
+.stat strong{display:block;font-size:24px;font-weight:900;color:var(--gold-deep);font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;color:var(--muted)}
+.how{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.how h2{font-size:15px;color:var(--brown)}
+.how ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;font-size:16px;min-height:48px}
+.btn-primary{background:var(--brown);color:#FFE7B8}
+.btn-ghost{background:var(--paper);border:1px solid var(--line);color:var(--brown)}
+.btn-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mods{display:flex;flex-direction:column;gap:8px}
+.mods h2{font-size:15px;color:var(--brown);margin-bottom:2px}
+.mod{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-height:56px}
+.mod .no{flex-shrink:0;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#fff;font-variant-numeric:tabular-nums}
+.mod .nm{flex:1;display:flex;flex-direction:column;line-height:1.35}
+.mod .nm strong{font-size:15px}
+.mod .nm span{font-size:12px;color:var(--muted)}
+.mod .ct{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mod .done{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--med);background:var(--med-t);border-radius:999px;padding:3px 10px;white-space:nowrap}
+.mod.is-done{border-color:#B9D3A6}
+.mod.is-done .no{box-shadow:0 0 0 3px var(--med-t)}
+.reset{align-self:center;background:none;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:13px;font-weight:700;padding:8px 18px;min-height:40px}
+.reset.armed{border-color:var(--red);color:var(--red);background:var(--red-t)}
+.donebar{font-size:13px;font-weight:700;color:var(--brown);margin:0 0 4px}
+.chip .tick{margin-left:6px}
+.finish{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;background:var(--med-t);color:var(--med);border-radius:16px;padding:16px}
+.finish strong{font-size:17px}
+.finish span{font-size:13px;color:var(--ink)}
+.foot{font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:12px}
+
+/* ---------- 顶栏 ---------- */
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;border:0;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.icon-btn:active{background:var(--line)}
+.bar .mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{align-self:flex-start;font-size:12px;font-weight:700;color:#fff;border-radius:999px;padding:2px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.prog{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .25s}
+.bar .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------- 问答卡 ---------- */
+.stage{flex:1;padding:16px 16px 8px;display:flex;flex-direction:column;gap:14px;touch-action:pan-y}
+.qcard{background:var(--paper);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column}
+.qhead{padding:18px 18px 16px;display:flex;flex-direction:column;gap:10px;border-top:6px solid var(--accent)}
+.qlabel{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--accent)}
+.qtext{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.45;color:var(--ink)}
+.reveal{margin:0 18px 18px;border:1.5px dashed var(--accent);background:var(--tint);color:var(--accent);border-radius:14px;padding:14px;font-weight:700;min-height:52px}
+.ans{border-top:1px solid var(--line);padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px}
+.sec-l{font-size:12px;font-weight:700;letter-spacing:.15em;color:var(--muted);margin-bottom:4px}
+.atext{white-space:pre-line;font-size:16px}
+.keys{display:flex;flex-wrap:wrap;gap:6px}
+.keys span{font-size:13px;font-weight:700;background:var(--tint);color:var(--accent);border-radius:8px;padding:3px 10px}
+.eg{background:var(--goldm-t);border-radius:14px;padding:12px 14px}
+.eg .sec-l{color:var(--gold-deep)}
+.eg p{margin:0;white-space:pre-line;font-size:14.5px;line-height:1.7;font-variant-numeric:tabular-nums}
+.trap{display:flex;gap:10px;background:#FFF1EC;border:1px solid #F2C9BB;border-radius:14px;padding:12px 14px}
+.trap svg{flex-shrink:0;margin-top:2px}
+.trap p{margin:0;font-size:14.5px;color:#7A1F1F}
+.trap strong{display:block;font-size:12px;letter-spacing:.15em;margin-bottom:2px}
+.hint{text-align:center;font-size:12px;color:var(--muted)}
+
+/* ---------- 底栏 ---------- */
+.nav{position:sticky;bottom:0;background:var(--ground);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+
+/* ---------- 小测 ---------- */
+.quiz{display:flex;flex-direction:column;gap:14px}
+.quiz-top{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px 18px;border-top:6px solid var(--accent)}
+.quiz-top h2{font-family:var(--display);font-size:22px;color:var(--ink)}
+.quiz-top p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.qq{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.qq h3{font-size:16px;line-height:1.5}
+.qq h3 span{color:var(--gold-deep);font-variant-numeric:tabular-nums;margin-right:6px}
+.opt{width:100%;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;min-height:46px;display:flex;gap:10px;align-items:flex-start}
+.opt b{flex-shrink:0;width:22px;color:var(--muted)}
+.opt.right{border-color:var(--ok);background:#EEF6E6}
+.opt.right b{color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:#FBEDEA}
+.opt.wrong b{color:var(--bad)}
+.opt[disabled]{cursor:default}
+.expl{font-size:14px;border-radius:10px;padding:10px 12px;background:var(--brown-t)}
+.expl strong{margin-right:4px}
+.score{background:var(--brown);color:#FFE7B8;border-radius:18px;padding:22px 18px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.score strong{font-size:44px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.score p{margin:0}
+
+/* ---------- 目录抽屉 ---------- */
+.drawer{position:fixed;inset:0;z-index:20;background:rgba(59,34,15,.45);display:flex;justify-content:center}
+.drawer .panel{width:100%;max-width:480px;margin-top:auto;background:var(--ground);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:85%;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.drawer .ph{display:flex;align-items:center;justify-content:space-between}
+.drawer .ph h2{font-size:17px;color:var(--brown)}
+
+/* ---------- 审阅模式 ---------- */
+.review{padding:16px;display:flex;flex-direction:column;gap:18px}
+.rv-head{display:flex;flex-direction:column;gap:10px}
+.rv-head h1{font-family:var(--display);font-size:24px;color:var(--brown)}
+.rv-head p{margin:0;font-size:14px;color:var(--muted)}
+.rv-mod{display:flex;flex-direction:column;gap:12px}
+.rv-mod > h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.rv-mod > h2 .no{width:30px;height:30px;border-radius:8px;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center}
+.rv-card .qtext{font-size:19px}
+.rv-quiz{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px 16px;font-size:14.5px}
+.rv-quiz ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.rv-quiz .ok{color:var(--ok);font-weight:700}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:999px;font-size:14px;z-index:30}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:360px){.hero h1{font-size:32px}.qtext{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 首页 -->
+  <section class="home" id="v-home" aria-label="首页">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Heritree Wealth Management 承瑞">
+      <span class="tag">内部培训 · 新人版</span>
+    </div>
+    <div class="hero">
+      <div class="kicker">承瑞商学院 · 问答特训</div>
+      <h1><em>CRS</em><b style="color:var(--gold-deep)">与境外保单税务</b><br>问答特训</h1>
+      <p>每张卡是一个真实的客户问题。先自己想答案，再点开参考答案、要点和踩坑提醒。每个模块后有 3 道小测。</p>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-start" type="button">开始学习</button>
+      <button class="btn btn-ghost" id="btn-final" type="button">结业测验</button>
+    </div>
+    <div class="mods"><h2>按模块学习</h2><p class="donebar" id="donebar"></p><div class="mods" id="home-mods"></div></div>
+    <button class="btn btn-ghost" id="btn-review" type="button">审阅模式：查看全部问答与答案</button>
+    <button class="reset" id="btn-reset" type="button">重置学习进度</button>
+    <div class="foot">内容取材自《香港储蓄保单征税，算完税后收益我不慌了》、承瑞分红险及私行房产方案课程，以及公开政策：个人所得税法、财政部 税务总局公告 2020 年第 3 号（境外所得）、2026 年第 21 号（离岸信托）及税务总局 2026 年 8 月 7 日答问。政策整理至 2026 年 11 月，境外保单收益的计税细则尚未出台，以税务机关最新口径为准。本材料不构成税务意见；涉及具体申报，请客户咨询内地税务师。仅供承瑞内部顾问培训使用，不得发给客户。</div>
+  </section>
+
+  <!-- 学习：卡片 / 小测 -->
+  <section id="v-learn" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <div class="mid">
+        <span class="chip" id="chip"></span>
+        <div class="prog" role="progressbar" aria-label="学习进度" id="progbar"><i id="prog"></i></div>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="icon-btn" type="button" id="btn-menu" aria-label="打开目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+    <div class="stage" id="stage"></div>
+    <div class="nav">
+      <button class="btn btn-ghost" type="button" id="btn-prev">上一张</button>
+      <button class="btn btn-primary" type="button" id="btn-next">下一张</button>
+    </div>
+  </section>
+
+  <!-- 审阅模式 -->
+  <section id="v-review" hidden>
+    <div class="bar">
+      <button class="icon-btn" type="button" id="btn-home2" aria-label="返回首页">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="mid"><strong style="font-size:16px;color:var(--brown)">审阅模式</strong></div>
+      <button class="btn btn-ghost" type="button" id="btn-copy" style="min-height:40px;padding:6px 12px;font-size:14px">复制全文</button>
+    </div>
+    <div class="review" id="review"></div>
+  </section>
+</div>
+
+<!-- 目录 -->
+<div class="drawer" id="drawer" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="drawer-t">
+    <div class="ph"><h2 id="drawer-t">目录</h2>
+      <button class="icon-btn" type="button" id="btn-close" aria-label="关闭目录">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="mods" id="drawer-mods"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* CRS 与境外保单税务 · 问答特训 — 内容数据
+   来源：《香港储蓄保单征税，算完税后收益我不慌了》；承瑞分红险、私行房产方案课程；
+   个人所得税法；财政部 税务总局公告 2020 年第 3 号（境外所得）；
+   财政部 税务总局公告 2026 年第 21 号、税务总局公告 2026 年第 15 号（离岸信托）；
+   税务总局相关司局负责人 2026 年 8 月 7 日答问。整理至 2026 年 11 月。
+   本材料不构成税务意见；境外保单收益的计税细则尚未出台。 */
+
+window.MODULES = [
+  { id: "m0", no: "00", name: "开篇", sub: "不用恐慌，也不能侥幸", color: "brown" },
+  { id: "m1", no: "01", name: "CRS 是什么", sub: "谁报、报什么、报给谁", color: "slate" },
+  { id: "m2", no: "02", name: "保单与 CRS", sub: "哪些保单会被申报", color: "gold" },
+  { id: "m3", no: "03", name: "保单收益怎么计税", sub: "已实现收益、两种分红、税后测算", color: "ci" },
+  { id: "m4", no: "04", name: "境外所得申报", sub: "申报期、抵免、自查通知", color: "teal" },
+  { id: "m5", no: "05", name: "离岸信托新规", sub: "2026 年第 21 号公告", color: "plum" },
+  { id: "m6", no: "06", name: "客户异议", sub: "8 个最常听到的问题", color: "orange" },
+  { id: "m7", no: "07", name: "合规红线", sub: "哪些话不能说、哪些事不能做", color: "red" }
+];
+
+window.PRODUCTS = {
+  pol: "政策依据 · 整理至 2026 年 11 月",
+  calc: "文章测算 · 极端情景，非保证",
+  crs: "CRS 申报内容 · 以香港税务局指引为准",
+  trust: "21 号公告要点 · 2026 年 7 月 24 日发布"
+};
+
+window.CARDS = [
+  /* ---------- 00 开篇 ---------- */
+  { m: "m0",
+    q: "「听说香港保险要交税了？」一句话怎么回？",
+    a: "「不是新政策。中国税收居民本来就要就全球所得纳税，境外保险收益也一直在应税范围里。保障型保单的理赔基本不受影响；储蓄分红保单要看有没有真正提取到收益，具体怎么计税，细则还没出台。」\n先把客户从「恐慌」拉回「了解规则」。",
+    k: ["不是新政策", "保障型基本不受影响", "储蓄型看实际收益"],
+    eg: "pol",
+    e: "2026 年 8 月 7 日，税务总局相关司局负责人表示：中国税收居民需就全球所得履行纳税义务，境外保险收益也属于应纳税所得范畴；这并非新政策，也不是专门针对香港保险市场，无需过度解读。",
+    t: "不要说「香港保险不用交税」，也不要说「以后都要交 20%」。两种说法都不对。" },
+
+  { m: "m0",
+    q: "为什么最近这么多客户问税务问题？",
+    a: "三件事叠在一起：\n· 2025 年起，多地税务机关通过短信、电话、个税 APP 提醒居民自查境外所得，依据之一是 CRS 交换回来的账户信息。\n· 2026 年 7 月，离岸信托个人所得税新规出台，适用 20% 税率。\n· 2026 年 8 月，市场传出「香港保险收益要征税」，税务总局回应「并非新政策」。\n大方向是征管越来越严、越来越透明，但境外保单的计税细则还没有落地。",
+    k: ["CRS 数据比对", "离岸信托新规", "征管趋严、细则未落地"] },
+
+  { m: "m0",
+    q: "顾问在税务问题上的角色是什么？",
+    a: "讲清楚规则和产品，不替客户做税务判断。\n· 能做的：解释 CRS 是什么、哪些保单会被申报、收益什么时候才算实现、公开政策怎么说。\n· 不能做的：判断客户该交多少税、怎么申报、怎么「规避」。\n涉及具体申报，转介内地税务师。",
+    k: ["讲规则", "不给税务意见", "转介税务师"],
+    t: "客户最容易记住的是顾问的一句「放心，不用交」。这句话一旦说错，就是投诉。" },
+
+  /* ---------- 01 CRS 是什么 ---------- */
+  { m: "m1",
+    q: "CRS 是什么？",
+    a: "CRS（Common Reporting Standard，共同申报准则）是经合组织（OECD）制定的金融账户涉税信息自动交换标准。参与的国家和地区，要求本地金融机构识别「外国税务居民」持有的账户，把账户信息报给本地税务局，再由税务局每年自动交换给账户持有人所属的税务居民地。\n香港和内地都参与 CRS，2018 年起开始交换信息。",
+    k: ["OECD 标准", "金融机构报本地税务局", "每年自动交换"] },
+
+  { m: "m1",
+    q: "哪些机构要报？报哪些账户？",
+    a: "报告主体是金融机构：银行、证券公司、基金、信托，以及经营现金价值保单或年金的保险公司。\n应申报的金融账户包括：存款账户、托管账户（股票、债券等）、某些投资实体的权益，以及具有现金价值的保险合同和年金合同。",
+    k: ["银行、券商、信托、保险", "存款、托管、现金价值保单"] },
+
+  { m: "m1",
+    q: "CRS 报送哪些信息？",
+    a: "基本是两类：\n· 身份信息：姓名、地址、出生日期、税务居民地、纳税人识别号。\n· 账户信息：账户号码、年末余额或价值，以及当年的利息、股息、出售所得、退保或给付等款项。",
+    k: ["身份信息", "年末余额", "当年收入"],
+    eg: "crs",
+    e: "现金价值保单：一般报保单年末的现金价值（或退保价值），以及当年向保单持有人支付的款项。" },
+
+  { m: "m1",
+    q: "怎样才算「中国税收居民」？",
+    a: "按个人所得税法：在中国境内有住所，或者无住所而一个纳税年度内在中国境内居住累计满 183 天的个人，是居民个人，要就境内外全部所得纳税。\n「住所」看的是户籍、家庭、经济利益关系等习惯性居住地，不只看护照或身份证件。",
+    k: ["有住所", "或满 183 天", "全球所得纳税"] },
+
+  { m: "m1",
+    q: "客户拿了香港身份，是不是就不算内地税收居民了？",
+    a: "不一定。香港身份（如高才通、优才）是居留身份，不等于税务居民身份改变。如果客户的家庭、主要经济利益仍在内地，或者一年在内地住满 183 天，通常仍是中国税收居民。\n开户时，金融机构会请客户签《税务居民自我证明表》，必须如实填写。",
+    k: ["居留身份 ≠ 税务居民", "看住所和 183 天", "自我证明须如实"],
+    t: "绝对不能建议客户在自我证明表上只填「香港税务居民」来避开 CRS。虚假声明有法律后果。" },
+
+  /* ---------- 02 保单与 CRS ---------- */
+  { m: "m2",
+    q: "哪些香港保单会被 CRS 申报？",
+    a: "具有现金价值或年金性质的保单会被申报，例如：储蓄分红险、终身寿险、万能寿险、投资相连保险、年金。\n没有现金价值、只提供保障的保单一般不申报，例如：纯消费型医疗险、意外险、无现金价值的定期寿险、纯保障型重疾险。",
+    k: ["有现金价值 → 申报", "纯保障 → 一般不申报"],
+    t: "带储蓄成分的重疾险（有现金价值）也可能被申报，要看产品本身。" },
+
+  { m: "m2",
+    q: "保单的「账户持有人」是谁？",
+    a: "保单有效、未出险时，账户持有人一般是保单持有人（投保人），申报的是保单年末的现金价值。理赔或给付时，领取款项的人可能被视为账户持有人。",
+    k: ["一般是投保人", "报年末现金价值"] },
+
+  { m: "m2",
+    q: "被 CRS 申报了，是不是就要交税？",
+    a: "不是。CRS 只是信息交换，申报不等于征税。是否要交税、交多少，看内地个人所得税法：有没有应税所得、所得是否已经实现。\nCRS 让税务机关「看得见」，交不交税要看税法。",
+    k: ["申报 ≠ 征税", "看税法", "看是否已实现"] },
+
+  { m: "m2",
+    q: "重疾险、医疗险的理赔款要交税吗？",
+    a: "按个人所得税法，保险赔款免征个人所得税。重疾险、医疗险、定期寿险的理赔属于风险补偿，不是投资收益，内地和主要海外市场的逻辑一致。\n所以只持有保障型保单的客户，这次的讨论和他关系不大。",
+    k: ["保险赔款免个税", "风险补偿不是收益"] },
+
+  { m: "m2",
+    q: "储蓄分红保单在 CRS 下会怎样？",
+    a: "每年会被申报现金价值，内地税务机关能看到客户持有这张保单、价值多少。\n但看到不等于要交税：保单没有退保、没有提取，现金价值的增长通常属于未实现收益。客户真正需要关心的，是提取或退保时的收益怎么申报。",
+    k: ["每年报现金价值", "未提取通常未实现", "关注提取与退保"] },
+
+  /* ---------- 03 保单收益怎么计税 ---------- */
+  { m: "m3",
+    q: "个税针对的是保单的什么？",
+    a: "针对已经落袋的实际收益，不是保单本身，也不是计划书上的演示数字。保单里的浮盈、未提取的红利，只要没有真正提取变现，一般属于未实现收益，暂时不产生纳税义务。",
+    k: ["已实现收益", "浮盈不算", "演示数字不算"],
+    t: "这是现行原则的理解，具体怎么认定收益、怎么扣本金，细则还没出台。讲的时候要加这句。" },
+
+  { m: "m3",
+    q: "现金红利型（美式）分红，税务上怎么看？",
+    a: "美式分红一般分三块：\n· 保证现金价值：只有退保或部分提取时才拿到，不动保单就没有应税所得。\n· 现金红利：如果提取，超出本金的部分才可能被认定为收益；还没回本前领取的，更接近本金返还。\n· 中期 / 终期红利：属于非保证，到保单终止前无法确定金额，计税很难界定。",
+    k: ["不动保单无所得", "超出本金才是收益", "非保证部分难界定"] },
+
+  { m: "m3",
+    q: "复归红利型（英式）分红，税务上怎么看？",
+    a: "复归红利宣布后，锁定的是保额面值，不是现金；想变现，要等到退保或提取结算。\n红利名义上已经归属保单，但真实现金价值不确定，税法上至今没有明确定性。提取时本金和增值要拆分核算，实操难度很高。",
+    k: ["锁定的是保额", "变现要退保或提取", "定性未明确"] },
+
+  { m: "m3",
+    q: "现在境外保单收益的计税细则落地了吗？",
+    a: "没有。政策定性早就有，但收益怎么认定、本金怎么扣除、申报流程怎么操作，目前还没有一套完整的执行指引，各地口径也不完全统一。\n离岸信托的细则已经出台，境外储蓄保单的还没有。",
+    k: ["定性有", "细则无", "口径未统一"],
+    t: "不要替税务机关「解读」还没出台的细则。只说公开文件写了什么。" },
+
+  { m: "m3",
+    q: "就算全部按 20% 交税，储蓄分红险还值得吗？",
+    a: "可以用最严苛的假设算一笔账：收益全额按 20% 征税，不做任何本金扣除。即使这样，长期持有的复利价值仍然可观。\n真实执行通常不会比这个假设更严，但仍要以将来的细则为准。",
+    k: ["最严苛假设", "税后仍有复利"],
+    eg: "calc",
+    e: "一次性投入 100 万，20 年后保单价值 327 万（按演示）。\n增值 227 万 × 20% = 税款 45.4 万\n税后到手 281.6 万，折合年复利约 5.3%（税前约 6.1%）。\n327 万是演示数字，含非保证红利。",
+    t: "这是帮助理解的情景测算，不是「税后保证 5.3%」。" },
+
+  { m: "m3",
+    q: "保单贷款要交税吗？",
+    a: "保单贷款是借钱，不是收入，一般不构成应税所得。所以客户需要资金周转时，可以优先考虑保单贷款而不是退保。\n但贷款要付利息，贷款加利息超过现金价值时保单可能失效；如果最后用现金价值抵扣贷款，就等同于退保结算。",
+    k: ["借款不是收入", "要付利息", "抵扣时等同退保"],
+    t: "不能把保单贷款包装成「避税工具」。只能说它是一种不必退保的资金周转方式。" },
+
+  /* ---------- 04 境外所得申报 ---------- */
+  { m: "m4",
+    q: "境外所得什么时候申报？",
+    a: "居民个人从中国境外取得所得，应在取得所得的次年 3 月 1 日至 6 月 30 日内申报纳税，可以通过自然人电子税务局网页端或办税服务厅办理。",
+    k: ["次年 3 月 1 日–6 月 30 日", "自行申报"],
+    eg: "pol",
+    e: "依据：个人所得税法；财政部 税务总局公告 2020 年第 3 号《关于境外所得有关个人所得税政策的公告》。" },
+
+  { m: "m4",
+    q: "常见的境外所得怎么计税？",
+    a: "· 利息、股息、红利（如债券票息、股票分红）：20% 比例税率，按全额计算。\n· 财产转让所得（如港股、美股买卖差价）：20%，同一年度内可盈亏相抵，亏损不能跨年结转。\n· 在境外已缴的税，可以在抵免限额内抵免。",
+    k: ["利息股息 20%", "转让所得 20%", "境外已缴可抵免"],
+    t: "私行房产方案里买入的债券，票息就属于境外利息所得。介绍方案时要同时提醒客户这部分要申报。" },
+
+  { m: "m4",
+    q: "客户收到税务局的自查短信或电话，怎么办？",
+    a: "不要不理，也不要慌。税务机关一般按「提示提醒、督促整改、约谈警示、立案稽查、公开曝光」五步处理。收到提醒后，梳理境外所得的类型、金额和取得时间；确实漏报的，尽早补正申报；没有漏报的，也要按要求说明情况、提供材料。\n具体怎么申报，请客户找内地税务师。",
+    k: ["五步工作法", "主动补报", "找税务师"],
+    eg: "pol",
+    e: "2025 年起，税务机关陆续提醒纳税人自查 2022 年至 2024 年的境外所得。" },
+
+  { m: "m4",
+    q: "主动补报和被查出来，结果差别有多大？",
+    a: "主动补报：一般补缴税款和滞纳金。\n经税务机关通知申报而拒不申报，或者虚假申报、少缴税款的，属于偷税：除追缴税款和滞纳金外，还要处少缴税款 50% 以上 5 倍以下的罚款；构成犯罪的，依法追究刑事责任。",
+    k: ["主动：税款 + 滞纳金", "偷税：另罚 50%–5 倍"],
+    eg: "pol",
+    e: "依据：税收征收管理法第 63 条。滞纳金按日加收滞纳税款的万分之五。" },
+
+  { m: "m4",
+    q: "顾问能帮客户填境外所得申报表吗？",
+    a: "不能。申报涉及所得定性、本金扣除、抵免计算，属于税务专业服务。顾问可以帮客户整理保险公司、银行提供的年结单和交易记录，然后转介内地税务师。",
+    k: ["不代填", "帮整理单据", "转介税务师"] },
+
+  /* ---------- 05 离岸信托新规 ---------- */
+  { m: "m5",
+    q: "离岸信托个税新规讲了什么？",
+    a: "2026 年 7 月 24 日，财政部、税务总局发布《关于离岸信托个人所得税有关事项的公告》（2026 年第 21 号），税务总局同日发布配套征管公告（2026 年第 15 号），首次系统明确离岸信托各环节的个税处理。",
+    k: ["21 号公告", "15 号征管公告", "全生命周期"],
+    eg: "trust",
+    e: "· 装入：居民个人把股权、股票、房产等装入离岸信托，按「财产转让所得」20% 计税（市场价值减原值和合理费用）。\n· 存续：信托存续期间的收益，即使没有分配，装入财产的居民个人也要按年申报。\n· 分配：已按规定缴过税的收益，实际分配时不再缴税；境外已缴税可抵免。\n· 申报：居民个人在次年 3 月 1 日至 6 月 30 日申报。" },
+
+  { m: "m5",
+    q: "已经设立的离岸信托怎么办？",
+    a: "新规对存量也有要求：2023 年至 2025 年装入财产的行为，以及 2026 年以前设立的信托存续期间应缴未缴的税款，须在公告实施之日起 90 日内集中申报。\n已有离岸信托的客户，要尽快请律师和税务师评估。",
+    k: ["追溯 2023–2025", "90 日内申报", "找律师和税务师"] },
+
+  { m: "m5",
+    q: "离岸信托新规适用于香港保单吗？",
+    a: "按公开解读，21 号公告所指的离岸信托，不包括受境外金融监管、面向公众、独立运营的银行、保险、证券、基金等金融机构发行的产品。所以香港保单本身一般不属于「离岸信托」。\n但如果保单由离岸信托持有，或者被装入信托，就要按新规处理。适用范围仍有待进一步明确。",
+    k: ["保单本身一般不算", "信托持有保单要看新规", "范围待明确"],
+    t: "不能说「保单的类信托功能就不用交税」。保单的类信托安排不是法律意义上的信托，税务处理以保单收益的规则为准。" },
+
+  /* ---------- 06 客户异议 ---------- */
+  { m: "m6",
+    q: "「那我现在要不要退保？」",
+    a: "「先不要急。储蓄分红保单前期现金价值很低，现在退保就是实打实亏本金；而且退保会把收益一次实现，反而可能产生纳税义务。为了一套还没落地的细则割肉，不划算。将来真的需要资金，可以先考虑保单贷款。」",
+    k: ["前期退保亏本金", "退保才实现收益", "可用保单贷款"] },
+
+  { m: "m6",
+    q: "「有没有办法不让内地知道我有这张保单？」",
+    a: "「没有合法的办法，我们也不会这样做。只要保单有现金价值、您是中国税收居民，香港保险公司每年都会按 CRS 申报。我们能做的，是帮您把保单的用途和将来的申报讲清楚，合规持有。」",
+    k: ["没有合法办法", "合规持有"],
+    t: "代持、虚假税务居民声明、拆分到他人名下等做法，顾问一律不得建议或协助。" },
+
+  { m: "m6",
+    q: "「我有香港身份了，是不是就不用报了？」",
+    a: "「香港身份是居留身份，不一定改变税务居民身份。如果您的家庭和主要经济利益还在内地，或者一年在内地住满 183 天，通常仍是中国税收居民。开户时的税务居民自我证明要如实填，具体情况建议您问税务师。」",
+    k: ["身份 ≠ 税务居民", "如实声明", "问税务师"] },
+
+  { m: "m6",
+    q: "「交了税，这东西还有什么意义？」",
+    a: "「我们配置它，本来就不是为了避税，而是三个长期需要：分散货币风险、匹配跨境资金需求、财富有序传承。这三个需要不会因为税务政策变化而消失。就算按最严苛的假设全额征 20%，长期的复利价值仍然在。」",
+    k: ["分散货币", "跨境资金", "传承"],
+    eg: "calc",
+    e: "100 万 → 20 年后演示 327 万；全额按 20% 计税后约 281.6 万，年复利约 5.3%。" },
+
+  { m: "m6",
+    q: "「以前没报的，会不会被追？」",
+    a: "「税务机关目前的做法是先提醒、再督促，主动补报通常只需要补税款和滞纳金；被立案稽查后结果会严重很多。如果您有境外收入以前没有申报，建议尽早请税务师梳理，主动处理。」",
+    k: ["先提醒后督促", "主动补报更好", "找税务师"],
+    t: "不要说「没事，不会查到你」，也不要说「一定会罚很多」。只说公开的流程和法律规定。" },
+
+  { m: "m6",
+    q: "「放在公司名下买保单，是不是更好？」",
+    a: "「公司持有会涉及公司的 CRS 身份、公司税务、利润分配的个税等一连串问题，不一定更省税，还可能更复杂。这要由律师和税务师根据您的整体情况判断，我们不建议为了税务目的改变持有结构。」",
+    k: ["更复杂", "交给律师和税务师"] },
+
+  { m: "m6",
+    q: "「保单分红每年都在涨，每年都要交税吗？」",
+    a: "「按现行原则，税针对的是真正落袋的收益。分红留在保单里没有提取，通常属于未实现收益。具体怎么认定，细则还没出台，以税务机关将来的口径为准。」",
+    k: ["没提取通常未实现", "以细则为准"] },
+
+  { m: "m6",
+    q: "「私行买的债券利息也要交税吗？」",
+    a: "「要。境外债券的票息属于利息所得，按 20% 申报个人所得税，账户信息同样会通过 CRS 交换。所以我们在测算方案时，要把税后收益也考虑进去。」",
+    k: ["利息所得 20%", "私行账户也申报", "看税后收益"] },
+
+  /* ---------- 07 合规红线 ---------- */
+  { m: "m7",
+    q: "哪些话绝对不能说？",
+    a: "· 「香港保险不用交税」「内地查不到」「CRS 管不到保单」\n· 「放心，不会被追税」\n· 「税后保证有 X% 回报」\n· 「保单的类信托就是信托，可以避税」\n· 「拿了香港身份就不是内地税务居民」\n正确做法：讲公开规则，说明细则未出台，具体问题转介税务师。",
+    k: ["不说不用交", "不说查不到", "不承诺税后收益"] },
+
+  { m: "m7",
+    q: "哪些事绝对不能做？",
+    a: "· 建议或协助客户在税务居民自我证明表上作虚假声明。\n· 建议用代持、拆分、他人名义投保等方式规避 CRS。\n· 替客户判断应纳税额、代填申报表。\n· 用「避税」「免税」作为卖点推销保单或方案。",
+    k: ["不协助虚假声明", "不建议代持规避", "不以避税为卖点"],
+    t: "任何一条被触碰，该案立即暂停，不论客户意愿多强。" },
+
+  { m: "m7",
+    q: "介绍保单或私行方案时，税务部分要怎么讲？",
+    a: "· 主动说明：现金价值保单、私行账户都在 CRS 申报范围。\n· 说明收益的税务处理：债券利息 20%；保单收益按已实现原则，细则未出台。\n· 测算方案时，加一行税后结果。\n· 提醒客户就具体申报咨询税务师，并记录已作提醒。",
+    k: ["主动说明 CRS", "测算加税后", "记录提醒"] },
+
+  { m: "m7",
+    q: "引用政策时要注意什么？",
+    a: "只引用正式文件和官方答问，注明文件号和日期，例如「财政部 税务总局公告 2026 年第 21 号」「税务总局 2026 年 8 月 7 日答问」。网上的解读文章、自媒体说法不能当作政策讲。政策变化快，用之前先核对最新口径。",
+    k: ["只引正式文件", "注明文号日期", "用前核对"] },
+
+  { m: "m7",
+    q: "这个 H5 可以发给客户看吗？",
+    a: "不可以。这是承瑞内部顾问培训材料，不构成税务意见。客户的具体税务问题，请转介内地税务师。",
+    k: ["仅限内部", "不是税务意见"] }
+];
+
+window.QUIZ = {
+  m1: [
+    { q: "CRS 是什么？",
+      o: ["香港的一项税种", "金融账户涉税信息自动交换标准", "内地的个税申报系统", "保险公司的分红制度"], a: 1,
+      x: "CRS 是 OECD 制定的共同申报准则，各参与地每年自动交换金融账户信息。" },
+    { q: "以下哪项是成为中国税收居民的标准之一？",
+      o: ["持有内地银行卡", "在内地有住所，或一个纳税年度在境内居住满 183 天", "在内地买过保险", "持有香港身份"], a: 1,
+      x: "有住所，或无住所而一年内在境内居住累计满 183 天。" },
+    { q: "客户拿了香港身份，以下哪项正确？",
+      o: ["自动成为香港税务居民", "不用再申报境外所得", "居留身份不等于税务居民身份，要看住所和居住天数", "可以在自我证明表只填香港"], a: 2,
+      x: "家庭和主要经济利益仍在内地，或住满 183 天，通常仍是中国税收居民。" }
+  ],
+  m2: [
+    { q: "以下哪种保单一般不在 CRS 申报范围？",
+      o: ["储蓄分红险", "终身寿险", "纯消费型医疗险", "年金"], a: 2,
+      x: "没有现金价值、只提供保障的保单一般不申报。" },
+    { q: "保单被 CRS 申报后，以下哪项正确？",
+      o: ["一定要交税", "申报不等于征税，要看是否有已实现的应税所得", "保单会被冻结", "保单会被强制退保"], a: 1,
+      x: "CRS 只是信息交换，交不交税看个人所得税法。" },
+    { q: "重疾险的理赔款要交个税吗？",
+      o: ["要，20%", "要，按工资薪金", "保险赔款免征个人所得税", "超过 100 万才交"], a: 2,
+      x: "个人所得税法规定保险赔款免征个人所得税。" }
+  ],
+  m3: [
+    { q: "个税针对的是保单的什么？",
+      o: ["计划书的演示收益", "保单的保额", "已经落袋的实际收益", "每年的现金价值增长"], a: 2,
+      x: "浮盈和未提取的红利一般属于未实现收益。" },
+    { q: "100 万 20 年后为 327 万，全额按 20% 计税，税后约多少？",
+      o: ["261.6 万", "281.6 万", "300 万", "327 万"], a: 1,
+      x: "增值 227 万 × 20% = 45.4 万，327 − 45.4 = 281.6 万，年复利约 5.3%。" },
+    { q: "关于保单贷款，以下哪项正确？",
+      o: ["是避税工具", "借款一般不是收入，可避免退保亏本", "不用付利息", "不会影响保单"], a: 1,
+      x: "贷款要付利息；贷款加利息超过现金价值时保单可能失效。" }
+  ],
+  m4: [
+    { q: "居民个人的境外所得应在什么时候申报？",
+      o: ["取得当月", "次年 1 月", "次年 3 月 1 日至 6 月 30 日", "不用申报"], a: 2,
+      x: "依据个人所得税法及 2020 年第 3 号公告。" },
+    { q: "境外债券的票息怎么计税？",
+      o: ["免税", "利息所得，20% 比例税率", "并入工资按累进税率", "只在香港交税"], a: 1,
+      x: "境外已缴税款可在抵免限额内抵免。" },
+    { q: "经通知仍拒不申报、少缴税款，属于偷税，罚款是？",
+      o: ["少缴税款的 10%", "少缴税款 50% 以上 5 倍以下", "固定 1 万元", "没有罚款"], a: 1,
+      x: "税收征收管理法第 63 条；另须补缴税款和滞纳金。" }
+  ],
+  m5: [
+    { q: "离岸信托新规是哪一份文件？",
+      o: ["2020 年第 3 号公告", "财政部 税务总局公告 2026 年第 21 号", "CRS 2.0", "香港税务条例"], a: 1,
+      x: "2026 年 7 月 24 日发布，税务总局同日发布 15 号征管公告。" },
+    { q: "居民个人把股权装入离岸信托，怎么计税？",
+      o: ["不计税", "按财产转让所得，20%", "按工资薪金", "按 5% 印花税"], a: 1,
+      x: "以装入时市场价值减原值和合理费用后的余额为应税所得。" },
+    { q: "关于香港保单与 21 号公告，以下哪项较准确？",
+      o: ["所有香港保单都属离岸信托", "保单的类信托安排就是信托", "受监管金融机构发行的产品一般不属于该公告所指离岸信托，但信托持有保单要看新规", "保单从此免税"], a: 2,
+      x: "适用范围仍有待进一步明确。" }
+  ],
+  m6: [
+    { q: "客户问「要不要退保」，最合适的回应是？",
+      o: ["马上退保避税", "前期退保亏本金，且退保会实现收益；需要资金可先考虑保单贷款", "转到他人名下", "换成纯保障产品就不用报"], a: 1,
+      x: "为一套还没落地的细则割肉不划算。" },
+    { q: "客户问「能不能不让内地知道」，正确回应是？",
+      o: ["可以填香港税务居民", "可以找人代持", "没有合法办法，只要是中国税收居民、保单有现金价值就会申报", "买小额就不会报"], a: 2,
+      x: "代持、虚假声明等做法一律不得建议或协助。" },
+    { q: "私行债券利息要交税吗？",
+      o: ["不用，在香港", "要，利息所得 20%", "只有超过 100 万才交", "只在退出时交"], a: 1,
+      x: "测算方案时要考虑税后收益。" }
+  ],
+  m7: [
+    { q: "以下哪句话是合规的？",
+      o: ["香港保险不用交税", "内地查不到", "CRS 会申报保单，细则未出台，具体申报请咨询税务师", "税后保证 5.3%"], a: 2,
+      x: "讲公开规则，说明细则未出台，转介税务师。" },
+    { q: "以下哪项是顾问可以做的？",
+      o: ["代填申报表", "帮客户整理年结单并转介税务师", "建议虚假税务居民声明", "以避税为卖点推销"], a: 1,
+      x: "顾问不提供税务意见。" },
+    { q: "引用政策时应该？",
+      o: ["引用自媒体解读", "引用正式文件并注明文号和日期", "凭记忆", "说「听说」"], a: 1,
+      x: "政策变化快，用之前先核对最新口径。" }
+  ]
+};
+
+</script>
+<script>
+(function(){
+  var M = window.MODULES, C = window.CARDS, Q = window.QUIZ, P = window.PRODUCTS;
+  var colorOf = {brown:["--brown","--brown-t"],ci:["--ci","--ci-t"],med:["--med","--med-t"],gold:["--goldm","--goldm-t"],slate:["--slate","--slate-t"],orange:["--orange","--orange-t"],red:["--red","--red-t"],teal:["--teal","--teal-t"],plum:["--plum","--plum-t"]};
+  function mod(id){ for(var i=0;i<M.length;i++) if(M[i].id===id) return M[i]; }
+  function acc(m){ return "var("+colorOf[m.color][0]+")"; }
+  function tint(m){ return "var("+colorOf[m.color][1]+")"; }
+  function el(tag, attrs, kids){
+    var e=document.createElement(tag);
+    if(attrs) for(var k in attrs){ if(k==="text") e.textContent=attrs[k]; else if(k==="style") e.setAttribute("style",attrs[k]); else e.setAttribute(k,attrs[k]); }
+    (kids||[]).forEach(function(c){ if(c) e.appendChild(c); });
+    return e;
+  }
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* 学习流程：每个模块的卡片 → 模块小测 */
+  var FLOW = [];
+  M.forEach(function(m){
+    C.forEach(function(c,i){ if(c.m===m.id) FLOW.push({t:"card",i:i,m:m.id}); });
+    if(Q[m.id]) FLOW.push({t:"quiz",m:m.id});
+  });
+  var KEY="ht-crs-pos", pos = 0, seen = {};
+  try{ var s=parseInt(localStorage.getItem(KEY),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
+  var DKEY=KEY+"-done", done={};
+  try{ done=JSON.parse(localStorage.getItem(DKEY)||"{}")||{}; }catch(e){ done={}; }
+  function markDone(mid){ if(done[mid]) return; done[mid]=true; try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
+  function save(){ try{ localStorage.setItem(KEY, String(pos)); }catch(e){} }
+
+  /* ---------- 首页 ---------- */
+  var nQuiz = 0; for(var k in Q) nQuiz++;
+  [[M.length-1,"个模块"],[C.length,"张问答卡"],[nQuiz,"组小测"]].forEach(function(s){
+    $("stats").appendChild(el("div",{class:"stat"},[el("strong",{text:String(s[0])}),el("span",{text:s[1]})]));
+  });
+  function modList(container, onPick){
+    container.innerHTML="";
+    M.forEach(function(m){
+      var n=C.filter(function(c){return c.m===m.id;}).length;
+      var b=el("button",{class:"mod"+(done[m.id]?" is-done":""),type:"button"},[
+        el("span",{class:"no",style:"background:"+acc(m),text:m.no}),
+        el("span",{class:"nm"},[el("strong",{text:m.name}),el("span",{text:m.sub})]),
+        done[m.id] ? el("span",{class:"done",text:"✓ 已完成"}) : el("span",{class:"ct",text:n+" 张"+(Q[m.id]?" · 小测":"")})
+      ]);
+      b.addEventListener("click",function(){ onPick(m.id); });
+      container.appendChild(b);
+    });
+  }
+  function refreshLists(){
+    modList($("home-mods"), startAt);
+    modList($("drawer-mods"), function(mid){ closeDrawer(); startAt(mid); });
+    var k=0; M.forEach(function(m){ if(done[m.id]) k++; });
+    $("donebar").textContent = k ? ("已完成 "+k+" / "+M.length+" 个模块"+(k===M.length?"，可以挑战结业测验":"")) : "";
+  }
+  function startAt(mid){
+    for(var i=0;i<FLOW.length;i++) if(FLOW[i].m===mid){ pos=i; break; }
+    show("learn");
+  }
+  refreshLists();
+  updStart();
+
+  /* ---------- 重置进度：点两次确认 ---------- */
+  var resetTimer=null;
+  $("btn-reset").addEventListener("click",function(){
+    var b=$("btn-reset");
+    if(!b.classList.contains("armed")){
+      b.classList.add("armed"); b.textContent="再点一次，清除全部进度";
+      resetTimer=setTimeout(function(){ b.classList.remove("armed"); b.textContent="重置学习进度"; },4000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    done={}; seen={}; pos=0;
+    try{ localStorage.removeItem(DKEY); localStorage.removeItem(KEY); }catch(e){}
+    b.classList.remove("armed"); b.textContent="重置学习进度";
+    refreshLists(); updStart(); toast("已重置，可以从头开始");
+  });
+
+  /* ---------- 视图切换 ---------- */
+  function show(v){
+    $("v-home").hidden = v!=="home";
+    $("v-learn").hidden = v!=="learn" && v!=="final";
+    $("v-review").hidden = v!=="review";
+    if(v==="learn") render();
+    if(v==="final") renderFinal();
+    if(v==="review"){ renderReview(); if(location.hash!=="#review") history.replaceState(null,"","#review"); }
+    else if(location.hash) history.replaceState(null,"",location.pathname+location.search);
+    window.scrollTo(0,0);
+  }
+  $("btn-start").addEventListener("click",function(){ show("learn"); });
+  $("btn-final").addEventListener("click",function(){ show("final"); });
+  $("btn-review").addEventListener("click",function(){ show("review"); });
+  $("btn-home").addEventListener("click",function(){ show("home"); });
+  $("btn-home2").addEventListener("click",function(){ show("home"); });
+
+  /* ---------- 卡片 ---------- */
+  function trapBox(text){
+    return el("div",{class:"trap"},[
+      (function(){ var s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("width","20");s.setAttribute("height","20");s.setAttribute("viewBox","0 0 24 24");s.setAttribute("aria-hidden","true");s.innerHTML='<path d="M12 3l10 18H2z" fill="none" stroke="#A8261A" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5M12 18h.01" stroke="#A8261A" stroke-width="2" stroke-linecap="round"/>';return s;})(),
+      el("p",{},[el("strong",{text:"踩坑提醒"}),document.createTextNode(text)])
+    ]);
+  }
+  function answerBlock(c){
+    var box=el("div",{class:"ans"},[
+      el("div",{},[el("div",{class:"sec-l",text:"参考答案"}),el("div",{class:"atext",text:c.a})]),
+      c.k? el("div",{},[el("div",{class:"sec-l",text:"要点"}),el("div",{class:"keys"},c.k.map(function(x){return el("span",{text:x});}))]) : null,
+      c.e? el("div",{class:"eg"},[el("div",{class:"sec-l",text:P[c.eg]}),el("p",{text:c.e})]) : null,
+      c.t? trapBox(c.t) : null
+    ]);
+    return box;
+  }
+  function cardEl(c, open){
+    var m=mod(c.m);
+    var card=el("article",{class:"qcard",style:"--accent:"+acc(m)+";--tint:"+tint(m)},[
+      el("div",{class:"qhead"},[el("div",{class:"qlabel",text:"客户问"}),el("h2",{class:"qtext",text:c.q})])
+    ]);
+    var ans=answerBlock(c); ans.id="ans-"+C.indexOf(c);
+    if(open){ card.appendChild(ans); return card; }
+    var btn=el("button",{class:"reveal",type:"button","aria-expanded":"false","aria-controls":ans.id,text:"先想一想，再点这里看参考答案"});
+    ans.hidden=true;
+    btn.addEventListener("click",function(){ ans.hidden=false; btn.hidden=true; btn.setAttribute("aria-expanded","true"); seen[C.indexOf(c)]=true; });
+    card.appendChild(btn); card.appendChild(ans);
+    if(seen[C.indexOf(c)]){ ans.hidden=false; btn.hidden=true; }
+    return card;
+  }
+
+  /* ---------- 小测 ---------- */
+  function quizItem(item, n, onDone){
+    var box=el("div",{class:"qq"},[el("h3",{},[el("span",{text:String(n)}),document.createTextNode(item.q)])]);
+    var opts=[];
+    item.o.forEach(function(o,j){
+      var b=el("button",{class:"opt",type:"button"},[el("b",{text:"ABCD"[j]}),el("span",{text:o})]);
+      b.addEventListener("click",function(){
+        opts.forEach(function(x,k){ x.disabled=true; if(k===item.a) x.classList.add("right"); });
+        var ok=j===item.a; if(!ok) b.classList.add("wrong");
+        box.appendChild(el("div",{class:"expl"},[el("strong",{text:ok?"答对了。":"再想想。"}),document.createTextNode(item.x)]));
+        if(onDone) onDone(ok);
+      });
+      opts.push(b); box.appendChild(b);
+    });
+    return box;
+  }
+  function quizEl(mid){
+    var m=mod(mid), wrap=el("div",{class:"quiz",style:"--accent:"+acc(m)});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:m.name+" · 小测"}),el("p",{text:"3 道题，选完马上看解析。"})]));
+    var answered=0, total=Q[mid].length;
+    Q[mid].forEach(function(it,i){ wrap.appendChild(quizItem(it,i+1,function(){
+      answered++;
+      if(answered===total){
+        wrap.appendChild(el("div",{class:"finish"},[el("strong",{text:"✓ 本模块已完成"}),el("span",{text:"看完解析后，点「完成，返回首页」。"})]));
+        markDone(mid); setChip(); setNext();
+      }
+    })); });
+    return wrap;
+  }
+
+  /* ---------- 渲染当前位置 ---------- */
+  function render(){
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    stage.innerHTML="";
+    setChip();
+    $("chip").style.background=acc(m);
+    var cards=[], ci=0;
+    FLOW.forEach(function(x,i){ if(x.m===f.m && x.t==="card"){ cards.push(i); if(i===pos) ci=cards.length; } });
+    var n=cards.length, step = f.t==="card" ? ci : n;
+    var hasQ=!!Q[f.m], totalSteps=n+(hasQ?1:0), cur = f.t==="card" ? ci : totalSteps;
+    var pct=Math.round(cur/totalSteps*100);
+    $("prog").style.width=pct+"%"; $("progbar").setAttribute("aria-valuenow",String(pct));
+    $("progbar").setAttribute("aria-label","本模块进度");
+    $("count").textContent = f.t==="card" ? (ci+" / "+n) : "小测";
+    if(f.t==="card"){
+      stage.appendChild(cardEl(C[f.i],false));
+      stage.appendChild(el("div",{class:"hint",text:"左右滑动切换卡片"}));
+    } else stage.appendChild(quizEl(f.m));
+    $("btn-prev").disabled = pos===0;
+    var nx=FLOW[pos+1];
+    setNext();
+    save(); window.scrollTo(0,0);
+  }
+  function setNext(){
+    var f=FLOW[pos], nx=FLOW[pos+1], last=!nx || nx.m!==f.m;
+    var willFinish = last && (done[f.m] || !Q[f.m]);
+    $("btn-next").textContent = willFinish ? "完成，返回首页" : (!nx ? "结业测验" : (nx.t==="quiz" ? "进入小测" : (f.t==="quiz" ? "下一模块" : "下一张")));
+  }
+  function updStart(){ $("btn-start").textContent = pos>0 ? "继续学习" : "开始学习"; }
+  function setChip(){
+    var f=FLOW[pos], m=mod(f.m);
+    $("chip").textContent=m.no+" "+m.name+(done[f.m]?"  ✓ 已完成":"");
+  }
+  function go(d){
+    if(!$("v-review").hidden || !$("v-home").hidden) return;
+    if(finalMode){ return; }
+    var n=pos+d;
+    /* 没有小测的模块：读完最后一张卡往前走即算完成 */
+    var leaving = d>0 && (!FLOW[n] || FLOW[n].m!==FLOW[pos].m);
+    if(leaving && !Q[FLOW[pos].m]) markDone(FLOW[pos].m);
+    if(leaving && done[FLOW[pos].m]){
+      if(FLOW[n]){ pos=n; save(); }
+      show("home"); updStart();
+      var hm=$("home-mods"); if(hm && hm.scrollIntoView) setTimeout(function(){ hm.parentNode.scrollIntoView({behavior:"smooth",block:"start"}); },60);
+      return;
+    }
+    if(n>=FLOW.length){ show("final"); return; }
+    if(n<0) return;
+    pos=n; render();
+  }
+  $("btn-prev").addEventListener("click",function(){ if(finalMode){ finalMode=false; show("learn"); } else go(-1); });
+  $("btn-next").addEventListener("click",function(){ if(finalMode){ show("home"); finalMode=false; } else go(1); });
+  var sx=0, sy=0;
+  $("stage").addEventListener("touchstart",function(e){ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+  $("stage").addEventListener("touchend",function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5) go(dx<0?1:-1);
+  },{passive:true});
+  document.addEventListener("keydown",function(e){
+    if($("v-learn").hidden || !$("drawer").hidden) return;
+    if(e.key==="ArrowRight") go(1); if(e.key==="ArrowLeft") go(-1);
+  });
+
+  /* ---------- 结业测验：从各模块小测中随机抽 10 题 ---------- */
+  var finalMode=false;
+  function renderFinal(){
+    finalMode=true;
+    var all=[]; for(var k in Q) Q[k].forEach(function(it){ all.push(it); });
+    for(var i=all.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=all[i]; all[i]=all[j]; all[j]=t; }
+    var pick=all.slice(0,10), done=0, right=0;
+    var stage=$("stage"); stage.innerHTML="";
+    $("chip").textContent="结业测验"; $("chip").style.background="var(--gold-deep)";
+    $("prog").style.width="100%"; $("count").textContent="10 题";
+    var wrap=el("div",{class:"quiz",style:"--accent:var(--gold-deep)"});
+    wrap.appendChild(el("div",{class:"quiz-top"},[el("h2",{text:"结业测验"}),el("p",{text:"从各模块随机抽 10 题，答完显示得分。8 题或以上为通过。"})]));
+    var result=el("div",{class:"score",hidden:""});
+    pick.forEach(function(it,i){
+      wrap.appendChild(quizItem(it,i+1,function(ok){
+        done++; if(ok) right++;
+        if(done===pick.length){
+          result.innerHTML="";
+          result.appendChild(el("p",{text:"你的得分"}));
+          result.appendChild(el("strong",{text:right+" / 10"}));
+          result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
+          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+        }
+      }));
+    });
+    wrap.appendChild(result);
+    stage.appendChild(wrap);
+    $("btn-prev").disabled=false; $("btn-prev").textContent="返回学习";
+    $("btn-next").textContent="回到首页";
+    window.scrollTo(0,0);
+  }
+  var _render=render; render=function(){ finalMode=false; $("btn-prev").textContent="上一张"; _render(); };
+
+  /* ---------- 目录 ---------- */
+  function closeDrawer(){ $("drawer").hidden=true; $("btn-menu").focus(); }
+  $("btn-menu").addEventListener("click",function(){ $("drawer").hidden=false; $("btn-close").focus(); });
+  $("btn-close").addEventListener("click",closeDrawer);
+  $("drawer").addEventListener("click",function(e){ if(e.target===$("drawer")) closeDrawer(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && !$("drawer").hidden) closeDrawer(); });
+
+  /* ---------- 审阅模式 ---------- */
+  var reviewBuilt=false;
+  function renderReview(){
+    if(reviewBuilt) return; reviewBuilt=true;
+    var r=$("review");
+    r.appendChild(el("div",{class:"rv-head"},[
+      el("h1",{text:"全部问答与答案"}),
+      el("p",{text:"供审阅和修改用：所有答案已展开，小测正确答案以绿色标出。点右上角「复制全文」可复制文字稿。"})
+    ]));
+    M.forEach(function(m){
+      var sec=el("section",{class:"rv-mod"},[el("h2",{},[el("span",{class:"no",style:"background:"+acc(m),text:m.no}),document.createTextNode(m.name)])]);
+      C.forEach(function(c){ if(c.m===m.id){ var ce=cardEl(c,true); ce.classList.add("rv-card"); sec.appendChild(ce); } });
+      if(Q[m.id]){
+        var ol=el("ol");
+        Q[m.id].forEach(function(it){
+          ol.appendChild(el("li",{},[document.createTextNode(it.q+" "),el("span",{class:"ok",text:"答案："+"ABCD"[it.a]+". "+it.o[it.a]})]));
+        });
+        sec.appendChild(el("div",{class:"rv-quiz"},[el("strong",{text:"小测"}),ol]));
+      }
+      r.appendChild(sec);
+    });
+  }
+  function plainText(){
+    var out=["CRS与境外保单税务 · 问答特训（文字稿）",""];
+    M.forEach(function(m){
+      out.push("【"+m.no+" "+m.name+"】");
+      C.forEach(function(c,i){ if(c.m!==m.id) return;
+        out.push("","Q："+c.q,"A："+c.a);
+        if(c.k) out.push("要点："+c.k.join(" / "));
+        if(c.e) out.push(P[c.eg]+"：\n"+c.e);
+        if(c.t) out.push("踩坑提醒："+c.t);
+      });
+      if(Q[m.id]){ out.push("","小测："); Q[m.id].forEach(function(it,i){ out.push((i+1)+". "+it.q+"  "+it.o.map(function(o,j){return "ABCD"[j]+"."+o;}).join("  ")+"  答案："+"ABCD"[it.a]); }); }
+      out.push("");
+    });
+    return out.join("\n");
+  }
+  function toast(t){ var x=$("toast"); x.textContent=t; x.hidden=false; setTimeout(function(){ x.hidden=true; },2200); }
+  $("btn-copy").addEventListener("click",function(){
+    var t=plainText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){ toast("已复制全文"); },function(){ toast("复制失败，请在页面上长按选取文字"); });
+    } else toast("此浏览器不支持复制，请长按选取文字");
+  });
+
+  /* 启动 */
+  function route(){ if(location.hash==="#review") show("review"); }
+  window.addEventListener("hashchange",route);
+  route();
+})();
+</script>
+</body>
+</html>
