@@ -483,6 +483,10 @@ export interface QaLearner {
   best_score: number | null;
   last_score: number | null;
   exam_total: number | null;
+  kind: "qa" | "video";            // 問答特訓 page or 视频课 folder
+  quiz_right: number | null;       // 视频课: latest chapter-quiz results, added up
+  quiz_total: number | null;
+  quiz_chapters: number;
   first_at: string;
   last_at: string;
 }
@@ -492,7 +496,7 @@ export interface QaEvent {
   learner_name: string;
   page: string;
   page_title: string;
-  event: "open" | "finish" | "exam";
+  event: "open" | "finish" | "exam" | "quiz";
   module_id: string | null;
   module_name: string | null;
   score: number | null;

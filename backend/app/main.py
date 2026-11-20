@@ -2618,7 +2618,7 @@ def clear_training_video_views(db: Session = Depends(get_db),
 # a random visitor id. Anyone can post here, so everything is length/shape checked
 # and rate-limited per client IP.
 
-_QA_EVENTS = ("open", "finish", "exam")
+_QA_EVENTS = ("open", "finish", "exam", "quiz")   # quiz: 视频课 chapter quiz
 _QA_PAGE_RE = _re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
 _QA_VISITOR_RE = _re.compile(r"^[A-Za-z0-9-]{8,40}$")
 _QA_HITS: dict[str, list[float]] = {}
@@ -2658,7 +2658,7 @@ def post_qa_event(payload: schemas.QaEventIn, request: Request, db: Session = De
             or not _QA_PAGE_RE.match(payload.page or "")
             or not _QA_VISITOR_RE.match(payload.visitor_id or "")):
         raise err(422, "invalid_event", "invalid event")
-    if payload.event in ("open", "finish") and not _short(payload.module_id, 20):
+    if payload.event in ("open", "finish", "quiz") and not _short(payload.module_id, 20):
         raise err(422, "invalid_event", "module_id required")
 
     def small(v):
@@ -2668,8 +2668,8 @@ def post_qa_event(payload: schemas.QaEventIn, request: Request, db: Session = De
         page_title=_short(payload.page_title, 120) or payload.page, event=payload.event,
         module_id=_short(payload.module_id, 20), module_name=_short(payload.module_name, 80),
         module_total=small(payload.module_total),
-        score=small(payload.score) if payload.event == "exam" else None,
-        total=small(payload.total) if payload.event == "exam" else None))
+        score=small(payload.score) if payload.event in ("exam", "quiz") else None,
+        total=small(payload.total) if payload.event in ("exam", "quiz") else None))
     db.commit()
 
 
@@ -2683,7 +2683,9 @@ def _qa_event_out(e: QaTrainingEvent) -> dict:
 @app.get("/admin/qa-training")
 def admin_qa_training(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
     """問答特訓紀錄: per learner × page progress summary, plus the full event history
-    (newest first). A learner is one browser (visitor id); the name is the latest typed."""
+    (newest first). A learner is one browser (visitor id); the name is the latest typed.
+    Pages are 問答特訓 (<slug>-qa) or 视频课 (<slug>-video, kind "video"); for videos,
+    quiz_right / quiz_total add up the latest quiz result of each chapter."""
     events = db.execute(select(QaTrainingEvent).order_by(QaTrainingEvent.created_at.desc(),
                                                          QaTrainingEvent.id.desc())).scalars().all()
     summary: dict[tuple[str, str], dict] = {}
@@ -2691,6 +2693,7 @@ def admin_qa_training(db: Session = Depends(get_db), current: Agent = Depends(re
         s = summary.setdefault((e.visitor_id, e.page), {
             "visitor_id": e.visitor_id, "page": e.page, "finished": [], "opened": [],
             "module_total": None, "best_score": None, "last_score": None, "exam_total": None,
+            "kind": "video" if e.page.endswith("-video") else "qa", "quizzes": {},
             "first_at": e.created_at})
         s["learner_name"], s["page_title"], s["last_at"] = e.learner_name, e.page_title, e.created_at
         if e.module_total:
@@ -2703,6 +2706,13 @@ def admin_qa_training(db: Session = Depends(get_db), current: Agent = Depends(re
         elif e.event == "exam" and e.score is not None:
             s["last_score"], s["exam_total"] = e.score, e.total
             s["best_score"] = max(s["best_score"] or 0, e.score)
+        elif e.event == "quiz" and e.score is not None:
+            s["quizzes"][label] = (e.score, e.total or 0)
+    for s in summary.values():
+        qz = s.pop("quizzes")
+        s["quiz_right"] = sum(r for r, _ in qz.values()) if qz else None
+        s["quiz_total"] = sum(t for _, t in qz.values()) if qz else None
+        s["quiz_chapters"] = len(qz)
     learners = sorted(summary.values(), key=lambda s: s["last_at"], reverse=True)
     return {"learners": learners, "events": [_qa_event_out(e) for e in events[:2000]],
             "total_events": len(events)}

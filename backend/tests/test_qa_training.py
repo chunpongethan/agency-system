@@ -72,3 +72,28 @@ def test_rate_limited(client):
     import app.main as main
     main._QA_HITS["testclient"] = [__import__("time").time()] * 60
     assert ev(client, "open", module_id="m0").status_code == 429
+
+
+def test_video_course_events(client):
+    """视频课 folders (/training/<slug>-video/) report with the same endpoint: chapters
+    opened / finished (watched), plus each chapter's quiz result."""
+    VP = "crs-video"
+    vid = dict(page=VP, page_title="CRS 与境外保单税务 · 视频课", module_total=5)
+    assert ev(client, "open", module_id="ch1", module_name="第1章 · 香港保险要交税了？", **vid).status_code == 204
+    assert ev(client, "finish", module_id="ch1", module_name="第1章 · 香港保险要交税了？", **vid).status_code == 204
+    assert ev(client, "quiz", module_id="ch1", module_name="第1章 · 香港保险要交税了？", score=1, total=3, **vid).status_code == 204
+    assert ev(client, "quiz", module_id="ch1", module_name="第1章 · 香港保险要交税了？", score=3, total=3, **vid).status_code == 204
+    assert ev(client, "quiz", module_id="ch2", module_name="第2章 · 哪些保单会被申报", score=2, total=3, **vid).status_code == 204
+    assert ev(client, "quiz", **vid).status_code == 422                       # quiz needs a chapter
+    ev(client, "open", module_id="m0", module_name="开篇")                     # a Q&A page too
+
+    d = client.get("/admin/qa-training", headers=auth(client, "ADM")).json()
+    s = {x["page"]: x for x in d["learners"]}
+    v = s[VP]
+    assert v["kind"] == "video" and v["module_total"] == 5
+    assert v["finished"] == ["第1章 · 香港保险要交税了？"]
+    assert (v["quiz_right"], v["quiz_total"], v["quiz_chapters"]) == (5, 6, 2)   # latest per chapter
+    assert v["best_score"] is None
+    assert s[PAGE]["kind"] == "qa" and s[PAGE]["quiz_right"] is None
+    q = [e for e in d["events"] if e["event"] == "quiz"][0]
+    assert (q["score"], q["total"]) == (2, 3)

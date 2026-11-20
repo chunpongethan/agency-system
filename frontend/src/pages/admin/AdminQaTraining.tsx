@@ -16,6 +16,7 @@ export default function AdminQaTraining() {
 
   const [search, setSearch] = useState("");
   const [course, setCourse] = useState("");
+  const [kind, setKind] = useState<"" | "qa" | "video">("");
   const [focus, setFocus] = useState<QaLearner | null>(null);   // history filtered to one learner × course
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["qaTraining"] });
@@ -27,16 +28,17 @@ export default function AdminQaTraining() {
 
   const courses = useMemo(() => {
     const m = new Map<string, string>();
-    (d?.learners || []).forEach((l) => m.set(l.page, l.page_title));
+    (d?.learners || []).filter((l) => !kind || l.kind === kind).forEach((l) => m.set(l.page, l.page_title));
     return [...m.entries()].sort((a, b) => a[1].localeCompare(b[1]));
-  }, [d]);
+  }, [d, kind]);
+  const pageKind = (page: string) => (page.endsWith("-video") ? "video" : "qa");
 
   const s = search.trim().toLowerCase();
   const learners = (d?.learners || []).filter((l) =>
-    (!course || l.page === course) && (!s || l.learner_name.toLowerCase().includes(s)));
+    (!kind || l.kind === kind) && (!course || l.page === course) && (!s || l.learner_name.toLowerCase().includes(s)));
   const events = (d?.events || []).filter((e) => focus
     ? e.visitor_id === focus.visitor_id && e.page === focus.page
-    : (!course || e.page === course) && (!s || e.learner_name.toLowerCase().includes(s)));
+    : (!kind || pageKind(e.page) === kind) && (!course || e.page === course) && (!s || e.learner_name.toLowerCase().includes(s)));
   const completions = (d?.learners || []).reduce((n, l) => n + l.finished.length, 0);
 
   return (
@@ -66,6 +68,11 @@ export default function AdminQaTraining() {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
             <input value={search} onChange={(e) => { setSearch(e.target.value); setFocus(null); }}
               placeholder={t("qaTraining.search")} style={{ flex: "1 1 200px", maxWidth: 280 }} />
+            <select value={kind} onChange={(e) => { setKind(e.target.value as "" | "qa" | "video"); setCourse(""); setFocus(null); }} style={{ flex: "0 1 160px" }}>
+              <option value="">{t("qaTraining.kindAll")}</option>
+              <option value="qa">{t("qaTraining.kindQa")}</option>
+              <option value="video">{t("qaTraining.kindVideo")}</option>
+            </select>
             <select value={course} onChange={(e) => { setCourse(e.target.value); setFocus(null); }} style={{ flex: "1 1 200px", maxWidth: 320 }}>
               <option value="">{t("qaTraining.allCourses")}</option>
               {courses.map(([page, title]) => <option key={page} value={page}>{title}</option>)}
@@ -91,13 +98,20 @@ export default function AdminQaTraining() {
                       <tr key={l.visitor_id + l.page} onClick={() => setFocus(sel ? null : l)}
                         style={{ cursor: "pointer", background: sel ? "var(--row-selected, rgba(201,134,46,.12))" : undefined }}>
                         <td>{l.learner_name}</td>
-                        <td>{l.page_title}</td>
+                        <td>
+                          {l.page_title}
+                          {l.kind === "video" && <span style={{ marginLeft: 6, fontSize: 11, padding: "1px 6px", borderRadius: 8,
+                            background: "rgba(106,44,107,.12)", color: "#6A2C6B", whiteSpace: "nowrap" }}>▶ {t("qaTraining.video")}</span>}
+                        </td>
                         <td>
                           <strong>{l.finished.length}{l.module_total ? ` / ${l.module_total}` : ""}</strong>
                           {l.finished.length > 0 && <div className="muted" style={{ fontSize: 12 }}>{l.finished.join("、")}</div>}
                         </td>
                         <td className="num">
-                          {l.last_score != null ? <>{l.last_score}{l.exam_total ? ` / ${l.exam_total}` : ""}
+                          {l.kind === "video" ? (l.quiz_right != null
+                            ? <>{l.quiz_right} / {l.quiz_total}
+                              <div className="muted" style={{ fontSize: 12 }}>{t("qaTraining.quiz")} · {l.quiz_chapters} {t("qaTraining.quizChapters")}</div></>
+                            : "—") : l.last_score != null ? <>{l.last_score}{l.exam_total ? ` / ${l.exam_total}` : ""}
                             {l.best_score != null && l.best_score !== l.last_score &&
                               <div className="muted" style={{ fontSize: 12 }}>{t("qaTraining.best")} {l.best_score}</div>}</> : "—"}
                         </td>
@@ -148,7 +162,9 @@ export default function AdminQaTraining() {
                       <td>{e.learner_name}</td>
                       <td>{e.page_title}</td>
                       <td>{t(`qaTraining.ev.${e.event}`)}</td>
-                      <td>{e.event === "exam" ? `${e.score ?? "—"}${e.total ? ` / ${e.total}` : ""}` : (e.module_name || e.module_id)}</td>
+                      <td>{e.event === "exam" ? `${e.score ?? "—"}${e.total ? ` / ${e.total}` : ""}`
+                        : e.event === "quiz" ? `${e.module_name || e.module_id} · ${e.score ?? "—"}${e.total ? ` / ${e.total}` : ""}`
+                        : (e.module_name || e.module_id)}</td>
                     </tr>
                   ))}
                   {events.length === 0 && <tr><td colSpan={5} className="muted">{t("qaTraining.noData")}</td></tr>}

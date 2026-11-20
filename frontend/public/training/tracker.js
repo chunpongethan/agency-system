@@ -4,7 +4,9 @@
      HTQA.open(module)            entered a chapter (logged once per chapter per visit)
      HTQA.log("finish", module)   completed a chapter
      HTQA.log("exam", null, score, total)  结业测验 result
-   Pages call these through hooks added by scripts/publish_training_page.py. */
+     HTQA.log("quiz", module, right, total) 视频课 chapter quiz result
+   Pages call these through hooks added by scripts/publish_training_page.py (問答特訓)
+   and scripts/publish_training_video.py (视频课, folder pages: /training/<slug>/). */
 (function () {
   var NAME_KEY = "ht-qa-name", ID_KEY = "ht-qa-visitor";
 
@@ -23,7 +25,11 @@
     set(ID_KEY, visitor);
   }
   var name = get(NAME_KEY);
-  var page = (location.pathname.split("/").pop() || "").replace(/\.html?$/i, "").toLowerCase();
+  // /training/crs-tax-qa.html -> crs-tax-qa ; /training/crs-video/ (or …/index.html) -> crs-video
+  var parts = location.pathname.split("/").filter(Boolean);
+  var page = (parts.pop() || "").replace(/\.html?$/i, "").toLowerCase();
+  if (page === "index" || page === "") page = (parts.pop() || "").toLowerCase();
+  var isVideo = /-video$/.test(page);
   var queue = [];          // events raised before the name is entered
   var lastOpen = null;
 
@@ -49,7 +55,7 @@
     log: function (event, m, score, total) {
       var b = { event: event };
       if (m) { b.module_id = m.id; b.module_name = m.name; }
-      if (event === "exam") { b.score = score; b.total = total; }
+      if (event === "exam" || event === "quiz") { b.score = score; b.total = total; }
       send(b);
     },
     name: function () { return name; }
@@ -71,7 +77,7 @@
     var ov = document.createElement("div");
     ov.className = "htqa-ov";
     ov.innerHTML = '<form class="htqa-box" role="dialog" aria-modal="true" aria-labelledby="htqa-t">' +
-      '<h2 id="htqa-t">' + (isChange ? "更改姓名" : "欢迎来到问答特训") + '</h2>' +
+      '<h2 id="htqa-t">' + (isChange ? "更改姓名" : (isVideo ? "欢迎来到视频课" : "欢迎来到问答特训")) + '</h2>' +
       '<p>请输入你的姓名，方便导师了解你的学习进度。</p>' +
       '<input id="htqa-n" maxlength="40" autocomplete="name" placeholder="你的姓名">' +
       '<p class="err" id="htqa-e"></p><button type="submit">' + (isChange ? "保存" : "开始") + '</button></form>';
@@ -93,7 +99,7 @@
   }
 
   function who() {
-    var bar = document.getElementById("donebar");
+    var bar = document.getElementById("donebar") || document.getElementById("htqa-anchor");
     if (!bar || !name) return;
     var p = document.getElementById("htqa-who");
     if (!p) {

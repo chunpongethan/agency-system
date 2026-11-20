@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
 <title>CRS 与境外保单税务 · 视频课</title>
 <style>
 :root{
@@ -274,6 +275,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
     <p class="ovp">5 个短章节，约 15–17 分钟。每章结束有 3 道小测，看完去问答特训巩固。</p>
     <div class="chl" id="chl"></div>
     <button class="btn" id="bstart" type="button">开始观看</button>
+    <div id="htqa-anchor"></div>
     <a class="btn ghost" href="https://app.heritree.hk/training/crs-tax-qa.html">CRS 问答特训</a>
     <p class="disc">政策整理至 2026 年 11 月，境外保单收益的计税细则尚未出台，以税务机关最新口径为准。本课程不构成税务意见。仅供承瑞内部顾问培训使用，不得发给客户。</p>
   </div></div>
@@ -287,6 +289,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   </div></div>
 </div>
 
+<script src="../tracker.js"></script>
 <script src="scenes.js"></script>
 <script src="video-data.js"></script>
 <script>
@@ -411,6 +414,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   var last=0;
   function tick(now){
     var dt=last?(now-last)/1000:0; last=now;
+    if(st.playing && dt>0 && dt<1.5 && CH[st.ch]){ var wk=CH[st.ch].n; prog.w=prog.w||{}; prog.w[wk]=(prog.w[wk]||0)+dt*st.rate; }
     if(st.playing && flat[st.i]){
       var b=flat[st.i].b;
       if(b.a && auBeat===st.i){ if(!au.paused) st.el=au.currentTime; }
@@ -439,6 +443,8 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   }
 
   /* ---------- chapters, progress ---------- */
+  function chMod(ci){ var c=CH[ci]; return {id:"ch"+c.n, name:"第"+c.n+"章 · "+c.title}; }
+  window.MODULES=CH.map(function(c,ci){ return chMod(ci); });
   var KEY="ht-crsvid", prog={done:{},ch:0,i:0};
   try{ prog=JSON.parse(localStorage.getItem(KEY))||prog; }catch(e){}
   function save(){ prog.ch=st.ch; prog.i=st.i; try{ localStorage.setItem(KEY,JSON.stringify(prog)); }catch(e){} }
@@ -459,14 +465,14 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   function startCh(ci,i){
     st.ch=ci; prep(ci); st.i=Math.min(i,flat.length-1); st.el=0; st.built="-"; auBeat=-1;
     $("cover").classList.remove("on"); $("quiz").classList.remove("on");
-    $("cttl").textContent="第 "+CH[ci].n+" 章 · "+CH[ci].title;
+    $("cttl").textContent="第 "+CH[ci].n+" 章 · "+CH[ci].title; if(window.HTQA) HTQA.open(chMod(ci));
     play();
   }
   function endChapter(){
     st.playing=false; au.pause(); $("bplay").textContent="播放";
-    var c=CH[st.ch]; prog.done[c.n]=true; prog.ch=(st.ch+1)%CH.length; prog.i=0; try{ localStorage.setItem(KEY,JSON.stringify(prog)); }catch(e){}
-    $("qkick").textContent="第 "+c.n+" 章 · "+c.title; $("qh").textContent="本章小测";
-    var ql=$("qlist"); ql.innerHTML="";
+    var c=CH[st.ch], full=((prog.w||{})[c.n]||0)>=0.8*total; if(full){ prog.done[c.n]=true; if(window.HTQA) HTQA.log("finish",chMod(st.ch)); } if(prog.w) prog.w[c.n]=0; prog.ch=(st.ch+1)%CH.length; prog.i=0; try{ localStorage.setItem(KEY,JSON.stringify(prog)); }catch(e){}
+    $("qkick").textContent="第 "+c.n+" 章 · "+c.title; $("qh").textContent= full ? "本章小测" : "本章小测 · 未完整观看，本章暂不计完成";
+    var ql=$("qlist"); ql.innerHTML=""; var qAns=0, qRight=0;
     (Q[c.n]||[]).forEach(function(it,qi){
       var box=document.createElement("div"); box.className="qq";
       box.innerHTML='<div class="q">'+(qi+1)+'. '+it.q+'</div>';
@@ -475,6 +481,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
         var b=document.createElement("button"); b.type="button"; b.className="opt"; b.textContent=o;
         b.addEventListener("click",function(){ if(done) return; done=true;
           [].forEach.call(box.querySelectorAll(".opt"),function(x,xi){ if(xi===it.a) x.classList.add("right"); else if(x===b) x.classList.add("wrong"); });
+          qAns++; if(oi===it.a) qRight++; if(qAns===(Q[c.n]||[]).length && window.HTQA) HTQA.log("quiz",chMod(st.ch),qRight,qAns);
           var x=document.createElement("div"); x.className="qx"; x.textContent=(oi===it.a?"答对了。":"正确答案见绿色选项。")+it.x; box.appendChild(x); });
         box.appendChild(b);
       });
@@ -495,6 +502,7 @@ a.btn{display:flex;align-items:center;justify-content:center;text-decoration:non
   };
   window.__total=function(ci){ prep(ci); return total; };
 
+  window.addEventListener("pagehide",function(){ try{ localStorage.setItem(KEY,JSON.stringify(prog)); }catch(e){} });
   prep(prog.ch||0); openCover(); requestAnimationFrame(tick);
 })();
 </script>
