@@ -471,6 +471,40 @@ export interface TrainingVideoViews {
   total_views: number;
 }
 
+// --- 問答特訓 progress (public /training/ pages) ---
+export interface QaLearner {
+  visitor_id: string;
+  learner_name: string;
+  page: string;
+  page_title: string;
+  opened: string[];
+  finished: string[];
+  module_total: number | null;
+  best_score: number | null;
+  last_score: number | null;
+  exam_total: number | null;
+  first_at: string;
+  last_at: string;
+}
+export interface QaEvent {
+  id: number;
+  visitor_id: string;
+  learner_name: string;
+  page: string;
+  page_title: string;
+  event: "open" | "finish" | "exam";
+  module_id: string | null;
+  module_name: string | null;
+  score: number | null;
+  total: number | null;
+  created_at: string;
+}
+export interface QaTraining {
+  learners: QaLearner[];
+  events: QaEvent[];
+  total_events: number;
+}
+
 // --- 課程考核 (MC quiz) ---
 export interface QuizQuestion {           // taker-facing: no answers
   text: string;

@@ -264,6 +264,20 @@ class TrainingViewIn(BaseModel):
     new_session: bool = False  # true on the first report of a viewing session
 
 
+class QaEventIn(BaseModel):
+    """One progress event from a public 問答特訓 page (validated in the endpoint)."""
+    visitor_id: str
+    name: str
+    page: str
+    page_title: str = ""
+    event: str                       # open | finish | exam
+    module_id: str | None = None
+    module_name: str | None = None
+    module_total: int | None = None
+    score: int | None = None
+    total: int | None = None
+
+
 class TrainingCategoryIn(BaseModel):
     name: str
     sort_order: int = 0

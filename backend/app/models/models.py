@@ -613,6 +613,27 @@ class TrainingVideoView(Base):
     last_viewed_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
 
 
+class QaTrainingEvent(Base):
+    """Progress event from a public 問答特訓 page (frontend/public/training/*.html).
+    Learners aren't logged in: they type a name once, and the page keeps a random
+    visitor_id in localStorage. event: open (entered a chapter) | finish (completed
+    a chapter) | exam (結業測驗 score). Powers the admin 問答特訓紀錄 report."""
+    __tablename__ = "qa_training_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    visitor_id: Mapped[str] = mapped_column(String(40), index=True)
+    learner_name: Mapped[str] = mapped_column(String(60))
+    page: Mapped[str] = mapped_column(String(80), index=True)        # file slug
+    page_title: Mapped[str] = mapped_column(String(120))
+    event: Mapped[str] = mapped_column(String(10))
+    module_id: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    module_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    module_total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, index=True)
+
+
 class Quiz(Base):
     """課程考核: a multiple-choice assessment tied to one 商學院課程 (training material).
     `questions` is a JSON list of {text, options: [str], correct_index: int, explanation: str}.

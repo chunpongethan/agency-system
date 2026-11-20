@@ -25,7 +25,7 @@ from app.models.models import (
     Base, Agent, Client, Product, Transaction, TxnStatus, Role, ProductType,
     CommissionEntry, DealType, Case, PipelineStage, CaseOutcome, Title,
     TitleTarget, TrainingMaterial, TrainingFile, TrainingCategory, OverrideRule,
-    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView,
+    ProductRate, KbArticle, KbDocument, KbUsage, MenuSetting, TrainingVideoView, QaTrainingEvent,
     Quiz, QuizAttempt, ProposalRequest, ProposalFile, WorkerHeartbeat, now_utc,
 )
 from app.schemas import schemas
@@ -2610,6 +2610,119 @@ def clear_training_video_views(db: Session = Depends(get_db),
                                current: Agent = Depends(require_admin)):
     """Clear all 商學院課程觀看 records (admin only)."""
     db.query(TrainingVideoView).delete()
+    db.commit()
+
+
+# --- 問答特訓 progress (public static pages under app/training/) ----------------
+# The pages are public (no login): a learner types a name once and the page keeps
+# a random visitor id. Anyone can post here, so everything is length/shape checked
+# and rate-limited per client IP.
+
+_QA_EVENTS = ("open", "finish", "exam")
+_QA_PAGE_RE = _re.compile(r"^[a-z0-9][a-z0-9-]{0,79}$")
+_QA_VISITOR_RE = _re.compile(r"^[A-Za-z0-9-]{8,40}$")
+_QA_HITS: dict[str, list[float]] = {}
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "?"
+
+
+def _qa_rate_limit(ip: str, limit: int = 60, window: float = 60.0) -> None:
+    import time
+    now = time.time()
+    hits = [t for t in _QA_HITS.get(ip, []) if now - t < window]
+    if len(hits) >= limit:
+        raise err(429, "rate_limited", "太多請求，請稍後再試 / too many requests")
+    hits.append(now)
+    _QA_HITS[ip] = hits
+    if len(_QA_HITS) > 5000:                 # drop idle IPs so the map can't grow forever
+        for k in [k for k, v in _QA_HITS.items() if not v or now - v[-1] > window]:
+            _QA_HITS.pop(k, None)
+
+
+def _short(s: str | None, n: int) -> str | None:
+    s = (s or "").strip()
+    return s[:n] if s else None
+
+
+@app.post("/public/qa-events", status_code=204)
+def post_qa_event(payload: schemas.QaEventIn, request: Request, db: Session = Depends(get_db)):
+    """Record one 問答特訓 progress event (no auth — the pages are public)."""
+    _qa_rate_limit(_client_ip(request))
+    name = _short(payload.name, 60)
+    if (payload.event not in _QA_EVENTS or not name
+            or not _QA_PAGE_RE.match(payload.page or "")
+            or not _QA_VISITOR_RE.match(payload.visitor_id or "")):
+        raise err(422, "invalid_event", "invalid event")
+    if payload.event in ("open", "finish") and not _short(payload.module_id, 20):
+        raise err(422, "invalid_event", "module_id required")
+
+    def small(v):
+        return v if isinstance(v, int) and 0 <= v <= 1000 else None
+    db.add(QaTrainingEvent(
+        visitor_id=payload.visitor_id, learner_name=name, page=payload.page,
+        page_title=_short(payload.page_title, 120) or payload.page, event=payload.event,
+        module_id=_short(payload.module_id, 20), module_name=_short(payload.module_name, 80),
+        module_total=small(payload.module_total),
+        score=small(payload.score) if payload.event == "exam" else None,
+        total=small(payload.total) if payload.event == "exam" else None))
+    db.commit()
+
+
+def _qa_event_out(e: QaTrainingEvent) -> dict:
+    return {"id": e.id, "visitor_id": e.visitor_id, "learner_name": e.learner_name,
+            "page": e.page, "page_title": e.page_title, "event": e.event,
+            "module_id": e.module_id, "module_name": e.module_name,
+            "score": e.score, "total": e.total, "created_at": e.created_at}
+
+
+@app.get("/admin/qa-training")
+def admin_qa_training(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """問答特訓紀錄: per learner × page progress summary, plus the full event history
+    (newest first). A learner is one browser (visitor id); the name is the latest typed."""
+    events = db.execute(select(QaTrainingEvent).order_by(QaTrainingEvent.created_at.desc(),
+                                                         QaTrainingEvent.id.desc())).scalars().all()
+    summary: dict[tuple[str, str], dict] = {}
+    for e in reversed(events):                       # oldest → newest, so later values win
+        s = summary.setdefault((e.visitor_id, e.page), {
+            "visitor_id": e.visitor_id, "page": e.page, "finished": [], "opened": [],
+            "module_total": None, "best_score": None, "last_score": None, "exam_total": None,
+            "first_at": e.created_at})
+        s["learner_name"], s["page_title"], s["last_at"] = e.learner_name, e.page_title, e.created_at
+        if e.module_total:
+            s["module_total"] = e.module_total
+        label = e.module_name or e.module_id
+        if e.event == "open" and label not in s["opened"]:
+            s["opened"].append(label)
+        elif e.event == "finish" and label not in s["finished"]:
+            s["finished"].append(label)
+        elif e.event == "exam" and e.score is not None:
+            s["last_score"], s["exam_total"] = e.score, e.total
+            s["best_score"] = max(s["best_score"] or 0, e.score)
+    learners = sorted(summary.values(), key=lambda s: s["last_at"], reverse=True)
+    return {"learners": learners, "events": [_qa_event_out(e) for e in events[:2000]],
+            "total_events": len(events)}
+
+
+@app.delete("/admin/qa-training/learners/{visitor_id}", status_code=204)
+def delete_qa_learner(visitor_id: str, page: str | None = None, db: Session = Depends(get_db),
+                      current: Agent = Depends(require_admin)):
+    """Delete one learner's events (optionally for one page only)."""
+    q = db.query(QaTrainingEvent).filter(QaTrainingEvent.visitor_id == visitor_id)
+    if page:
+        q = q.filter(QaTrainingEvent.page == page)
+    q.delete()
+    db.commit()
+
+
+@app.delete("/admin/qa-training", status_code=204)
+def clear_qa_training(db: Session = Depends(get_db), current: Agent = Depends(require_admin)):
+    """Clear all 問答特訓 records (admin only)."""
+    db.query(QaTrainingEvent).delete()
     db.commit()
 
 

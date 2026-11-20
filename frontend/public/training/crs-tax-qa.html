@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<script src="tracker.js"></script>
 <title>CRS与境外保单税务问答特训</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -602,7 +603,7 @@ window.QUIZ = {
   try{ var s=parseInt(localStorage.getItem(KEY),10); if(s>=0 && s<FLOW.length) pos=s; }catch(e){}
   var DKEY=KEY+"-done", done={};
   try{ done=JSON.parse(localStorage.getItem(DKEY)||"{}")||{}; }catch(e){ done={}; }
-  function markDone(mid){ if(done[mid]) return; done[mid]=true; try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
+  function markDone(mid){ if(done[mid]) return; done[mid]=true; if(window.HTQA) HTQA.log("finish",mod(mid)); try{ localStorage.setItem(DKEY, JSON.stringify(done)); }catch(e){} refreshLists(); toast("✓ "+mod(mid).name+" 已完成"); }
   function save(){ try{ localStorage.setItem(KEY, String(pos)); }catch(e){} }
 
   /* ---------- 首页 ---------- */
@@ -732,7 +733,7 @@ window.QUIZ = {
 
   /* ---------- 渲染当前位置 ---------- */
   function render(){
-    var f=FLOW[pos], m=mod(f.m), stage=$("stage");
+    var f=FLOW[pos], m=mod(f.m), stage=$("stage"); if(window.HTQA) HTQA.open(m);
     stage.innerHTML="";
     setChip();
     $("chip").style.background=acc(m);
@@ -814,7 +815,7 @@ window.QUIZ = {
           result.appendChild(el("p",{text:"你的得分"}));
           result.appendChild(el("strong",{text:right+" / 10"}));
           result.appendChild(el("p",{text: right>=8 ? "通过。可以开始在导师陪同下见客户。" : "未达 8 题。建议回到目录，重温答错题目所在的模块。"}));
-          result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
+          if(window.HTQA) HTQA.log("exam",null,right,pick.length); result.hidden=false; result.scrollIntoView({behavior:"smooth",block:"center"});
         }
       }));
     });

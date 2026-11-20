@@ -7,7 +7,7 @@ import type {
   TeamProductionRow, AgentScorecard, ProductMix, AdminTxnRow, OverrideDefault,
   AgentDirectory, CaseRow, TitleTarget, TrainingMaterial, TrainingCategory,
   CaseImportResult, KbArticle, KbDocument, KbStatus, KbSearchResult, KbAnswer,
-  KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews, Proposal, ProposalWorkerStatus,
+  KbChatTurn, MenuSetting, KbUsageSummary, TrainingVideoViews, QaTraining, Proposal, ProposalWorkerStatus,
   QuizSummary, QuizAdmin, QuizListItem, QuizTake, QuizResult, QuizResults,
 } from "./types";
 import { translate } from "../i18n/LanguageContext";
@@ -202,6 +202,11 @@ export const api = {
     request<void>(`/admin/training-video-views/${viewId}`, { method: "DELETE" }),
   clearTrainingVideoViews: () =>
     request<void>("/admin/training-video-views", { method: "DELETE" }),
+  qaTraining: () => request<QaTraining>("/admin/qa-training"),
+  deleteQaLearner: (visitorId: string, page?: string) =>
+    request<void>(`/admin/qa-training/learners/${encodeURIComponent(visitorId)}` +
+      (page ? `?page=${encodeURIComponent(page)}` : ""), { method: "DELETE" }),
+  clearQaTraining: () => request<void>("/admin/qa-training", { method: "DELETE" }),
 
   // 課程考核 (MC quiz) — admin maintenance
   adminQuizzes: () => request<QuizSummary[]>("/admin/quizzes"),
